@@ -1,17 +1,19 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Pbl3.Models
 {
     public class Passenger
     {
-        [Key, ForeignKey("User")]
-        public Guid UserId { get; set; }
+        [Key]
+        public Guid PassengerID { get; set; } = Guid.NewGuid();
+        public Guid? UserID { get; set; }
+        public User? User { get; set; }
 
-        public int LoyaltyPoints { get; set; }
-        public required string PreferredPaymentMethod { get; set; }
+        public required string FullName { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? IdentityCard { get; set; }
+        public string? Email { get; set; }
 
-        public virtual required User User { get; set; }
-        public virtual required ICollection<Ticket> Tickets { get; set; }
+        public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
     }
 }

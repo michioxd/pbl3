@@ -1,26 +1,21 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Pbl3.Models
 {
     public class Bus
     {
         [Key]
-        public Guid Id { get; set; }
+        public Guid BusID { get; set; } = Guid.NewGuid();
+        public Guid CompanyID { get; set; }
+        public BusCompany? BusCompany { get; set; }
 
-        public Guid CompanyId { get; set; }
+        public Guid BusTypeID { get; set; }
+        public BusType? BusType { get; set; }
 
-        [Required]
         public required string PlateNumber { get; set; }
-        public int SeatCapacity { get; set; }
+        public bool IsActive { get; set; }
 
-        [Column(TypeName = "jsonb")]
-        public required string SeatMapConfig { get; set; }
-
-        public virtual required BusCompany Company { get; set; }
-        public virtual required ICollection<BusUtility> BusUtilities { get; set; }
-        public virtual required ICollection<Trip> Trips { get; set; }
+        public ICollection<BusImage> BusImages { get; set; } = new List<BusImage>();
+        public ICollection<Trip> Trips { get; set; } = new List<Trip>();
     }
 }

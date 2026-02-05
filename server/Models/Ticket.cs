@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using Pbl3.Enums;
 
 namespace Pbl3.Models
@@ -9,23 +6,23 @@ namespace Pbl3.Models
     public class Ticket
     {
         [Key]
-        public Guid Id { get; set; }
+        public Guid TicketID { get; set; } = Guid.NewGuid();
 
-        public Guid TripId { get; set; }
-        public Guid PassengerId { get; set; }
+        public Guid BookingID { get; set; }
+        public Booking? Booking { get; set; }
 
-        public DateTime BookingDate { get; set; }
+        public Guid TripID { get; set; }
+        public Trip? Trip { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal TotalAmount { get; set; }
+        public Guid PassengerID { get; set; }
+        public Passenger? Passenger { get; set; }
 
+        public Guid SeatLayoutID { get; set; }
+        public SeatLayout? SeatLayout { get; set; }
+
+        public decimal FinalPrice { get; set; }
         public TicketStatus Status { get; set; }
-        public required string QRCode { get; set; }
-
-        public virtual required Trip Trip { get; set; }
-        [ForeignKey("PassengerId")]
-        public virtual required Passenger Passenger { get; set; }
-
-        public virtual required ICollection<TicketDetail> TicketDetails { get; set; }
+        public required string TicketCode { get; set; }
+        public string? QrCode { get; set; }
     }
 }

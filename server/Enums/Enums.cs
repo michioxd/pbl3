@@ -15,17 +15,87 @@ namespace Pbl3.Enums
         Cancelled
     }
 
-    public enum SeatStatus
+    public enum SeatType
     {
-        Available,
-        Locked,
-        Booked
+        Window,
+        Aisle,
+        Middle,
+        Driver,
+        UpperDeck,
+        LowerDeck
+    }
+
+    public enum StationType
+    {
+        BusStation,
+        Office,
+        PickUpPoint
+    }
+
+    public enum CalendarExceptionType
+    {
+        Added,
+        Removed
+    }
+
+    public enum BookingStatus
+    {
+        Pending,
+        Paid,
+        Cancelled,
+        Refunded
     }
 
     public enum TicketStatus
     {
-        Pending,
-        Confirmed,
+        Issued,
+        CheckedIn,
         Cancelled
+    }
+
+    public enum SeatHoldStatus
+    {
+        Held,
+        Confirmed,
+        Expired
+    }
+
+    public enum PaymentProvider
+    {
+        Momo,
+        Stripe,
+        Cash
+    }
+
+    public enum PaymentIntentStatus
+    {
+        Created,
+        Succeeded,
+        Failed
+    }
+
+    public enum PaymentChargeStatus
+    {
+        Captured,
+        Failed
+    }
+
+    public enum RefundStatus
+    {
+        Pending,
+        Processed
+    }
+
+    public enum NotificationType
+    {
+        Email,
+        SMS,
+        Push
+    }
+
+    public enum NotificationStatus
+    {
+        Sent,
+        Failed
     }
 }

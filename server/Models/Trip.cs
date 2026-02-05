@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using Pbl3.Enums;
 
 namespace Pbl3.Models
@@ -9,30 +6,27 @@ namespace Pbl3.Models
     public class Trip
     {
         [Key]
-        public Guid Id { get; set; }
+        public Guid TripID { get; set; } = Guid.NewGuid();
+        public Guid? ScheduleID { get; set; }
+        public TripSchedule? TripSchedule { get; set; }
 
-        public Guid BusId { get; set; }
-        public Guid StartLocationId { get; set; }
-        public Guid EndLocationId { get; set; }
+        public Guid RouteID { get; set; }
+        public Route? Route { get; set; }
 
+        public Guid? BusID { get; set; }
+        public Bus? Bus { get; set; }
+
+        public Guid BusTypeID { get; set; }
+        public BusType? BusType { get; set; }
+
+        public DateOnly DepartureDate { get; set; }
         public DateTime DepartureTime { get; set; }
         public DateTime ArrivalTime { get; set; }
-
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal BasePrice { get; set; }
-
-        public int AvailableSeats { get; set; }
         public TripStatus Status { get; set; }
 
-        public virtual required Bus Bus { get; set; }
-
-        [ForeignKey("StartLocationId")]
-        public virtual required Location StartLocation { get; set; }
-
-        [ForeignKey("EndLocationId")]
-        public virtual required Location EndLocation { get; set; }
-
-        public virtual required ICollection<TripSeat> TripSeats { get; set; }
-        public virtual required ICollection<Ticket> Tickets { get; set; }
+        public ICollection<StopTime> StopTimes { get; set; } = new List<StopTime>();
+        public ICollection<SeatHold> SeatHolds { get; set; } = new List<SeatHold>();
+        public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
     }
 }

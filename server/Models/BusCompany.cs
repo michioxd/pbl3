@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Pbl3.Models
@@ -7,18 +5,14 @@ namespace Pbl3.Models
     public class BusCompany
     {
         [Key]
-        public Guid Id { get; set; }
-
-        [Required, MaxLength(200)]
+        public Guid CompanyID { get; set; } = Guid.NewGuid();
         public required string Name { get; set; }
-
-        public required string LicenseNumber { get; set; }
-        public required string Hotline { get; set; }
-
-        public float Rating { get; set; } // Cached value
+        public string? LicenseNumber { get; set; }
+        public string? Hotline { get; set; }
         public bool IsApproved { get; set; }
 
-        public virtual ICollection<BusCompanyAdmin>? Admins { get; set; }
-        public virtual ICollection<Bus>? Buses { get; set; }
+        public ICollection<BusCompanyAdmin> BusCompanyAdmins { get; set; } = new List<BusCompanyAdmin>();
+        public ICollection<Bus> Buses { get; set; } = new List<Bus>();
+        public ICollection<Route> Routes { get; set; } = new List<Route>();
     }
 }

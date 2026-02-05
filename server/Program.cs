@@ -29,8 +29,18 @@ namespace Pbl3
             var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
             dataSourceBuilder.MapEnum<UserRole>();
             dataSourceBuilder.MapEnum<TripStatus>();
-            dataSourceBuilder.MapEnum<SeatStatus>();
+            dataSourceBuilder.MapEnum<SeatType>();
+            dataSourceBuilder.MapEnum<StationType>();
+            dataSourceBuilder.MapEnum<CalendarExceptionType>();
+            dataSourceBuilder.MapEnum<BookingStatus>();
             dataSourceBuilder.MapEnum<TicketStatus>();
+            dataSourceBuilder.MapEnum<SeatHoldStatus>();
+            dataSourceBuilder.MapEnum<PaymentProvider>();
+            dataSourceBuilder.MapEnum<PaymentIntentStatus>();
+            dataSourceBuilder.MapEnum<PaymentChargeStatus>();
+            dataSourceBuilder.MapEnum<RefundStatus>();
+            dataSourceBuilder.MapEnum<NotificationType>();
+            dataSourceBuilder.MapEnum<NotificationStatus>();
             var dataSource = dataSourceBuilder.Build();
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
