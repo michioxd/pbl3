@@ -20,10 +20,7 @@ namespace Pbl3.Models
         public ICollection<BusCompanyAdmin> BusCompanyAdmins { get; set; } = new List<BusCompanyAdmin>();
         public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
         public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
-        // User can be linked to many passengers (e.g. family members) or one? ERD says UserID FK in Passengers.
-        // Passengers||--o{ Tickets. Passengers||--o{ User (implied by FK).
-        // Actually ERD diagram text: Passengers { Guid UserID FK "Nullable" ... }
-        public ICollection<Passenger> Passengers { get; set; } = new List<Passenger>();
+         public ICollection<Passenger> Passengers { get; set; } = new List<Passenger>();
         public ICollection<SeatHold> SeatHolds { get; set; } = new List<SeatHold>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }
