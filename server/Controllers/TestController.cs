@@ -23,7 +23,7 @@ namespace Pbl3.Controllers
             var users = await _context.Users
                 .Select(u => new UserDto
                 {
-                    Id = u.Id,
+                    Id = u.UserID,
                     Username = u.Username,
                     Email = u.Email,
                     Role = u.Role.ToString()

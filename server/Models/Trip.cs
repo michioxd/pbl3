@@ -11,7 +11,7 @@ namespace Pbl3.Models
         public TripSchedule? TripSchedule { get; set; }
 
         public Guid RouteID { get; set; }
-        public Route? Route { get; set; }
+        public BusRoute? Route { get; set; }
 
         public Guid? BusID { get; set; }
         public Bus? Bus { get; set; }

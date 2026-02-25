@@ -13,6 +13,6 @@ namespace Pbl3.Models
 
         public ICollection<BusCompanyAdmin> BusCompanyAdmins { get; set; } = new List<BusCompanyAdmin>();
         public ICollection<Bus> Buses { get; set; } = new List<Bus>();
-        public ICollection<Route> Routes { get; set; } = new List<Route>();
+        public ICollection<BusRoute> Routes { get; set; } = new List<BusRoute>();
     }
 }

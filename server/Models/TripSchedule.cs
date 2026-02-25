@@ -7,7 +7,7 @@ namespace Pbl3.Models
         [Key]
         public Guid ScheduleID { get; set; } = Guid.NewGuid();
         public Guid RouteID { get; set; }
-        public Route? Route { get; set; }
+        public BusRoute? Route { get; set; }
 
         public Guid CalendarID { get; set; }
         public Calendar? Calendar { get; set; }
