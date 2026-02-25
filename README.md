@@ -45,3 +45,9 @@ Then run the development server:
 cd server
 dotnet watch
 ```
+
+You may have to initialize the database first by running:
+
+```sh
+dotnet ef database update
+```
