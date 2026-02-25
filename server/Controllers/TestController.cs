@@ -21,12 +21,13 @@ namespace Pbl3.Controllers
         public async Task<IActionResult> GetAll()
         {
             var users = await _context.Users
+                .Include(u => u.Role)
                 .Select(u => new UserDto
                 {
                     Id = u.UserID,
                     Username = u.Username,
                     Email = u.Email,
-                    Role = u.Role.ToString()
+                    Role = u.Role != null ? u.Role.RoleName : "Unknown"
                 })
                 .ToListAsync();
 

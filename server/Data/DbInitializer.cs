@@ -19,11 +19,8 @@ namespace Pbl3.Data
         {
             try
             {
-                if (_context.Database.GetPendingMigrations().Any())
-                {
-                    await _context.Database.MigrateAsync();
-                    _logger.LogInformation("Migrated database successfully.");
-                }
+                await _context.Database.MigrateAsync();
+                _logger.LogInformation("Migrated database successfully.");
 
                 if (!await _context.Users.AnyAsync())
                 {
@@ -34,27 +31,40 @@ namespace Pbl3.Data
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while initializing the database.");
-                throw;
             }
         }
 
         private async Task SeedUsersAsync()
         {
+            var sysAdminRole = new Role { RoleID = Guid.NewGuid(), RoleName = UserRole.SysAdmin.ToString() };
+            var busAdminRole = new Role { RoleID = Guid.NewGuid(), RoleName = UserRole.BusAdmin.ToString() };
+            var passengerRole = new Role { RoleID = Guid.NewGuid(), RoleName = UserRole.Passenger.ToString() };
+
+            if (!_context.Roles.Any())
+            {
+                _context.Roles.AddRange(sysAdminRole, busAdminRole, passengerRole);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                sysAdminRole = await _context.Roles.FirstAsync(r => r.RoleName == UserRole.SysAdmin.ToString());
+            }
+
             var adminUser = new User
             {
-                Id = Guid.NewGuid(),
+                UserID = Guid.NewGuid(),
                 Username = "sysadmin",
                 Email = "admin@example.com",
-                PasswordHash = "abcdef",
+                PasswordHash = "abcdef", // sample, it must be hashed in prod
                 PhoneNumber = "1234567890",
-                Role = UserRole.SysAdmin,
+                RoleID = sysAdminRole.RoleID,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
 
             var phuongTrang = new BusCompany
             {
-                Id = Guid.NewGuid(),
+                CompanyID = Guid.NewGuid(),
                 Name = "Phuong Trang Lines",
                 LicenseNumber = "VN-PT-001",
                 Hotline = "19006067",
