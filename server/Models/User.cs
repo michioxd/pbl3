@@ -17,7 +17,8 @@ namespace Pbl3.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties
-        public ICollection<BusCompanyAdmin> BusCompanyAdmins { get; set; } = new List<BusCompanyAdmin>();
+        public ICollection<BusCompanyAdmin> BusCompanyAdmins { get; set; } =
+            new List<BusCompanyAdmin>();
         public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
         public ICollection<Passenger> Passengers { get; set; } = new List<Passenger>();
         public ICollection<SeatHold> SeatHolds { get; set; } = new List<SeatHold>();

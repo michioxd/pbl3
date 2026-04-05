@@ -20,12 +20,11 @@ namespace Pbl3.Controllers.BusAdmin
 
         // API Test: Lấy tất cả danh sách xe bảo gồm cả tên công ty và loại xe (Giống TestController)
         [AllowAnonymous]
-        
         [HttpGet("GetAllBus")]
         public async Task<IActionResult> GetAll()
         {
-            var buses = await _context.Buses
-                .Include(b => b.BusCompany)
+            var buses = await _context
+                .Buses.Include(b => b.BusCompany)
                 .Include(b => b.BusType)
                 .Select(b => new
                 {
@@ -34,7 +33,7 @@ namespace Pbl3.Controllers.BusAdmin
                     CompanyName = b.BusCompany != null ? b.BusCompany.Name : "Unknown",
                     BusType = b.BusType != null ? b.BusType.Name : "Unknown",
                     TotalSeats = b.BusType != null ? b.BusType.TotalSeats : 0,
-                    IsActive = b.IsActive
+                    IsActive = b.IsActive,
                 })
                 .ToListAsync();
 
@@ -42,12 +41,12 @@ namespace Pbl3.Controllers.BusAdmin
         }
 
         // Lấy danh sách xe của nhà xe
-        
+
         [HttpGet("company/{companyId}")]
         public async Task<IActionResult> GetCompanyBuses(Guid companyId)
         {
-            var buses = await _context.Buses
-                .Include(b => b.BusType)
+            var buses = await _context
+                .Buses.Include(b => b.BusType)
                 .Where(b => b.CompanyID == companyId)
                 .Select(b => new
                 {
@@ -58,8 +57,8 @@ namespace Pbl3.Controllers.BusAdmin
                     {
                         b.BusType!.BusTypeID,
                         b.BusType.Name,
-                        b.BusType.TotalSeats
-                    }
+                        b.BusType.TotalSeats,
+                    },
                 })
                 .ToListAsync();
 
@@ -89,12 +88,12 @@ namespace Pbl3.Controllers.BusAdmin
         public async Task<IActionResult> CreateBus([FromBody] Bus newBus)
         {
             // Khởi tạo ID nếu chưa có
-            if (newBus.BusID==Guid.Empty)
+            if (newBus.BusID == Guid.Empty)
             {
-                newBus.BusID=Guid.NewGuid();
+                newBus.BusID = Guid.NewGuid();
             }
 
-             _context.Add(newBus);
+            _context.Add(newBus);
 
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetAll), new { id = newBus.BusID }, newBus);
@@ -104,16 +103,16 @@ namespace Pbl3.Controllers.BusAdmin
         [HttpPatch("{id}/status")]
         public async Task<IActionResult> UpdateBusStatus(Guid id, [FromBody] bool isActive)
         {
-            var bus=await _context.Buses.FindAsync(id);
+            var bus = await _context.Buses.FindAsync(id);
 
-            if (bus==null)
+            if (bus == null)
             {
-                return NotFound(new {message="xe khong duoc tim thay"});
+                return NotFound(new { message = "xe khong duoc tim thay" });
             }
-            bus.IsActive=isActive;
+            bus.IsActive = isActive;
             await _context.SaveChangesAsync();
 
-            return Ok(new {message ="trang thai xe da duoc cap nhat thanh cong"});
+            return Ok(new { message = "trang thai xe da duoc cap nhat thanh cong" });
         }
 
         // Xóa một xe
@@ -126,14 +125,13 @@ namespace Pbl3.Controllers.BusAdmin
                 return NotFound(new { message = "Bus not found." });
             }
 
-
-            if (bus.IsActive!=true)
+            if (bus.IsActive != true)
             {
                 _context.Buses.Remove(bus);
             }
-            else 
+            else
             {
-                return Ok(new {message="xe nay dang hoat dong , nen ko the xoa"});
+                return Ok(new { message = "xe nay dang hoat dong , nen ko the xoa" });
             }
 
             await _context.SaveChangesAsync();
@@ -151,10 +149,8 @@ namespace Pbl3.Controllers.BusAdmin
         //         {
         //             bc.CompanyID,
         //             bc.Name,
-                    
-                    
+
         //         }).ToList();
-            
 
         //     return Ok();
         // }

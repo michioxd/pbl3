@@ -15,15 +15,14 @@ namespace pbl3_server.Migrations
                 table: "BusCompanyAdmins",
                 type: "text",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: ""
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "Roles",
-                table: "BusCompanyAdmins");
+            migrationBuilder.DropColumn(name: "Roles", table: "BusCompanyAdmins");
         }
     }
 }

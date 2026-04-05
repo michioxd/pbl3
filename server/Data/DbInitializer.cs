@@ -11,7 +11,8 @@ namespace Pbl3.Data
         public DbInitializer(
             ApplicationDbContext context,
             ILogger<DbInitializer> logger,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider
+        )
         {
             _context = context;
             _logger = logger;
