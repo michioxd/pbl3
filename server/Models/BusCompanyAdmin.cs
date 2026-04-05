@@ -10,5 +10,6 @@ namespace Pbl3.Models
 
         public Guid CompanyID { get; set; }
         public BusCompany? BusCompany { get; set; }
+        public String Roles {get;set;}
     }
 }
