@@ -1,7 +1,7 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using Pbl3.Models;
+using Microsoft.EntityFrameworkCore;
 using Pbl3.Enums;
+using Pbl3.Models;
 
 namespace Pbl3.Data
 {
@@ -11,7 +11,11 @@ namespace Pbl3.Data
         private readonly ILogger<DataSeeder> _logger;
         private readonly IHostEnvironment _environment;
 
-        public DataSeeder(ApplicationDbContext context, ILogger<DataSeeder> logger, IHostEnvironment environment)
+        public DataSeeder(
+            ApplicationDbContext context,
+            ILogger<DataSeeder> logger,
+            IHostEnvironment environment
+        )
         {
             _context = context;
             _logger = logger;
@@ -61,30 +65,56 @@ namespace Pbl3.Data
             var hasDistricts = await _context.Districts.AnyAsync();
             var hasWards = await _context.Wards.AnyAsync();
 
-            if (hasAdministrativeRegions && hasAdministrativeUnits && hasProvinces && hasDistricts && hasWards)
+            if (
+                hasAdministrativeRegions
+                && hasAdministrativeUnits
+                && hasProvinces
+                && hasDistricts
+                && hasWards
+            )
             {
-                _logger.LogInformation("Administrative location data already exists. Skipping SQL import.");
+                _logger.LogInformation(
+                    "Administrative location data already exists. Skipping SQL import."
+                );
                 return;
             }
 
-            if (hasAdministrativeRegions || hasAdministrativeUnits || hasProvinces || hasDistricts || hasWards)
+            if (
+                hasAdministrativeRegions
+                || hasAdministrativeUnits
+                || hasProvinces
+                || hasDistricts
+                || hasWards
+            )
             {
-                _logger.LogWarning("Administrative location tables are partially populated. Skipping SQL import to avoid duplicate data.");
+                _logger.LogWarning(
+                    "Administrative location tables are partially populated. Skipping SQL import to avoid duplicate data."
+                );
                 return;
             }
 
-            var sqlFilePath = Path.Combine(_environment.ContentRootPath, "seed", "locations", "data.sql");
+            var sqlFilePath = Path.Combine(
+                _environment.ContentRootPath,
+                "seed",
+                "locations",
+                "data.sql"
+            );
 
             if (!File.Exists(sqlFilePath))
             {
-                throw new FileNotFoundException("Administrative location seed file was not found.", sqlFilePath);
+                throw new FileNotFoundException(
+                    "Administrative location seed file was not found.",
+                    sqlFilePath
+                );
             }
 
             var sqlScript = await File.ReadAllTextAsync(sqlFilePath);
 
             if (string.IsNullOrWhiteSpace(sqlScript))
             {
-                _logger.LogWarning("Administrative location seed file is empty. Skipping SQL import.");
+                _logger.LogWarning(
+                    "Administrative location seed file is empty. Skipping SQL import."
+                );
                 return;
             }
 
@@ -98,11 +128,18 @@ namespace Pbl3.Data
                 await _context.Database.ExecuteSqlRawAsync(sqlScript);
                 await transaction.CommitAsync();
 
-                _logger.LogInformation("Imported administrative location data from {SqlFilePath}", sqlFilePath);
+                _logger.LogInformation(
+                    "Imported administrative location data from {SqlFilePath}",
+                    sqlFilePath
+                );
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to import administrative location data from {SqlFilePath}", sqlFilePath);
+                _logger.LogError(
+                    ex,
+                    "Failed to import administrative location data from {SqlFilePath}",
+                    sqlFilePath
+                );
                 throw;
             }
             finally
@@ -117,7 +154,7 @@ namespace Pbl3.Data
             {
                 new Role { RoleID = Guid.NewGuid(), RoleName = UserRole.SysAdmin.ToString() },
                 new Role { RoleID = Guid.NewGuid(), RoleName = UserRole.BusAdmin.ToString() },
-                new Role { RoleID = Guid.NewGuid(), RoleName = UserRole.Passenger.ToString() }
+                new Role { RoleID = Guid.NewGuid(), RoleName = UserRole.Passenger.ToString() },
             };
 
             _context.Roles.AddRange(roles);
@@ -127,9 +164,15 @@ namespace Pbl3.Data
 
         private async Task SeedUsersAsync()
         {
-            var sysAdminRole = await _context.Roles.FirstAsync(r => r.RoleName == UserRole.SysAdmin.ToString());
-            var busAdminRole = await _context.Roles.FirstAsync(r => r.RoleName == UserRole.BusAdmin.ToString());
-            var passengerRole = await _context.Roles.FirstAsync(r => r.RoleName == UserRole.Passenger.ToString());
+            var sysAdminRole = await _context.Roles.FirstAsync(r =>
+                r.RoleName == UserRole.SysAdmin.ToString()
+            );
+            var busAdminRole = await _context.Roles.FirstAsync(r =>
+                r.RoleName == UserRole.BusAdmin.ToString()
+            );
+            var passengerRole = await _context.Roles.FirstAsync(r =>
+                r.RoleName == UserRole.Passenger.ToString()
+            );
             var passwordHasher = new PasswordHasher<User>();
             const string defaultSeedPassword = "hashed_password_123";
 
@@ -144,7 +187,7 @@ namespace Pbl3.Data
                     PhoneNumber = "0901234567",
                     RoleID = sysAdminRole.RoleID,
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
                 },
                 new User
                 {
@@ -155,7 +198,7 @@ namespace Pbl3.Data
                     PhoneNumber = "0902345678",
                     RoleID = busAdminRole.RoleID,
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
                 },
                 new User
                 {
@@ -166,7 +209,7 @@ namespace Pbl3.Data
                     PhoneNumber = "0903456789",
                     RoleID = busAdminRole.RoleID,
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
                 },
                 new User
                 {
@@ -177,7 +220,7 @@ namespace Pbl3.Data
                     PhoneNumber = "0904567890",
                     RoleID = passengerRole.RoleID,
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
                 },
                 new User
                 {
@@ -188,8 +231,8 @@ namespace Pbl3.Data
                     PhoneNumber = "0905678901",
                     RoleID = passengerRole.RoleID,
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow
-                }
+                    CreatedAt = DateTime.UtcNow,
+                },
             };
 
             foreach (var user in users)
@@ -215,7 +258,7 @@ namespace Pbl3.Data
                     Name = "Phương Trang (FUTA Bus Lines)",
                     LicenseNumber = "VN-PT-001",
                     Hotline = "19006067",
-                    IsApproved = true
+                    IsApproved = true,
                 },
                 new BusCompany
                 {
@@ -223,7 +266,7 @@ namespace Pbl3.Data
                     Name = "Mai Linh Express",
                     LicenseNumber = "VN-ML-002",
                     Hotline = "19006292",
-                    IsApproved = true
+                    IsApproved = true,
                 },
                 new BusCompany
                 {
@@ -231,29 +274,35 @@ namespace Pbl3.Data
                     Name = "Thiện Thành",
                     LicenseNumber = "VN-TT-003",
                     Hotline = "02513828282",
-                    IsApproved = true
-                }
+                    IsApproved = true,
+                },
             };
 
             _context.BusCompanies.AddRange(companies);
             await _context.SaveChangesAsync();
 
             // Link admins to companies
-            var phuongTrang = await _context.BusCompanies.FirstAsync(c => c.LicenseNumber == "VN-PT-001");
-            var maiLinh = await _context.BusCompanies.FirstAsync(c => c.LicenseNumber == "VN-ML-002");
+            var phuongTrang = await _context.BusCompanies.FirstAsync(c =>
+                c.LicenseNumber == "VN-PT-001"
+            );
+            var maiLinh = await _context.BusCompanies.FirstAsync(c =>
+                c.LicenseNumber == "VN-ML-002"
+            );
 
             var admins = new List<BusCompanyAdmin>
             {
                 new BusCompanyAdmin
                 {
                     UserID = busAdmin1.UserID,
-                    CompanyID = phuongTrang.CompanyID
+                    CompanyID = phuongTrang.CompanyID,
+                    Roles = "O",
                 },
                 new BusCompanyAdmin
                 {
                     UserID = busAdmin2.UserID,
-                    CompanyID = maiLinh.CompanyID
-                }
+                    CompanyID = maiLinh.CompanyID,
+                    Roles = "TB",
+                },
             };
 
             _context.BusCompanyAdmins.AddRange(admins);
@@ -270,22 +319,22 @@ namespace Pbl3.Data
                     BusTypeID = Guid.NewGuid(),
                     Name = "Giường nằm 29 chỗ",
                     TotalSeats = 29,
-                    Description = "Xe giường nằm cao cấp 29 chỗ"
+                    Description = "Xe giường nằm cao cấp 29 chỗ",
                 },
                 new BusType
                 {
                     BusTypeID = Guid.NewGuid(),
                     Name = "Ghế ngồi 40 chỗ",
                     TotalSeats = 40,
-                    Description = "Xe ghế ngồi tiêu chuẩn 40 chỗ"
+                    Description = "Xe ghế ngồi tiêu chuẩn 40 chỗ",
                 },
                 new BusType
                 {
                     BusTypeID = Guid.NewGuid(),
                     Name = "Ghế ngồi 45 chỗ",
                     TotalSeats = 45,
-                    Description = "Xe ghế ngồi 45 chỗ"
-                }
+                    Description = "Xe ghế ngồi 45 chỗ",
+                },
             };
 
             _context.BusTypes.AddRange(busTypes);
@@ -295,9 +344,15 @@ namespace Pbl3.Data
 
         private async Task SeedSeatLayoutsAsync()
         {
-            var busType29Seat = await _context.BusTypes.FirstAsync(bt => bt.Name == "Giường nằm 29 chỗ");
-            var busType40Seat = await _context.BusTypes.FirstAsync(bt => bt.Name == "Ghế ngồi 40 chỗ");
-            var busType45Seat = await _context.BusTypes.FirstAsync(bt => bt.Name == "Ghế ngồi 45 chỗ");
+            var busType29Seat = await _context.BusTypes.FirstAsync(bt =>
+                bt.Name == "Giường nằm 29 chỗ"
+            );
+            var busType40Seat = await _context.BusTypes.FirstAsync(bt =>
+                bt.Name == "Ghế ngồi 40 chỗ"
+            );
+            var busType45Seat = await _context.BusTypes.FirstAsync(bt =>
+                bt.Name == "Ghế ngồi 45 chỗ"
+            );
 
             var seatLayouts = new List<SeatLayout>();
             seatLayouts.AddRange(CreateSeatLayouts(busType29Seat.BusTypeID, 29, 3, 1, "A"));
@@ -311,13 +366,25 @@ namespace Pbl3.Data
 
         private async Task SeedBusesAsync()
         {
-            var phuongTrang = await _context.BusCompanies.FirstAsync(c => c.LicenseNumber == "VN-PT-001");
-            var maiLinh = await _context.BusCompanies.FirstAsync(c => c.LicenseNumber == "VN-ML-002");
-            var thienThanh = await _context.BusCompanies.FirstAsync(c => c.LicenseNumber == "VN-TT-003");
+            var phuongTrang = await _context.BusCompanies.FirstAsync(c =>
+                c.LicenseNumber == "VN-PT-001"
+            );
+            var maiLinh = await _context.BusCompanies.FirstAsync(c =>
+                c.LicenseNumber == "VN-ML-002"
+            );
+            var thienThanh = await _context.BusCompanies.FirstAsync(c =>
+                c.LicenseNumber == "VN-TT-003"
+            );
 
-            var busType29Seat = await _context.BusTypes.FirstAsync(bt => bt.Name == "Giường nằm 29 chỗ");
-            var busType40Seat = await _context.BusTypes.FirstAsync(bt => bt.Name == "Ghế ngồi 40 chỗ");
-            var busType45Seat = await _context.BusTypes.FirstAsync(bt => bt.Name == "Ghế ngồi 45 chỗ");
+            var busType29Seat = await _context.BusTypes.FirstAsync(bt =>
+                bt.Name == "Giường nằm 29 chỗ"
+            );
+            var busType40Seat = await _context.BusTypes.FirstAsync(bt =>
+                bt.Name == "Ghế ngồi 40 chỗ"
+            );
+            var busType45Seat = await _context.BusTypes.FirstAsync(bt =>
+                bt.Name == "Ghế ngồi 45 chỗ"
+            );
 
             var buses = new List<Bus>
             {
@@ -327,7 +394,7 @@ namespace Pbl3.Data
                     CompanyID = phuongTrang.CompanyID,
                     BusTypeID = busType29Seat.BusTypeID,
                     PlateNumber = "51B-12345",
-                    IsActive = true
+                    IsActive = true,
                 },
                 new Bus
                 {
@@ -335,7 +402,7 @@ namespace Pbl3.Data
                     CompanyID = phuongTrang.CompanyID,
                     BusTypeID = busType29Seat.BusTypeID,
                     PlateNumber = "51B-67890",
-                    IsActive = true
+                    IsActive = true,
                 },
                 new Bus
                 {
@@ -343,7 +410,7 @@ namespace Pbl3.Data
                     CompanyID = maiLinh.CompanyID,
                     BusTypeID = busType40Seat.BusTypeID,
                     PlateNumber = "79A-11111",
-                    IsActive = true
+                    IsActive = true,
                 },
                 new Bus
                 {
@@ -351,7 +418,7 @@ namespace Pbl3.Data
                     CompanyID = maiLinh.CompanyID,
                     BusTypeID = busType45Seat.BusTypeID,
                     PlateNumber = "79A-22222",
-                    IsActive = true
+                    IsActive = true,
                 },
                 new Bus
                 {
@@ -359,8 +426,8 @@ namespace Pbl3.Data
                     CompanyID = thienThanh.CompanyID,
                     BusTypeID = busType29Seat.BusTypeID,
                     PlateNumber = "92B-33333",
-                    IsActive = true
-                }
+                    IsActive = true,
+                },
             };
 
             _context.Buses.AddRange(buses);
@@ -378,11 +445,36 @@ namespace Pbl3.Data
 
             var busImages = new List<BusImage>
             {
-                new BusImage { ImageID = Guid.NewGuid(), BusID = bus1.BusID, ImageURL = "https://images.example.com/buses/51B-12345.jpg" },
-                new BusImage { ImageID = Guid.NewGuid(), BusID = bus2.BusID, ImageURL = "https://images.example.com/buses/51B-67890.jpg" },
-                new BusImage { ImageID = Guid.NewGuid(), BusID = bus3.BusID, ImageURL = "https://images.example.com/buses/79A-11111.jpg" },
-                new BusImage { ImageID = Guid.NewGuid(), BusID = bus4.BusID, ImageURL = "https://images.example.com/buses/79A-22222.jpg" },
-                new BusImage { ImageID = Guid.NewGuid(), BusID = bus5.BusID, ImageURL = "https://images.example.com/buses/92B-33333.jpg" }
+                new BusImage
+                {
+                    ImageID = Guid.NewGuid(),
+                    BusID = bus1.BusID,
+                    ImageURL = "https://images.example.com/buses/51B-12345.jpg",
+                },
+                new BusImage
+                {
+                    ImageID = Guid.NewGuid(),
+                    BusID = bus2.BusID,
+                    ImageURL = "https://images.example.com/buses/51B-67890.jpg",
+                },
+                new BusImage
+                {
+                    ImageID = Guid.NewGuid(),
+                    BusID = bus3.BusID,
+                    ImageURL = "https://images.example.com/buses/79A-11111.jpg",
+                },
+                new BusImage
+                {
+                    ImageID = Guid.NewGuid(),
+                    BusID = bus4.BusID,
+                    ImageURL = "https://images.example.com/buses/79A-22222.jpg",
+                },
+                new BusImage
+                {
+                    ImageID = Guid.NewGuid(),
+                    BusID = bus5.BusID,
+                    ImageURL = "https://images.example.com/buses/92B-33333.jpg",
+                },
             };
 
             _context.BusImages.AddRange(busImages);
@@ -403,7 +495,7 @@ namespace Pbl3.Data
                     WardCode = (string?)"26914",
                     Type = StationType.BusStation,
                     Latitude = 10.8142,
-                    Longitude = 106.7100
+                    Longitude = 106.7100,
                 },
                 new
                 {
@@ -414,7 +506,7 @@ namespace Pbl3.Data
                     WardCode = (string?)"27460",
                     Type = StationType.BusStation,
                     Latitude = 10.7387,
-                    Longitude = 106.6102
+                    Longitude = 106.6102,
                 },
                 new
                 {
@@ -425,7 +517,7 @@ namespace Pbl3.Data
                     WardCode = null as string,
                     Type = StationType.BusStation,
                     Latitude = 21.0278,
-                    Longitude = 105.7802
+                    Longitude = 105.7802,
                 },
                 new
                 {
@@ -436,7 +528,7 @@ namespace Pbl3.Data
                     WardCode = (string?)"20200",
                     Type = StationType.BusStation,
                     Latitude = 16.0544,
-                    Longitude = 108.1851
+                    Longitude = 108.1851,
                 },
                 new
                 {
@@ -447,7 +539,7 @@ namespace Pbl3.Data
                     WardCode = (string?)"24802",
                     Type = StationType.BusStation,
                     Latitude = 11.9404,
-                    Longitude = 108.4583
+                    Longitude = 108.4583,
                 },
                 new
                 {
@@ -458,7 +550,7 @@ namespace Pbl3.Data
                     WardCode = (string?)"26524",
                     Type = StationType.BusStation,
                     Latitude = 10.3459,
-                    Longitude = 107.0843
+                    Longitude = 107.0843,
                 },
                 new
                 {
@@ -469,7 +561,7 @@ namespace Pbl3.Data
                     WardCode = (string?)"31147",
                     Type = StationType.BusStation,
                     Latitude = 10.0452,
-                    Longitude = 105.7469
+                    Longitude = 105.7469,
                 },
                 new
                 {
@@ -480,36 +572,49 @@ namespace Pbl3.Data
                     WardCode = (string?)"22378",
                     Type = StationType.BusStation,
                     Latitude = 12.2388,
-                    Longitude = 109.1967
-                }
+                    Longitude = 109.1967,
+                },
             };
 
             var provinceCodes = stationLocations.Select(x => x.ProvinceCode).Distinct().ToList();
             var districtCodes = stationLocations.Select(x => x.DistrictCode).Distinct().ToList();
-            var wardCodes = stationLocations.Where(x => x.WardCode != null).Select(x => x.WardCode!).Distinct().ToList();
+            var wardCodes = stationLocations
+                .Where(x => x.WardCode != null)
+                .Select(x => x.WardCode!)
+                .Distinct()
+                .ToList();
 
-            var provinces = await _context.Provinces
-                .Where(p => provinceCodes.Contains(p.Code))
+            var provinces = await _context
+                .Provinces.Where(p => provinceCodes.Contains(p.Code))
                 .ToDictionaryAsync(p => p.Code);
 
-            var districts = await _context.Districts
-                .Where(d => districtCodes.Contains(d.Code))
+            var districts = await _context
+                .Districts.Where(d => districtCodes.Contains(d.Code))
                 .ToDictionaryAsync(d => d.Code);
 
-            var wards = await _context.Wards
-                .Where(w => wardCodes.Contains(w.Code))
+            var wards = await _context
+                .Wards.Where(w => wardCodes.Contains(w.Code))
                 .ToDictionaryAsync(w => w.Code);
 
-            var missingProvinceCodes = provinceCodes.Where(code => !provinces.ContainsKey(code)).ToList();
-            var missingDistrictCodes = districtCodes.Where(code => !districts.ContainsKey(code)).ToList();
+            var missingProvinceCodes = provinceCodes
+                .Where(code => !provinces.ContainsKey(code))
+                .ToList();
+            var missingDistrictCodes = districtCodes
+                .Where(code => !districts.ContainsKey(code))
+                .ToList();
             var missingWardCodes = wardCodes.Where(code => !wards.ContainsKey(code)).ToList();
 
-            if (missingProvinceCodes.Count != 0 || missingDistrictCodes.Count != 0 || missingWardCodes.Count != 0)
+            if (
+                missingProvinceCodes.Count != 0
+                || missingDistrictCodes.Count != 0
+                || missingWardCodes.Count != 0
+            )
             {
                 throw new InvalidOperationException(
-                    $"Administrative seed data is incomplete. Missing province codes: {string.Join(", ", missingProvinceCodes)}; " +
-                    $"missing district codes: {string.Join(", ", missingDistrictCodes)}; " +
-                    $"missing ward codes: {string.Join(", ", missingWardCodes)}");
+                    $"Administrative seed data is incomplete. Missing province codes: {string.Join(", ", missingProvinceCodes)}; "
+                        + $"missing district codes: {string.Join(", ", missingDistrictCodes)}; "
+                        + $"missing ward codes: {string.Join(", ", missingWardCodes)}"
+                );
             }
 
             var stations = stationLocations
@@ -526,7 +631,7 @@ namespace Pbl3.Data
                     Ward = location.WardCode != null ? wards[location.WardCode] : null,
                     Type = location.Type,
                     Latitude = location.Latitude,
-                    Longitude = location.Longitude
+                    Longitude = location.Longitude,
                 })
                 .ToList();
 
@@ -537,9 +642,15 @@ namespace Pbl3.Data
 
         private async Task SeedRoutesAsync()
         {
-            var phuongTrang = await _context.BusCompanies.FirstAsync(c => c.LicenseNumber == "VN-PT-001");
-            var maiLinh = await _context.BusCompanies.FirstAsync(c => c.LicenseNumber == "VN-ML-002");
-            var thienThanh = await _context.BusCompanies.FirstAsync(c => c.LicenseNumber == "VN-TT-003");
+            var phuongTrang = await _context.BusCompanies.FirstAsync(c =>
+                c.LicenseNumber == "VN-PT-001"
+            );
+            var maiLinh = await _context.BusCompanies.FirstAsync(c =>
+                c.LicenseNumber == "VN-ML-002"
+            );
+            var thienThanh = await _context.BusCompanies.FirstAsync(c =>
+                c.LicenseNumber == "VN-TT-003"
+            );
 
             var routes = new List<BusRoute>
             {
@@ -550,7 +661,7 @@ namespace Pbl3.Data
                     RouteName = "TP.HCM - Đà Lạt",
                     DistanceEstimate = 308,
                     DurationEstimate = 8,
-                    IsActive = true
+                    IsActive = true,
                 },
                 new BusRoute
                 {
@@ -559,7 +670,7 @@ namespace Pbl3.Data
                     RouteName = "TP.HCM - Vũng Tàu",
                     DistanceEstimate = 125,
                     DurationEstimate = 2.5m,
-                    IsActive = true
+                    IsActive = true,
                 },
                 new BusRoute
                 {
@@ -568,7 +679,7 @@ namespace Pbl3.Data
                     RouteName = "TP.HCM - Cần Thơ",
                     DistanceEstimate = 169,
                     DurationEstimate = 4,
-                    IsActive = true
+                    IsActive = true,
                 },
                 new BusRoute
                 {
@@ -577,7 +688,7 @@ namespace Pbl3.Data
                     RouteName = "TP.HCM - Nha Trang",
                     DistanceEstimate = 450,
                     DurationEstimate = 10,
-                    IsActive = true
+                    IsActive = true,
                 },
                 new BusRoute
                 {
@@ -586,8 +697,8 @@ namespace Pbl3.Data
                     RouteName = "TP.HCM - Đà Nẵng",
                     DistanceEstimate = 964,
                     DurationEstimate = 18,
-                    IsActive = true
-                }
+                    IsActive = true,
+                },
             };
 
             _context.BusRoutes.AddRange(routes);
@@ -597,19 +708,41 @@ namespace Pbl3.Data
 
         private async Task SeedRouteStopsAsync()
         {
-            var routeHCMDaLat = await _context.BusRoutes.FirstAsync(r => r.RouteName == "TP.HCM - Đà Lạt");
-            var routeHCMVungTau = await _context.BusRoutes.FirstAsync(r => r.RouteName == "TP.HCM - Vũng Tàu");
-            var routeHCMCanTho = await _context.BusRoutes.FirstAsync(r => r.RouteName == "TP.HCM - Cần Thơ");
-            var routeHCMNhaTrang = await _context.BusRoutes.FirstAsync(r => r.RouteName == "TP.HCM - Nha Trang");
-            var routeHCMDaNang = await _context.BusRoutes.FirstAsync(r => r.RouteName == "TP.HCM - Đà Nẵng");
+            var routeHCMDaLat = await _context.BusRoutes.FirstAsync(r =>
+                r.RouteName == "TP.HCM - Đà Lạt"
+            );
+            var routeHCMVungTau = await _context.BusRoutes.FirstAsync(r =>
+                r.RouteName == "TP.HCM - Vũng Tàu"
+            );
+            var routeHCMCanTho = await _context.BusRoutes.FirstAsync(r =>
+                r.RouteName == "TP.HCM - Cần Thơ"
+            );
+            var routeHCMNhaTrang = await _context.BusRoutes.FirstAsync(r =>
+                r.RouteName == "TP.HCM - Nha Trang"
+            );
+            var routeHCMDaNang = await _context.BusRoutes.FirstAsync(r =>
+                r.RouteName == "TP.HCM - Đà Nẵng"
+            );
 
-            var stationBenTreHCM = await _context.Stations.FirstAsync(s => s.Name == "Bến xe Miền Đông");
-            var stationBenThanhHCM = await _context.Stations.FirstAsync(s => s.Name == "Bến xe Miền Tây");
-            var stationDaLat = await _context.Stations.FirstAsync(s => s.Name == "Bến xe Phương Trang Đà Lạt");
-            var stationVungTau = await _context.Stations.FirstAsync(s => s.Name == "Bến xe Vũng Tàu");
+            var stationBenTreHCM = await _context.Stations.FirstAsync(s =>
+                s.Name == "Bến xe Miền Đông"
+            );
+            var stationBenThanhHCM = await _context.Stations.FirstAsync(s =>
+                s.Name == "Bến xe Miền Tây"
+            );
+            var stationDaLat = await _context.Stations.FirstAsync(s =>
+                s.Name == "Bến xe Phương Trang Đà Lạt"
+            );
+            var stationVungTau = await _context.Stations.FirstAsync(s =>
+                s.Name == "Bến xe Vũng Tàu"
+            );
             var stationCanTho = await _context.Stations.FirstAsync(s => s.Name == "Bến xe Cần Thơ");
-            var stationNhaTrang = await _context.Stations.FirstAsync(s => s.Name == "Bến xe Nha Trang");
-            var stationDaNang = await _context.Stations.FirstAsync(s => s.Name == "Bến xe Trung tâm Đà Nẵng");
+            var stationNhaTrang = await _context.Stations.FirstAsync(s =>
+                s.Name == "Bến xe Nha Trang"
+            );
+            var stationDaNang = await _context.Stations.FirstAsync(s =>
+                s.Name == "Bến xe Trung tâm Đà Nẵng"
+            );
 
             var routeStops = new List<BusRouteStop>
             {
@@ -622,7 +755,7 @@ namespace Pbl3.Data
                     StopOrder = 1,
                     IsPickUp = true,
                     IsDropOff = false,
-                    DurationFromStart = 0
+                    DurationFromStart = 0,
                 },
                 new BusRouteStop
                 {
@@ -632,7 +765,7 @@ namespace Pbl3.Data
                     StopOrder = 2,
                     IsPickUp = false,
                     IsDropOff = true,
-                    DurationFromStart = 480
+                    DurationFromStart = 480,
                 },
                 // HCM - Vung Tau
                 new BusRouteStop
@@ -643,7 +776,7 @@ namespace Pbl3.Data
                     StopOrder = 1,
                     IsPickUp = true,
                     IsDropOff = false,
-                    DurationFromStart = 0
+                    DurationFromStart = 0,
                 },
                 new BusRouteStop
                 {
@@ -653,7 +786,7 @@ namespace Pbl3.Data
                     StopOrder = 2,
                     IsPickUp = false,
                     IsDropOff = true,
-                    DurationFromStart = 150
+                    DurationFromStart = 150,
                 },
                 // HCM - Can Tho
                 new BusRouteStop
@@ -664,7 +797,7 @@ namespace Pbl3.Data
                     StopOrder = 1,
                     IsPickUp = true,
                     IsDropOff = false,
-                    DurationFromStart = 0
+                    DurationFromStart = 0,
                 },
                 new BusRouteStop
                 {
@@ -674,7 +807,7 @@ namespace Pbl3.Data
                     StopOrder = 2,
                     IsPickUp = false,
                     IsDropOff = true,
-                    DurationFromStart = 240
+                    DurationFromStart = 240,
                 },
                 // HCM - Nha Trang
                 new BusRouteStop
@@ -685,7 +818,7 @@ namespace Pbl3.Data
                     StopOrder = 1,
                     IsPickUp = true,
                     IsDropOff = false,
-                    DurationFromStart = 0
+                    DurationFromStart = 0,
                 },
                 new BusRouteStop
                 {
@@ -695,7 +828,7 @@ namespace Pbl3.Data
                     StopOrder = 2,
                     IsPickUp = false,
                     IsDropOff = true,
-                    DurationFromStart = 600
+                    DurationFromStart = 600,
                 },
                 // HCM - Da Nang
                 new BusRouteStop
@@ -706,7 +839,7 @@ namespace Pbl3.Data
                     StopOrder = 1,
                     IsPickUp = true,
                     IsDropOff = false,
-                    DurationFromStart = 0
+                    DurationFromStart = 0,
                 },
                 new BusRouteStop
                 {
@@ -716,8 +849,8 @@ namespace Pbl3.Data
                     StopOrder = 2,
                     IsPickUp = false,
                     IsDropOff = true,
-                    DurationFromStart = 1080
-                }
+                    DurationFromStart = 1080,
+                },
             };
 
             _context.RouteStops.AddRange(routeStops);
@@ -727,11 +860,21 @@ namespace Pbl3.Data
 
         private async Task SeedTripsAsync()
         {
-            var routeHCMDaLat = await _context.BusRoutes.FirstAsync(r => r.RouteName == "TP.HCM - Đà Lạt");
-            var routeHCMVungTau = await _context.BusRoutes.FirstAsync(r => r.RouteName == "TP.HCM - Vũng Tàu");
-            var routeHCMCanTho = await _context.BusRoutes.FirstAsync(r => r.RouteName == "TP.HCM - Cần Thơ");
-            var routeHCMNhaTrang = await _context.BusRoutes.FirstAsync(r => r.RouteName == "TP.HCM - Nha Trang");
-            var routeHCMDaNang = await _context.BusRoutes.FirstAsync(r => r.RouteName == "TP.HCM - Đà Nẵng");
+            var routeHCMDaLat = await _context.BusRoutes.FirstAsync(r =>
+                r.RouteName == "TP.HCM - Đà Lạt"
+            );
+            var routeHCMVungTau = await _context.BusRoutes.FirstAsync(r =>
+                r.RouteName == "TP.HCM - Vũng Tàu"
+            );
+            var routeHCMCanTho = await _context.BusRoutes.FirstAsync(r =>
+                r.RouteName == "TP.HCM - Cần Thơ"
+            );
+            var routeHCMNhaTrang = await _context.BusRoutes.FirstAsync(r =>
+                r.RouteName == "TP.HCM - Nha Trang"
+            );
+            var routeHCMDaNang = await _context.BusRoutes.FirstAsync(r =>
+                r.RouteName == "TP.HCM - Đà Nẵng"
+            );
 
             var bus1 = await _context.Buses.FirstAsync(b => b.PlateNumber == "51B-12345");
             var bus2 = await _context.Buses.FirstAsync(b => b.PlateNumber == "51B-67890");
@@ -739,9 +882,15 @@ namespace Pbl3.Data
             var bus4 = await _context.Buses.FirstAsync(b => b.PlateNumber == "79A-22222");
             var bus5 = await _context.Buses.FirstAsync(b => b.PlateNumber == "92B-33333");
 
-            var busType29Seat = await _context.BusTypes.FirstAsync(bt => bt.Name == "Giường nằm 29 chỗ");
-            var busType40Seat = await _context.BusTypes.FirstAsync(bt => bt.Name == "Ghế ngồi 40 chỗ");
-            var busType45Seat = await _context.BusTypes.FirstAsync(bt => bt.Name == "Ghế ngồi 45 chỗ");
+            var busType29Seat = await _context.BusTypes.FirstAsync(bt =>
+                bt.Name == "Giường nằm 29 chỗ"
+            );
+            var busType40Seat = await _context.BusTypes.FirstAsync(bt =>
+                bt.Name == "Ghế ngồi 40 chỗ"
+            );
+            var busType45Seat = await _context.BusTypes.FirstAsync(bt =>
+                bt.Name == "Ghế ngồi 45 chỗ"
+            );
 
             var today = DateTime.UtcNow;
             var trips = new List<Trip>
@@ -756,7 +905,7 @@ namespace Pbl3.Data
                     DepartureDate = DateOnly.FromDateTime(today.AddDays(1)),
                     DepartureTime = today.AddDays(1).Date.AddHours(7),
                     ArrivalTime = today.AddDays(1).Date.AddHours(15),
-                    Status = TripStatus.Scheduled
+                    Status = TripStatus.Scheduled,
                 },
                 new Trip
                 {
@@ -767,7 +916,7 @@ namespace Pbl3.Data
                     DepartureDate = DateOnly.FromDateTime(today.AddDays(1)),
                     DepartureTime = today.AddDays(1).Date.AddHours(22),
                     ArrivalTime = today.AddDays(2).Date.AddHours(6),
-                    Status = TripStatus.Scheduled
+                    Status = TripStatus.Scheduled,
                 },
                 new Trip
                 {
@@ -778,7 +927,7 @@ namespace Pbl3.Data
                     DepartureDate = DateOnly.FromDateTime(today.AddDays(2)),
                     DepartureTime = today.AddDays(2).Date.AddHours(7),
                     ArrivalTime = today.AddDays(2).Date.AddHours(15),
-                    Status = TripStatus.Scheduled
+                    Status = TripStatus.Scheduled,
                 },
                 // HCM - Vung Tau trips
                 new Trip
@@ -790,7 +939,7 @@ namespace Pbl3.Data
                     DepartureDate = DateOnly.FromDateTime(today.AddDays(1)),
                     DepartureTime = today.AddDays(1).Date.AddHours(8),
                     ArrivalTime = today.AddDays(1).Date.AddHours(10).AddMinutes(30),
-                    Status = TripStatus.Scheduled
+                    Status = TripStatus.Scheduled,
                 },
                 new Trip
                 {
@@ -801,7 +950,7 @@ namespace Pbl3.Data
                     DepartureDate = DateOnly.FromDateTime(today.AddDays(1)),
                     DepartureTime = today.AddDays(1).Date.AddHours(14),
                     ArrivalTime = today.AddDays(1).Date.AddHours(16).AddMinutes(30),
-                    Status = TripStatus.Scheduled
+                    Status = TripStatus.Scheduled,
                 },
                 // HCM - Can Tho trips
                 new Trip
@@ -813,7 +962,7 @@ namespace Pbl3.Data
                     DepartureDate = DateOnly.FromDateTime(today.AddDays(1)),
                     DepartureTime = today.AddDays(1).Date.AddHours(6),
                     ArrivalTime = today.AddDays(1).Date.AddHours(10),
-                    Status = TripStatus.Scheduled
+                    Status = TripStatus.Scheduled,
                 },
                 new Trip
                 {
@@ -824,7 +973,7 @@ namespace Pbl3.Data
                     DepartureDate = DateOnly.FromDateTime(today.AddDays(2)),
                     DepartureTime = today.AddDays(2).Date.AddHours(12),
                     ArrivalTime = today.AddDays(2).Date.AddHours(16),
-                    Status = TripStatus.Scheduled
+                    Status = TripStatus.Scheduled,
                 },
                 // HCM - Nha Trang trips
                 new Trip
@@ -836,7 +985,7 @@ namespace Pbl3.Data
                     DepartureDate = DateOnly.FromDateTime(today.AddDays(1)),
                     DepartureTime = today.AddDays(1).Date.AddHours(20),
                     ArrivalTime = today.AddDays(2).Date.AddHours(6),
-                    Status = TripStatus.Scheduled
+                    Status = TripStatus.Scheduled,
                 },
                 // HCM - Da Nang trips
                 new Trip
@@ -848,8 +997,8 @@ namespace Pbl3.Data
                     DepartureDate = DateOnly.FromDateTime(today.AddDays(3)),
                     DepartureTime = today.AddDays(3).Date.AddHours(18),
                     ArrivalTime = today.AddDays(4).Date.AddHours(12),
-                    Status = TripStatus.Scheduled
-                }
+                    Status = TripStatus.Scheduled,
+                },
             };
 
             _context.Trips.AddRange(trips);
@@ -874,7 +1023,7 @@ namespace Pbl3.Data
                     TotalAmount = 250000,
                     Status = BookingStatus.Paid,
                     CreatedAt = DateTime.UtcNow.AddDays(-2),
-                    ExpiresAt = null
+                    ExpiresAt = null,
                 },
                 new Booking
                 {
@@ -886,8 +1035,8 @@ namespace Pbl3.Data
                     TotalAmount = 180000,
                     Status = BookingStatus.Pending,
                     CreatedAt = DateTime.UtcNow,
-                    ExpiresAt = DateTime.UtcNow.AddMinutes(15)
-                }
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(15),
+                },
             };
 
             _context.Bookings.AddRange(bookings);
@@ -909,7 +1058,7 @@ namespace Pbl3.Data
                     FullName = "Nguyễn Văn A",
                     PhoneNumber = "0904567890",
                     IdentityCard = "079203001234",
-                    Email = "nguyenvana@gmail.com"
+                    Email = "nguyenvana@gmail.com",
                 },
                 new Passenger
                 {
@@ -918,7 +1067,7 @@ namespace Pbl3.Data
                     FullName = "Trần Thị B",
                     PhoneNumber = "0905678901",
                     IdentityCard = "079203005678",
-                    Email = "tranthib@gmail.com"
+                    Email = "tranthib@gmail.com",
                 },
                 new Passenger
                 {
@@ -927,8 +1076,8 @@ namespace Pbl3.Data
                     FullName = "Lê Văn C",
                     PhoneNumber = "0911112233",
                     IdentityCard = "079203009999",
-                    Email = "levanc@example.com"
-                }
+                    Email = "levanc@example.com",
+                },
             };
 
             _context.Passengers.AddRange(passengers);
@@ -938,13 +1087,21 @@ namespace Pbl3.Data
 
         private async Task SeedTicketsAsync()
         {
-            var paidBooking = await _context.Bookings.FirstAsync(b => b.ContactEmail == "nguyenvana@gmail.com" && b.Status == BookingStatus.Paid);
+            var paidBooking = await _context.Bookings.FirstAsync(b =>
+                b.ContactEmail == "nguyenvana@gmail.com" && b.Status == BookingStatus.Paid
+            );
 
-            var passenger1 = await _context.Passengers.FirstAsync(p => p.Email == "nguyenvana@gmail.com");
+            var passenger1 = await _context.Passengers.FirstAsync(p =>
+                p.Email == "nguyenvana@gmail.com"
+            );
 
-            var tripDaLatMorning = await _context.Trips.FirstAsync(t => t.Route!.RouteName == "TP.HCM - Đà Lạt" && t.DepartureTime.Hour == 7);
+            var tripDaLatMorning = await _context.Trips.FirstAsync(t =>
+                t.Route!.RouteName == "TP.HCM - Đà Lạt" && t.DepartureTime.Hour == 7
+            );
 
-            var seatA1 = await _context.SeatLayouts.FirstAsync(s => s.BusType!.Name == "Giường nằm 29 chỗ" && s.SeatLabel == "A1");
+            var seatA1 = await _context.SeatLayouts.FirstAsync(s =>
+                s.BusType!.Name == "Giường nằm 29 chỗ" && s.SeatLabel == "A1"
+            );
 
             var tickets = new List<Ticket>
             {
@@ -958,8 +1115,8 @@ namespace Pbl3.Data
                     FinalPrice = 250000,
                     Status = TicketStatus.Issued,
                     TicketCode = "TKT-DALAT-0001",
-                    QrCode = "QR-TKT-DALAT-0001"
-                }
+                    QrCode = "QR-TKT-DALAT-0001",
+                },
             };
 
             _context.Tickets.AddRange(tickets);
@@ -969,8 +1126,12 @@ namespace Pbl3.Data
 
         private async Task SeedPaymentIntentsAsync()
         {
-            var paidBooking = await _context.Bookings.FirstAsync(b => b.ContactEmail == "nguyenvana@gmail.com" && b.Status == BookingStatus.Paid);
-            var pendingBooking = await _context.Bookings.FirstAsync(b => b.ContactEmail == "tranthib@gmail.com" && b.Status == BookingStatus.Pending);
+            var paidBooking = await _context.Bookings.FirstAsync(b =>
+                b.ContactEmail == "nguyenvana@gmail.com" && b.Status == BookingStatus.Paid
+            );
+            var pendingBooking = await _context.Bookings.FirstAsync(b =>
+                b.ContactEmail == "tranthib@gmail.com" && b.Status == BookingStatus.Pending
+            );
 
             var paymentIntents = new List<PaymentIntent>
             {
@@ -982,7 +1143,7 @@ namespace Pbl3.Data
                     Amount = 250000,
                     Currency = "VND",
                     Status = PaymentIntentStatus.Succeeded,
-                    CreatedAt = DateTime.UtcNow.AddDays(-2)
+                    CreatedAt = DateTime.UtcNow.AddDays(-2),
                 },
                 new PaymentIntent
                 {
@@ -992,8 +1153,8 @@ namespace Pbl3.Data
                     Amount = 180000,
                     Currency = "VND",
                     Status = PaymentIntentStatus.Created,
-                    CreatedAt = DateTime.UtcNow
-                }
+                    CreatedAt = DateTime.UtcNow,
+                },
             };
 
             _context.PaymentIntents.AddRange(paymentIntents);
@@ -1003,7 +1164,9 @@ namespace Pbl3.Data
 
         private async Task SeedRefundsAsync()
         {
-            var succeededIntent = await _context.PaymentIntents.FirstAsync(pi => pi.Status == PaymentIntentStatus.Succeeded);
+            var succeededIntent = await _context.PaymentIntents.FirstAsync(pi =>
+                pi.Status == PaymentIntentStatus.Succeeded
+            );
 
             var refunds = new List<Refund>
             {
@@ -1014,8 +1177,8 @@ namespace Pbl3.Data
                     Amount = 50000,
                     Reason = "Hoàn phí khuyến mại do đổi lịch",
                     Status = RefundStatus.Processed,
-                    CreatedAt = DateTime.UtcNow.AddDays(-1)
-                }
+                    CreatedAt = DateTime.UtcNow.AddDays(-1),
+                },
             };
 
             _context.Refunds.AddRange(refunds);
@@ -1025,8 +1188,12 @@ namespace Pbl3.Data
 
         private async Task SeedReviewsAsync()
         {
-            var paidBooking = await _context.Bookings.FirstAsync(b => b.ContactEmail == "nguyenvana@gmail.com" && b.Status == BookingStatus.Paid);
-            var tripDaLatMorning = await _context.Trips.FirstAsync(t => t.Route!.RouteName == "TP.HCM - Đà Lạt" && t.DepartureTime.Hour == 7);
+            var paidBooking = await _context.Bookings.FirstAsync(b =>
+                b.ContactEmail == "nguyenvana@gmail.com" && b.Status == BookingStatus.Paid
+            );
+            var tripDaLatMorning = await _context.Trips.FirstAsync(t =>
+                t.Route!.RouteName == "TP.HCM - Đà Lạt" && t.DepartureTime.Hour == 7
+            );
 
             var reviews = new List<Review>
             {
@@ -1036,8 +1203,8 @@ namespace Pbl3.Data
                     BookingID = paidBooking.BookingID,
                     TripID = tripDaLatMorning.TripID,
                     RatingScore = 5,
-                    Comment = "Xe sạch sẽ, tài xế chạy đúng giờ và nhân viên hỗ trợ tốt."
-                }
+                    Comment = "Xe sạch sẽ, tài xế chạy đúng giờ và nhân viên hỗ trợ tốt.",
+                },
             };
 
             _context.Reviews.AddRange(reviews);
@@ -1049,8 +1216,12 @@ namespace Pbl3.Data
         {
             var user1 = await _context.Users.FirstAsync(u => u.Username == "nguyenvana");
             var user2 = await _context.Users.FirstAsync(u => u.Username == "tranthib");
-            var paidBooking = await _context.Bookings.FirstAsync(b => b.ContactEmail == "nguyenvana@gmail.com" && b.Status == BookingStatus.Paid);
-            var pendingBooking = await _context.Bookings.FirstAsync(b => b.ContactEmail == "tranthib@gmail.com" && b.Status == BookingStatus.Pending);
+            var paidBooking = await _context.Bookings.FirstAsync(b =>
+                b.ContactEmail == "nguyenvana@gmail.com" && b.Status == BookingStatus.Paid
+            );
+            var pendingBooking = await _context.Bookings.FirstAsync(b =>
+                b.ContactEmail == "tranthib@gmail.com" && b.Status == BookingStatus.Pending
+            );
 
             var notifications = new List<Notification>
             {
@@ -1061,7 +1232,7 @@ namespace Pbl3.Data
                     BookingID = paidBooking.BookingID,
                     Type = NotificationType.Email,
                     Content = "Đặt vé TP.HCM - Đà Lạt đã được thanh toán thành công.",
-                    Status = NotificationStatus.Sent
+                    Status = NotificationStatus.Sent,
                 },
                 new Notification
                 {
@@ -1069,9 +1240,10 @@ namespace Pbl3.Data
                     UserID = user2.UserID,
                     BookingID = pendingBooking.BookingID,
                     Type = NotificationType.SMS,
-                    Content = "Đơn đặt vé TP.HCM - Vũng Tàu đang chờ thanh toán trước khi giữ ghế hết hạn.",
-                    Status = NotificationStatus.Sent
-                }
+                    Content =
+                        "Đơn đặt vé TP.HCM - Vũng Tàu đang chờ thanh toán trước khi giữ ghế hết hạn.",
+                    Status = NotificationStatus.Sent,
+                },
             };
 
             _context.Notifications.AddRange(notifications);
@@ -1082,9 +1254,15 @@ namespace Pbl3.Data
         private async Task SeedSeatHoldsAsync()
         {
             var user2 = await _context.Users.FirstAsync(u => u.Username == "tranthib");
-            var tripVungTauMorning = await _context.Trips.FirstAsync(t => t.Route!.RouteName == "TP.HCM - Vũng Tàu" && t.DepartureTime.Hour == 8);
-            var seatA2 = await _context.SeatLayouts.FirstAsync(s => s.BusType!.Name == "Giường nằm 29 chỗ" && s.SeatLabel == "A2");
-            var seatA3 = await _context.SeatLayouts.FirstAsync(s => s.BusType!.Name == "Giường nằm 29 chỗ" && s.SeatLabel == "A3");
+            var tripVungTauMorning = await _context.Trips.FirstAsync(t =>
+                t.Route!.RouteName == "TP.HCM - Vũng Tàu" && t.DepartureTime.Hour == 8
+            );
+            var seatA2 = await _context.SeatLayouts.FirstAsync(s =>
+                s.BusType!.Name == "Giường nằm 29 chỗ" && s.SeatLabel == "A2"
+            );
+            var seatA3 = await _context.SeatLayouts.FirstAsync(s =>
+                s.BusType!.Name == "Giường nằm 29 chỗ" && s.SeatLabel == "A3"
+            );
 
             var seatHolds = new List<SeatHold>
             {
@@ -1096,7 +1274,7 @@ namespace Pbl3.Data
                     UserID = user2.UserID,
                     SessionID = "session-tranthib-001",
                     ExpiresAt = DateTime.UtcNow.AddMinutes(10),
-                    Status = SeatHoldStatus.Confirmed
+                    Status = SeatHoldStatus.Confirmed,
                 },
                 new SeatHold
                 {
@@ -1106,8 +1284,8 @@ namespace Pbl3.Data
                     UserID = null,
                     SessionID = "guest-session-001",
                     ExpiresAt = DateTime.UtcNow.AddMinutes(5),
-                    Status = SeatHoldStatus.Held
-                }
+                    Status = SeatHoldStatus.Held,
+                },
             };
 
             _context.SeatHolds.AddRange(seatHolds);
@@ -1115,23 +1293,31 @@ namespace Pbl3.Data
             _logger.LogInformation("Seeded {Count} seat holds", seatHolds.Count);
         }
 
-        private static IEnumerable<SeatLayout> CreateSeatLayouts(Guid busTypeId, int totalSeats, int seatsPerRow, int floor, string seatPrefix)
+        private static IEnumerable<SeatLayout> CreateSeatLayouts(
+            Guid busTypeId,
+            int totalSeats,
+            int seatsPerRow,
+            int floor,
+            string seatPrefix
+        )
         {
             var seatLayouts = new List<SeatLayout>();
 
             for (int i = 1; i <= totalSeats; i++)
             {
                 var positionX = (i - 1) % seatsPerRow + 1;
-                seatLayouts.Add(new SeatLayout
-                {
-                    LayoutID = Guid.NewGuid(),
-                    BusTypeID = busTypeId,
-                    SeatLabel = $"{seatPrefix}{i}",
-                    Floor = floor,
-                    SeatType = ResolveSeatType(positionX, seatsPerRow),
-                    PositionX = positionX,
-                    PositionY = (i - 1) / seatsPerRow + 1
-                });
+                seatLayouts.Add(
+                    new SeatLayout
+                    {
+                        LayoutID = Guid.NewGuid(),
+                        BusTypeID = busTypeId,
+                        SeatLabel = $"{seatPrefix}{i}",
+                        Floor = floor,
+                        SeatType = ResolveSeatType(positionX, seatsPerRow),
+                        PositionX = positionX,
+                        PositionY = (i - 1) / seatsPerRow + 1,
+                    }
+                );
             }
 
             return seatLayouts;

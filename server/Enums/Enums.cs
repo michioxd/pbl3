@@ -4,7 +4,17 @@ namespace Pbl3.Enums
     {
         Passenger,
         BusAdmin,
-        SysAdmin
+        SysAdmin,
+    }
+
+    public enum BusCompanyPermission
+    {
+        RouteManagement,
+        TicketManagement,
+        BusManagement,
+        StaffManagement,
+        PromotionManagement,
+        FinanceManagement,
     }
 
     public enum TripStatus
@@ -12,7 +22,7 @@ namespace Pbl3.Enums
         Scheduled,
         Running,
         Completed,
-        Cancelled
+        Cancelled,
     }
 
     public enum SeatType
@@ -22,14 +32,14 @@ namespace Pbl3.Enums
         Middle,
         Driver,
         UpperDeck,
-        LowerDeck
+        LowerDeck,
     }
 
     public enum StationType
     {
         BusStation,
         Office,
-        PickUpPoint
+        PickUpPoint,
     }
 
     public enum BookingStatus
@@ -37,54 +47,53 @@ namespace Pbl3.Enums
         Pending,
         Paid,
         Cancelled,
-        Refunded
+        Refunded,
     }
 
     public enum TicketStatus
     {
         Issued,
         CheckedIn,
-        Cancelled
+        Cancelled,
     }
 
     public enum SeatHoldStatus
     {
         Held,
         Confirmed,
-        Expired
+        Expired,
     }
 
     public enum PaymentProvider
     {
         Momo,
         Stripe,
-        Cash
+        Cash,
     }
 
     public enum PaymentIntentStatus
     {
         Created,
         Succeeded,
-        Failed
+        Failed,
     }
-
 
     public enum RefundStatus
     {
         Pending,
-        Processed
+        Processed,
     }
 
     public enum NotificationType
     {
         Email,
         SMS,
-        Push
+        Push,
     }
 
     public enum NotificationStatus
     {
         Sent,
-        Failed
+        Failed,
     }
 }
