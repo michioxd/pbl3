@@ -1,0 +1,16 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" rx="36" fill="url(#bg)"/>
+  <path d="M0 458C116 440 184 408 254 366C334 318 407 288 501 314C609 344 677 424 800 438V600H0V458Z" fill="#7C2D12" fill-opacity="0.34"/>
+  <path d="M0 492C118 476 201 438 285 392C374 343 447 324 531 349C627 378 696 450 800 467V600H0V492Z" fill="#7C2D12" fill-opacity="0.62"/>
+  <circle cx="628" cy="126" r="62" fill="#FED7AA"/>
+  <text x="52" y="92" fill="#FFF7ED" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700">Đà Nẵng → Hội An</text>
+  <text x="52" y="138" fill="white" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="800">Phố cổ lên đèn</text>
+  <rect x="52" y="468" width="230" height="46" rx="23" fill="#ffffff" fill-opacity="0.18" stroke="#ffffff" stroke-opacity="0.34"/>
+  <text x="98" y="498" fill="white" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Chuyến ngắn tiện lợi</text>
+  <defs>
+    <linearGradient id="bg" x1="58" y1="56" x2="722" y2="538" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FB923C"/>
+      <stop offset="1" stop-color="#EA580C"/>
+    </linearGradient>
+  </defs>
+</svg>

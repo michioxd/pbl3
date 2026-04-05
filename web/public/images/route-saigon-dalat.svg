@@ -1,0 +1,16 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" rx="36" fill="url(#bg)"/>
+  <path d="M0 426C134 368 209 329 314 335C435 342 502 428 615 430C680 431 741 401 800 370V600H0V426Z" fill="#14532D" fill-opacity="0.68"/>
+  <path d="M0 460C137 413 199 372 308 382C431 393 505 487 617 489C686 490 742 458 800 422V600H0V460Z" fill="#0B3A20"/>
+  <circle cx="644" cy="118" r="54" fill="#FEF08A"/>
+  <text x="52" y="92" fill="#E8FFF5" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700">Sài Gòn → Đà Lạt</text>
+  <text x="52" y="136" fill="white" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="800">Chạm mây phố núi</text>
+  <rect x="52" y="468" width="176" height="46" rx="23" fill="#ffffff" fill-opacity="0.16" stroke="#ffffff" stroke-opacity="0.3"/>
+  <text x="89" y="498" fill="white" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Giá tốt mỗi ngày</text>
+  <defs>
+    <linearGradient id="bg" x1="74" y1="60" x2="725" y2="523" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22C55E"/>
+      <stop offset="1" stop-color="#15803D"/>
+    </linearGradient>
+  </defs>
+</svg>

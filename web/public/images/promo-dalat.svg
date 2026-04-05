@@ -1,0 +1,20 @@
+<svg width="1200" height="600" viewBox="0 0 1200 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="600" rx="40" fill="url(#bg)"/>
+  <path d="M0 468C161 402 223 365 340 354C475 341 536 409 676 395C815 381 891 288 1200 252V600H0V468Z" fill="#1E5E52" fill-opacity="0.42"/>
+  <path d="M0 420C159 355 293 272 437 278C587 284 699 381 836 380C979 379 1104 292 1200 246V600H0V420Z" fill="#0C3B32" fill-opacity="0.52"/>
+  <circle cx="977" cy="137" r="72" fill="#FFD76A"/>
+  <text x="86" y="164" fill="white" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700">FLASH SALE</text>
+  <text x="86" y="246" fill="white" font-family="Inter, Arial, sans-serif" font-size="82" font-weight="800">ĐÀ LẠT</text>
+  <text x="86" y="304" fill="#DFFCF4" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="500">Ưu đãi tuyến Sài Gòn - Đà Lạt</text>
+  <rect x="86" y="356" width="252" height="60" rx="30" fill="#ffffff" fill-opacity="0.14" stroke="#ffffff" stroke-opacity="0.38"/>
+  <text x="137" y="394" fill="white" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800">DALAT50K</text>
+  <rect x="786" y="289" width="256" height="146" rx="30" fill="#ffffff" fill-opacity="0.1" stroke="#ffffff" stroke-opacity="0.26"/>
+  <path d="M866 402c0-34.242 27.758-62 62-62s62 27.758 62 62" stroke="white" stroke-width="20" stroke-linecap="round"/>
+  <rect x="836" y="394" width="124" height="28" rx="14" fill="#ffffff"/>
+  <defs>
+    <linearGradient id="bg" x1="64" y1="54" x2="1090" y2="558" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1FB28A"/>
+      <stop offset="1" stop-color="#0A7C66"/>
+    </linearGradient>
+  </defs>
+</svg>

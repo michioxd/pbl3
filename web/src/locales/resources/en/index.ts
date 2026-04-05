@@ -1,8 +1,14 @@
 import type { LocaleResourcesType } from "@/locales/list";
-import I18nCommon from "./common";
+import footer from "./footer";
+import header from "./header";
+import hero from "./hero";
 
 const Locale: LocaleResourcesType = {
-    common: I18nCommon,
+    common: {
+        header,
+        hero,
+        footer,
+    },
 };
 
 export default Locale;

@@ -1,0 +1,25 @@
+<svg width="1200" height="600" viewBox="0 0 1200 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="600" rx="40" fill="url(#bg)"/>
+  <circle cx="1010" cy="118" r="128" fill="#ffffff" fill-opacity="0.16"/>
+  <circle cx="132" cy="520" r="180" fill="#ffffff" fill-opacity="0.12"/>
+  <rect x="72" y="82" width="388" height="436" rx="32" fill="#ffffff" fill-opacity="0.12"/>
+  <rect x="112" y="128" width="308" height="44" rx="22" fill="#ffffff" fill-opacity="0.24"/>
+  <rect x="112" y="194" width="230" height="22" rx="11" fill="#ffffff" fill-opacity="0.36"/>
+  <rect x="112" y="248" width="194" height="124" rx="24" fill="#fff4d6"/>
+  <path d="M209 273c-28.166 0-51 22.834-51 51s22.834 51 51 51 51-22.834 51-51-22.834-51-51-51Zm0 21c16.569 0 30 13.431 30 30s-13.431 30-30 30-30-13.431-30-30 13.431-30 30-30Z" fill="#FF8A00"/>
+  <path d="M200 320h18v-19h-18v19Zm0 27h18v-18h-18v18Z" fill="#FF8A00"/>
+  <rect x="112" y="398" width="210" height="20" rx="10" fill="#ffffff" fill-opacity="0.42"/>
+  <rect x="112" y="432" width="168" height="20" rx="10" fill="#ffffff" fill-opacity="0.26"/>
+  <rect x="520" y="136" width="500" height="328" rx="36" fill="#0b1020" fill-opacity="0.18"/>
+  <text x="560" y="214" fill="white" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700">NEW USER OFFER</text>
+  <text x="560" y="278" fill="white" font-family="Inter, Arial, sans-serif" font-size="88" font-weight="800">-20%</text>
+  <text x="560" y="336" fill="#FFF0D1" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="500">Ưu đãi đầu tiên cho khách hàng mới</text>
+  <rect x="560" y="376" width="206" height="60" rx="30" fill="#ffffff"/>
+  <text x="611" y="414" fill="#ff7a00" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800">NEW20</text>
+  <defs>
+    <linearGradient id="bg" x1="86" y1="38" x2="1112" y2="564" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF8A00"/>
+      <stop offset="1" stop-color="#FF3D00"/>
+    </linearGradient>
+  </defs>
+</svg>

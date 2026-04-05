@@ -1,0 +1,16 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" rx="36" fill="url(#bg)"/>
+  <path d="M0 437C122 382 242 389 351 427C479 472 593 498 800 402V600H0V437Z" fill="#0F766E" fill-opacity="0.3"/>
+  <path d="M0 478C165 430 260 448 387 502C518 557 639 563 800 498V600H0V478Z" fill="#0F766E" fill-opacity="0.62"/>
+  <circle cx="637" cy="120" r="58" fill="#FDE68A"/>
+  <text x="52" y="92" fill="#E6FFFB" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700">Sài Gòn → Nha Trang</text>
+  <text x="52" y="138" fill="white" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="800">Đi biển thật chill</text>
+  <rect x="52" y="468" width="214" height="46" rx="23" fill="#ffffff" fill-opacity="0.16" stroke="#ffffff" stroke-opacity="0.34"/>
+  <text x="92" y="498" fill="white" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Ghế êm - xe đẹp</text>
+  <defs>
+    <linearGradient id="bg" x1="60" y1="64" x2="710" y2="534" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22D3EE"/>
+      <stop offset="1" stop-color="#0891B2"/>
+    </linearGradient>
+  </defs>
+</svg>

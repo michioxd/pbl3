@@ -1,9 +1,22 @@
 import { useThemeContext } from "@/controller/ThemeProvider";
-import { Box, Flex, Container, Heading, Button, Link, IconButton } from "@radix-ui/themes";
+import { useState } from "react";
+import { Box, Flex, Container, Heading, Button, Link, IconButton, DropdownMenu } from "@radix-ui/themes";
 import { BusFront, ContrastIcon, Menu, Moon, Sun } from "lucide-react";
+import LinkRouter from "@/utils/LinkRouter";
+import { LangSelectorComponent } from "./LangSelector";
+import { useTranslation } from "react-i18next";
+import LoginDialog from "@/dialogs/Login";
+
+const NAV_ITEMS = [
+    { key: "header.nav.manageOrders", href: "#" },
+    { key: "header.nav.openTicketSale", href: "#" },
+    { key: "header.nav.becomePartner", href: "#" },
+];
 
 function MainHeader() {
     const { theme, toggleTheme } = useThemeContext();
+    const { t } = useTranslation();
+    const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
     return (
         <Box
@@ -17,23 +30,28 @@ function MainHeader() {
                             <BusFront size={24} />
                         </IconButton>
                         <Heading size="5" color="blue" weight="bold">
-                            XeNhanh
+                            {t("header.brand")}
                         </Heading>
                     </Flex>
 
-                    <Flex align="center" gap="5" display={{ initial: "none", md: "flex" }}>
-                        <Link href="#" color="gray" size="3" weight="medium" highContrast className="no-underline!">
-                            Quản lý đơn hàng
-                        </Link>
-                        <Link href="#" color="gray" size="3" weight="medium" highContrast className="no-underline!">
-                            Mở bán vé trên XeNhanh
-                        </Link>
-                        <Link href="#" color="gray" size="3" weight="medium" highContrast className="no-underline!">
-                            Trở thành đối tác
-                        </Link>
+                    <Flex align="center" gap="5" className="md:inline-flex! hidden!">
+                        {NAV_ITEMS.map((item) => (
+                            <Link
+                                asChild
+                                key={item.key}
+                                color="gray"
+                                size="3"
+                                weight="medium"
+                                highContrast
+                                className="no-underline!"
+                            >
+                                <LinkRouter to={item.href}>{t(item.key)}</LinkRouter>
+                            </Link>
+                        ))}
                     </Flex>
 
                     <Flex align="center" gap="3">
+                        <LangSelectorComponent minimal />
                         <IconButton variant="soft" color="gray" size="2" onClick={toggleTheme}>
                             {theme === 1 ? (
                                 <Sun size={18} />
@@ -43,12 +61,34 @@ function MainHeader() {
                                 <ContrastIcon size={18} />
                             )}
                         </IconButton>
-                        <Button variant="solid" color="blue">
-                            Đăng nhập
+                        <Button
+                            variant="solid"
+                            color="blue"
+                            className="hidden md:inline-flex!"
+                            onClick={() => setAuthDialogOpen(true)}
+                        >
+                            {t("header.login")}
                         </Button>
-                        <IconButton variant="ghost" color="gray" className="inline-flex md:hidden">
-                            <Menu size={24} />
-                        </IconButton>
+                        <DropdownMenu.Root>
+                            <DropdownMenu.Trigger>
+                                <IconButton variant="ghost" color="gray" className="inline-flex! md:hidden!">
+                                    <Menu size={24} />
+                                </IconButton>
+                            </DropdownMenu.Trigger>
+                            <DropdownMenu.Content size="2">
+                                {NAV_ITEMS.map((item) => (
+                                    <DropdownMenu.Item key={item.key} asChild>
+                                        <LinkRouter to={item.href}>{t(item.key)}</LinkRouter>
+                                    </DropdownMenu.Item>
+                                ))}
+
+                                <DropdownMenu.Separator />
+                                <DropdownMenu.Item onSelect={() => setAuthDialogOpen(true)}>
+                                    {t("header.login")}
+                                </DropdownMenu.Item>
+                            </DropdownMenu.Content>
+                        </DropdownMenu.Root>
+                        <LoginDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
                     </Flex>
                 </Flex>
             </Container>

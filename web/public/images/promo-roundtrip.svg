@@ -1,0 +1,20 @@
+<svg width="1200" height="600" viewBox="0 0 1200 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="600" rx="40" fill="url(#bg)"/>
+  <circle cx="1035" cy="108" r="118" fill="#ffffff" fill-opacity="0.12"/>
+  <rect x="90" y="106" width="410" height="388" rx="34" fill="#ffffff" fill-opacity="0.11"/>
+  <path d="M190 240h194" stroke="#fff" stroke-width="18" stroke-linecap="round"/>
+  <path d="M366 214l42 26-42 26" stroke="#fff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M384 360H190" stroke="#fff" stroke-width="18" stroke-linecap="round"/>
+  <path d="M208 334l-42 26 42 26" stroke="#fff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="560" y="198" fill="white" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700">ROUNDTRIP SAVINGS</text>
+  <text x="560" y="282" fill="white" font-family="Inter, Arial, sans-serif" font-size="76" font-weight="800">TIẾT KIỆM 100K</text>
+  <text x="560" y="342" fill="#F3E8FF" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="500">Ưu đãi khứ hồi cho chuyến đi trọn vẹn</text>
+  <rect x="560" y="384" width="280" height="60" rx="30" fill="#ffffff"/>
+  <text x="615" y="422" fill="#7C3AED" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800">KHUHOI100</text>
+  <defs>
+    <linearGradient id="bg" x1="83" y1="61" x2="1131" y2="554" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A855F7"/>
+      <stop offset="1" stop-color="#6D28D9"/>
+    </linearGradient>
+  </defs>
+</svg>

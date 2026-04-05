@@ -10,13 +10,16 @@ i18n.use(LanguageDetector)
     .init(
         {
             resources,
-            fallbackLng: "vi-VN",
+            fallbackLng: "vi",
+            supportedLngs: ["vi", "en"],
+            nonExplicitSupportedLngs: true,
             detection: {
                 lookupLocalStorage: "hl",
                 lookupQuerystring: "hl",
                 order: ["querystring", "localStorage", "navigator"],
             },
             debug: false,
+            defaultNS: "common",
 
             interpolation: {
                 escapeValue: false,

@@ -14,106 +14,109 @@ import {
     Avatar,
     Link,
 } from "@radix-ui/themes";
-import { MapPin, Calendar, Search, Ticket, Headset, Star } from "lucide-react";
+import { useThemeContext } from "@/controller/ThemeProvider";
+import { ArrowRight, Calendar, Headset, MapPin, Search, ShieldCheck, Sparkles, Star, Ticket } from "lucide-react";
+import clsx from "clsx";
+import { useTranslation } from "react-i18next";
 
 const PROMOS = [
     {
         id: 1,
-        title: "Giảm 20% cho khách hàng mới",
+        titleKey: "hero.promotions.items.newUser.title",
         code: "NEW20",
-        image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=600&h=300",
-        validUntil: "30/11/2026",
+        image: "/images/promo-new-user.svg",
+        validUntilKey: "hero.promotions.items.newUser.validUntil",
     },
     {
         id: 2,
-        title: "Flash Sale tuyến Sài Gòn - Đà Lạt",
+        titleKey: "hero.promotions.items.dalat.title",
         code: "DALAT50K",
-        image: "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&q=80&w=600&h=300",
-        validUntil: "15/12/2026",
+        image: "/images/promo-dalat.svg",
+        validUntilKey: "hero.promotions.items.dalat.validUntil",
     },
     {
         id: 3,
-        title: "Ưu đãi khứ hồi tiết kiệm 100k",
+        titleKey: "hero.promotions.items.roundtrip.title",
         code: "KHUHOI100",
-        image: "https://images.unsplash.com/photo-1520106208823-441ce4e21d33?auto=format&fit=crop&q=80&w=600&h=300",
-        validUntil: "Hết hạn trong 3 ngày",
+        image: "/images/promo-roundtrip.svg",
+        validUntilKey: "hero.promotions.items.roundtrip.validUntil",
     },
 ];
 
 const POPULAR_ROUTES = [
     {
         id: 1,
-        from: "Sài Gòn",
-        to: "Đà Lạt",
+        fromKey: "hero.popularRoutes.places.saigon",
+        toKey: "hero.popularRoutes.places.dalat",
         price: "250.000đ",
         oldPrice: "350.000đ",
-        image: "https://images.unsplash.com/photo-1625642471723-12744e6e42fd?auto=format&fit=crop&q=80&w=400&h=300",
+        image: "https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&q=80&w=900&h=700",
     },
     {
         id: 2,
-        from: "Hà Nội",
-        to: "Sapa",
+        fromKey: "hero.popularRoutes.places.hanoi",
+        toKey: "hero.popularRoutes.places.sapa",
         price: "300.000đ",
         oldPrice: "400.000đ",
-        image: "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?auto=format&fit=crop&q=80&w=400&h=300",
+        image: "https://images.unsplash.com/photo-1521295121783-8a321d551ad2?auto=format&fit=crop&q=80&w=900&h=700",
     },
     {
         id: 3,
-        from: "Sài Gòn",
-        to: "Nha Trang",
+        fromKey: "hero.popularRoutes.places.saigon",
+        toKey: "hero.popularRoutes.places.nhatrang",
         price: "220.000đ",
         oldPrice: "",
-        image: "https://images.unsplash.com/photo-1582234372722-50d7ccc30ebd?auto=format&fit=crop&q=80&w=400&h=300",
+        image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=900&h=700",
     },
     {
         id: 4,
-        from: "Đà Nẵng",
-        to: "Hội An",
+        fromKey: "hero.popularRoutes.places.danang",
+        toKey: "hero.popularRoutes.places.hoian",
         price: "100.000đ",
         oldPrice: "150.000đ",
-        image: "https://images.unsplash.com/photo-1555921015-5532091f6026?auto=format&fit=crop&q=80&w=400&h=300",
+        image: "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?auto=format&fit=crop&q=80&w=900&h=700",
     },
 ];
 
 function HeroAndSearch() {
+    const { mode } = useThemeContext();
+    const { t } = useTranslation();
+
     return (
         <Box position="relative" pb="9" style={{ backgroundColor: "var(--gray-2)" }}>
             <div
-                className="relative flex items-center justify-center h-96 bg-cover bg-center"
+                className={clsx("relative flex items-center justify-center h-96 bg-cover bg-center")}
                 style={{
                     backgroundImage:
-                        "linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=2000')",
+                        mode === 1
+                            ? "linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=2000')"
+                            : "linear-gradient(rgba(255,255,255, 0.9), rgba(255,255,255, 0.9)), url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=2000')",
                 }}
             >
                 <Container size="4" px="4" className="h-fit mb-16 flex-1">
-                    <Flex direction="column" justify="center" align="center" className="h-full flex-1" gap="4" pt="6">
-                        <Heading size={{ initial: "7", md: "8" }} align="center" style={{ color: "white" }}>
-                            XeNhanh - Nền tảng đặt vé xe hàng đầu
+                    <Flex direction="column" justify="center" align="center" className="h-full flex-1" gap="2" pt="6">
+                        <Heading size={{ initial: "7", md: "8" }} align="center">
+                            {t("hero.title")}
                         </Heading>
-                        <Text size="5" align="center" style={{ color: "var(--gray-a9)" }}>
-                            Cam kết giữ chỗ 100% - Hoàn tiền nếu không có xe.
+                        <Text size="5" align="center" color="gray">
+                            {t("hero.subtitle")}
                         </Text>
                     </Flex>
                 </Container>
             </div>
 
             <Container size="4" px="4" style={{ marginTop: "-64px", position: "relative", zIndex: 10 }}>
-                <Card
-                    size="3"
-                    variant="surface"
-                    className="pt-3!"
-                    style={{ backgroundColor: "var(--color-panel-solid)", boxShadow: "var(--shadow-4)" }}
-                >
+                <Card size="3" variant="surface" className="pt-3!">
                     <Tabs.Root defaultValue="oneway">
                         <Tabs.List size="2" mb="4" color="blue">
                             <Tabs.Trigger value="oneway">
                                 <Flex align="center" gap="2">
-                                    Một chiều
+                                    {t("hero.tabs.oneway")}
                                 </Flex>
                             </Tabs.Trigger>
                             <Tabs.Trigger value="roundtrip">
                                 <Flex align="center" gap="2">
-                                    Khứ hồi
+                                    {t("hero.tabs.roundtrip")}
                                 </Flex>
                             </Tabs.Trigger>
                         </Tabs.List>
@@ -123,9 +126,9 @@ function HeroAndSearch() {
                                 <Grid columns={{ initial: "1", md: "4" }} gap="4" align="end">
                                     <Box>
                                         <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
-                                            Nơi đi
+                                            {t("hero.fields.from")}
                                         </Text>
-                                        <TextField.Root size="3" placeholder="Nhập tỉnh, thành phố nơi đi">
+                                        <TextField.Root size="3" placeholder={t("hero.placeholders.fromFull")}>
                                             <TextField.Slot>
                                                 <MapPin size={18} />
                                             </TextField.Slot>
@@ -134,9 +137,9 @@ function HeroAndSearch() {
 
                                     <Box>
                                         <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
-                                            Nơi đến
+                                            {t("hero.fields.to")}
                                         </Text>
-                                        <TextField.Root size="3" placeholder="Nhập tỉnh, thành phố nơi đến">
+                                        <TextField.Root size="3" placeholder={t("hero.placeholders.toFull")}>
                                             <TextField.Slot>
                                                 <MapPin size={18} />
                                             </TextField.Slot>
@@ -145,7 +148,7 @@ function HeroAndSearch() {
 
                                     <Box>
                                         <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
-                                            Ngày đi
+                                            {t("hero.fields.departureDate")}
                                         </Text>
                                         <TextField.Root size="3" type="date">
                                             <TextField.Slot>
@@ -156,7 +159,7 @@ function HeroAndSearch() {
 
                                     <Button size="3" color="amber" variant="solid" style={{ cursor: "pointer" }}>
                                         <Search size={18} />
-                                        Tìm chuyến xe
+                                        {t("hero.actions.searchTrip")}
                                     </Button>
                                 </Grid>
                             </Tabs.Content>
@@ -165,9 +168,9 @@ function HeroAndSearch() {
                                 <Grid columns={{ initial: "1", md: "5" }} gap="4" align="end">
                                     <Box>
                                         <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
-                                            Nơi đi
+                                            {t("hero.fields.from")}
                                         </Text>
-                                        <TextField.Root size="3" placeholder="Điểm đi">
+                                        <TextField.Root size="3" placeholder={t("hero.placeholders.fromShort")}>
                                             <TextField.Slot>
                                                 <MapPin size={18} />
                                             </TextField.Slot>
@@ -176,9 +179,9 @@ function HeroAndSearch() {
 
                                     <Box>
                                         <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
-                                            Nơi đến
+                                            {t("hero.fields.to")}
                                         </Text>
-                                        <TextField.Root size="3" placeholder="Điểm đến">
+                                        <TextField.Root size="3" placeholder={t("hero.placeholders.toShort")}>
                                             <TextField.Slot>
                                                 <MapPin size={18} />
                                             </TextField.Slot>
@@ -187,7 +190,7 @@ function HeroAndSearch() {
 
                                     <Box>
                                         <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
-                                            Ngày đi
+                                            {t("hero.fields.departureDate")}
                                         </Text>
                                         <TextField.Root size="3" type="date">
                                             <TextField.Slot>
@@ -198,7 +201,7 @@ function HeroAndSearch() {
 
                                     <Box>
                                         <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
-                                            Ngày về
+                                            {t("hero.fields.returnDate")}
                                         </Text>
                                         <TextField.Root size="3" type="date">
                                             <TextField.Slot>
@@ -209,7 +212,7 @@ function HeroAndSearch() {
 
                                     <Button size="3" color="amber" variant="solid" style={{ cursor: "pointer" }}>
                                         <Search size={18} />
-                                        Tìm
+                                        {t("hero.actions.search")}
                                     </Button>
                                 </Grid>
                             </Tabs.Content>
@@ -222,49 +225,84 @@ function HeroAndSearch() {
 }
 
 function Promotions() {
+    const { t } = useTranslation();
+
     return (
-        <Box py="8" style={{ backgroundColor: "var(--color-background)" }}>
+        <Box py={{ initial: "7", md: "9" }} style={{ backgroundColor: "var(--color-background)" }}>
             <Container size="4" px="4">
-                <Flex justify="between" align="end" mb="5">
-                    <Heading size="6" weight="bold">
-                        Ưu đãi nổi bật
-                    </Heading>
-                    <Link href="#" size="3" color="blue" weight="medium">
-                        Xem tất cả
-                    </Link>
+                <Flex justify="between" align={{ initial: "start", sm: "end" }} mb="6" gap="4" wrap="wrap">
+                    <Box>
+                        <Badge size="2" color="orange" variant="soft" mb="3">
+                            <Sparkles size={14} />
+                            {t("hero.promotions.badge")}
+                        </Badge>
+                        <Heading size={{ initial: "6", md: "7" }} weight="bold" mb="2">
+                            {t("hero.promotions.title")}
+                        </Heading>
+                        <Text size="3" color="gray">
+                            {t("hero.promotions.description")}
+                        </Text>
+                    </Box>
+
+                    <Button asChild size="3" variant="soft" color="blue" highContrast>
+                        <Link href="#" className="no-underline!">
+                            {t("hero.promotions.viewAll")}
+                            <ArrowRight size={16} />
+                        </Link>
+                    </Button>
                 </Flex>
 
                 <Grid columns={{ initial: "1", sm: "2", md: "3" }} gap="5">
                     {PROMOS.map((promo) => (
                         <Card
                             key={promo.id}
-                            size="2"
+                            size="3"
                             variant="surface"
-                            style={{ padding: 0, overflow: "hidden", cursor: "pointer" }}
+                            className="group overflow-hidden"
+                            style={{ padding: 0, cursor: "pointer" }}
                         >
                             <Inset clip="padding-box" side="top" pb="current">
-                                <img
-                                    src={promo.image}
-                                    alt={promo.title}
-                                    style={{
-                                        display: "block",
-                                        objectFit: "cover",
-                                        width: "100%",
-                                        height: 140,
-                                    }}
-                                />
+                                <Box position="relative" className="overflow-hidden">
+                                    <img
+                                        src={promo.image}
+                                        alt={t(promo.titleKey)}
+                                        className="block h-44 w-full object-cover"
+                                    />
+                                    <Box
+                                        position="absolute"
+                                        inset="0"
+                                        className="bg-linear-to-t from-black/70 via-black/10 to-transparent"
+                                    />
+                                    <Flex position="absolute" top="0" left="0" p="4" gap="2" wrap="wrap">
+                                        <Badge color="crimson" variant="solid" radius="full">
+                                            {t("hero.promotions.hotDeal")}
+                                        </Badge>
+                                        <Badge color="orange" variant="soft" radius="full">
+                                            {promo.code}
+                                        </Badge>
+                                    </Flex>
+                                    <Box position="absolute" bottom="0" left="0" p="6" pb="2">
+                                        <Badge size="1">
+                                            {t("hero.promotions.validityPrefix")} {t(promo.validUntilKey)}
+                                        </Badge>
+                                    </Box>
+                                </Box>
                             </Inset>
-                            <Flex direction="column" gap="3" p="4" style={{ height: "100%" }}>
-                                <Heading size="4" weight="bold" style={{ flexGrow: 1 }}>
-                                    {promo.title}
+                            <Flex direction="column" gap="2" p="5" pt="0" style={{ height: "100%" }}>
+                                <Heading size="5" weight="bold">
+                                    {t(promo.titleKey)}
                                 </Heading>
-                                <Flex justify="between" align="center">
-                                    <Badge color="orange" variant="soft" size="2">
-                                        {promo.code}
+                                <Text size="3" color="gray">
+                                    {t("hero.promotions.cardDescription")}
+                                </Text>
+                                <Flex justify="between" align="center" gap="3" wrap="wrap">
+                                    <Badge color="blue" variant="soft" size="2" radius="full">
+                                        {t("hero.promotions.saveNow")}
                                     </Badge>
-                                    <Text size="2" color="gray">
-                                        {promo.validUntil}
-                                    </Text>
+                                    <Button size="2" variant="ghost" color="blue">
+                                        {t("hero.promotions.claimOffer")}
+                                        <ArrowRight size={15} />
+                                    </Button>
                                 </Flex>
                             </Flex>
                         </Card>
@@ -276,61 +314,96 @@ function Promotions() {
 }
 
 function PopularRoutes() {
+    const { t } = useTranslation();
+
     return (
-        <Box py="8" style={{ backgroundColor: "var(--gray-2)" }}>
+        <Box py={{ initial: "7", md: "9" }} style={{ backgroundColor: "var(--gray-2)" }}>
             <Container size="4" px="4">
-                <Heading size="6" weight="bold" mb="5">
-                    Tuyến đường phổ biến
-                </Heading>
+                <Flex justify="between" align={{ initial: "start", sm: "end" }} mb="6" gap="4" wrap="wrap">
+                    <Box>
+                        <Badge size="2" color="blue" variant="soft" mb="3">
+                            <MapPin size={14} />
+                            {t("hero.popularRoutes.badge")}
+                        </Badge>
+                        <Heading size={{ initial: "6", md: "7" }} weight="bold" mb="2">
+                            {t("hero.popularRoutes.title")}
+                        </Heading>
+                        <Text size="3" color="gray">
+                            {t("hero.popularRoutes.description")}
+                        </Text>
+                    </Box>
+
+                    <Button asChild size="3" variant="soft" color="blue">
+                        <Link href="#" className="no-underline!">
+                            {t("hero.popularRoutes.exploreMore")}
+                            <ArrowRight size={16} />
+                        </Link>
+                    </Button>
+                </Flex>
 
                 <Grid columns={{ initial: "1", sm: "2", md: "4" }} gap="4">
-                    {POPULAR_ROUTES.map((route) => (
-                        <Card
-                            key={route.id}
-                            size="1"
-                            variant="surface"
-                            style={{ cursor: "pointer", padding: 0, overflow: "hidden" }}
-                        >
-                            <Inset clip="padding-box" side="top" pb="current">
-                                <Box position="relative">
-                                    <img
-                                        src={route.image}
-                                        alt={`${route.from} đi ${route.to}`}
-                                        style={{
-                                            display: "block",
-                                            objectFit: "cover",
-                                            width: "100%",
-                                            height: 140,
-                                        }}
-                                    />
-                                    <Box
-                                        position="absolute"
-                                        bottom="0"
-                                        left="0"
-                                        width="100%"
-                                        p="3"
-                                        style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7), transparent)" }}
-                                    >
-                                        <Heading size="4" weight="bold" style={{ color: "white" }}>
-                                            {route.from} - {route.to}
-                                        </Heading>
-                                    </Box>
-                                </Box>
-                            </Inset>
-                            <Box p="3">
-                                <Flex align="center" gap="3">
-                                    <Text size="4" weight="bold" color="blue">
-                                        {route.price}
-                                    </Text>
-                                    {route.oldPrice && (
-                                        <Text size="2" color="gray" style={{ textDecoration: "line-through" }}>
-                                            {route.oldPrice}
-                                        </Text>
-                                    )}
-                                </Flex>
-                            </Box>
-                        </Card>
-                    ))}
+                    {POPULAR_ROUTES.map((route) =>
+                        (() => {
+                            const from = t(route.fromKey);
+                            const to = t(route.toKey);
+
+                            return (
+                                <Card
+                                    key={route.id}
+                                    size="2"
+                                    variant="surface"
+                                    className="group overflow-hidden"
+                                    style={{ cursor: "pointer", padding: 0 }}
+                                >
+                                    <Inset clip="padding-box" side="top" pb="current">
+                                        <Box position="relative" className="overflow-hidden">
+                                            <img
+                                                src={route.image}
+                                                alt={t("hero.popularRoutes.imageAlt", { from, to })}
+                                                className="block h-44 w-full object-cover"
+                                            />
+                                            <Box
+                                                position="absolute"
+                                                bottom="0"
+                                                left="0"
+                                                width="100%"
+                                                p="6"
+                                                pb="2"
+                                                style={{
+                                                    background:
+                                                        "linear-gradient(to top, rgba(0,0,0,0.78), rgba(0,0,0,0.08), transparent)",
+                                                }}
+                                            >
+                                                <Badge color="blue" variant="solid" radius="full" mb="2" size="1">
+                                                    {t("hero.popularRoutes.priceFrom", { price: route.price })}
+                                                </Badge>
+                                                <Heading size="5" weight="bold" style={{ color: "white" }}>
+                                                    {from} - {to}
+                                                </Heading>
+                                            </Box>
+                                        </Box>
+                                    </Inset>
+                                    <Flex direction="column" gap="4" p="4" pt="0">
+                                        <Flex align="center" gap="1" wrap="wrap">
+                                            <Text size="5" weight="bold" color="blue">
+                                                {route.price}
+                                            </Text>
+                                            {route.oldPrice && (
+                                                <Text size="2" color="gray" style={{ textDecoration: "line-through" }}>
+                                                    {route.oldPrice}
+                                                </Text>
+                                            )}
+                                        </Flex>
+
+                                        <Button size="2" variant="soft" color="blue" className="justify-between!">
+                                            {t("hero.popularRoutes.bookTrip")}
+                                            <ArrowRight size={16} />
+                                        </Button>
+                                    </Flex>
+                                </Card>
+                            );
+                        })(),
+                    )}
                 </Grid>
             </Container>
         </Box>
@@ -338,42 +411,87 @@ function PopularRoutes() {
 }
 
 function Features() {
+    const { t } = useTranslation();
+
     return (
-        <Box py="9" style={{ backgroundColor: "var(--color-background)", borderTop: "1px solid var(--gray-a4)" }}>
+        <Box
+            py={{ initial: "8", md: "9" }}
+            style={{
+                backgroundColor: "var(--color-background)",
+                borderTop: "1px solid var(--gray-a4)",
+            }}
+        >
             <Container size="4" px="4">
-                <Grid columns={{ initial: "1", md: "3" }} gap="8">
-                    <Flex direction="column" align="center" gap="4">
-                        <Avatar size="6" fallback={<Ticket size={32} />} color="blue" variant="soft" radius="large" />
-                        <Heading size="4" align="center">
-                            Đa dạng lựa chọn
-                        </Heading>
-                        <Text size="3" color="gray" align="center">
-                            Hơn 2000+ nhà xe chất lượng cao với nhiều dòng xe đa dạng (Limousine, Giường nằm, Ghế ngồi)
-                            đáp ứng mọi nhu cầu.
-                        </Text>
-                    </Flex>
+                <Flex direction="column" align="center" gap="3" mb="7">
+                    <Badge size="2" color="jade" variant="soft">
+                        <ShieldCheck size={14} />
+                        {t("hero.features.badge")}
+                    </Badge>
+                    <Heading size={{ initial: "6", md: "7" }} align="center">
+                        {t("hero.features.title")}
+                    </Heading>
+                    <Text size="3" color="gray" align="center" className="max-w-2xl">
+                        {t("hero.features.description")}
+                    </Text>
+                </Flex>
 
-                    <Flex direction="column" align="center" gap="4">
-                        <Avatar size="6" fallback={<Star size={32} />} color="amber" variant="soft" radius="large" />
-                        <Heading size="4" align="center">
-                            Chất lượng đảm bảo
-                        </Heading>
-                        <Text size="3" color="gray" align="center">
-                            Các nhà xe được đánh giá chân thực từ hàng triệu hành khách. Cam kết giữ chỗ 100%, hoàn tiền
-                            nếu không có xe.
-                        </Text>
-                    </Flex>
+                <Grid columns={{ initial: "1", md: "3" }} gap="5">
+                    <Card size="3" variant="surface" className="rounded-3xl border border-(--gray-a4) p-6!">
+                        <Flex direction="column" gap="4" align="start">
+                            <Avatar
+                                size="6"
+                                fallback={<Ticket size={32} />}
+                                color="blue"
+                                variant="soft"
+                                radius="large"
+                            />
+                            <Heading size="5">{t("hero.features.items.choices.title")}</Heading>
+                            <Text size="3" color="gray">
+                                {t("hero.features.items.choices.description")}
+                            </Text>
+                            <Badge color="blue" variant="soft" radius="full">
+                                {t("hero.features.items.choices.badge")}
+                            </Badge>
+                        </Flex>
+                    </Card>
 
-                    <Flex direction="column" align="center" gap="4">
-                        <Avatar size="6" fallback={<Headset size={32} />} color="green" variant="soft" radius="large" />
-                        <Heading size="4" align="center">
-                            Hỗ trợ 24/7
-                        </Heading>
-                        <Text size="3" color="gray" align="center">
-                            Đội ngũ tổng đài viên chuyên nghiệp luôn sẵn sàng giải đáp thắc mắc và hỗ trợ khách hàng xử
-                            lý mọi sự cố.
-                        </Text>
-                    </Flex>
+                    <Card size="3" variant="surface" className="rounded-3xl border border-(--gray-a4) p-6!">
+                        <Flex direction="column" gap="4" align="start">
+                            <Avatar
+                                size="6"
+                                fallback={<Star size={32} />}
+                                color="amber"
+                                variant="soft"
+                                radius="large"
+                            />
+                            <Heading size="5">{t("hero.features.items.quality.title")}</Heading>
+                            <Text size="3" color="gray">
+                                {t("hero.features.items.quality.description")}
+                            </Text>
+                            <Badge color="amber" variant="soft" radius="full">
+                                {t("hero.features.items.quality.badge")}
+                            </Badge>
+                        </Flex>
+                    </Card>
+
+                    <Card size="3" variant="surface" className="rounded-3xl border border-(--gray-a4) p-6!">
+                        <Flex direction="column" gap="4" align="start">
+                            <Avatar
+                                size="6"
+                                fallback={<Headset size={32} />}
+                                color="green"
+                                variant="soft"
+                                radius="large"
+                            />
+                            <Heading size="5">{t("hero.features.items.support.title")}</Heading>
+                            <Text size="3" color="gray">
+                                {t("hero.features.items.support.description")}
+                            </Text>
+                            <Badge color="green" variant="soft" radius="full">
+                                {t("hero.features.items.support.badge")}
+                            </Badge>
+                        </Flex>
+                    </Card>
                 </Grid>
             </Container>
         </Box>

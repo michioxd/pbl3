@@ -64,7 +64,7 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     return (
         <>
             <ThemeContext.Provider value={{ theme, setTheme, toggleTheme, mode }}>
-                <Theme appearance={mode === 1 ? "dark" : "light"}>
+                <Theme appearance={mode === 1 ? "dark" : "light"} accentColor="blue">
                     <Toaster
                         position="bottom-right"
                         richColors

@@ -1,0 +1,15 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" rx="36" fill="url(#bg)"/>
+  <path d="M0 450L116 344L199 409L324 262L454 392L587 240L800 404V600H0V450Z" fill="#EFF6FF" fill-opacity="0.42"/>
+  <path d="M0 490L134 366L245 436L362 301L470 421L620 276L800 430V600H0V490Z" fill="#DBEAFE" fill-opacity="0.68"/>
+  <text x="54" y="92" fill="#EFF6FF" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700">Hà Nội → Sapa</text>
+  <text x="54" y="138" fill="white" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="800">Săn mây vùng cao</text>
+  <rect x="54" y="468" width="198" height="46" rx="23" fill="#ffffff" fill-opacity="0.18" stroke="#ffffff" stroke-opacity="0.35"/>
+  <text x="92" y="498" fill="white" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700">Khởi hành đêm</text>
+  <defs>
+    <linearGradient id="bg" x1="68" y1="56" x2="704" y2="540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#60A5FA"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+  </defs>
+</svg>
