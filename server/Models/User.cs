@@ -9,7 +9,6 @@ namespace Pbl3.Models
         public Guid RoleID { get; set; }
         public Role? Role { get; set; }
 
-        public required string Username { get; set; }
         public required string PasswordHash { get; set; }
         public required string Email { get; set; }
         public string? PhoneNumber { get; set; }

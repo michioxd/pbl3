@@ -181,7 +181,6 @@ namespace Pbl3.Data
                 new User
                 {
                     UserID = Guid.NewGuid(),
-                    Username = "sysadmin",
                     Email = "admin@example.com",
                     PasswordHash = string.Empty,
                     PhoneNumber = "0901234567",
@@ -192,7 +191,6 @@ namespace Pbl3.Data
                 new User
                 {
                     UserID = Guid.NewGuid(),
-                    Username = "busadmin_pt",
                     Email = "admin@phuongtrang.com",
                     PasswordHash = string.Empty,
                     PhoneNumber = "0902345678",
@@ -203,7 +201,6 @@ namespace Pbl3.Data
                 new User
                 {
                     UserID = Guid.NewGuid(),
-                    Username = "busadmin_mt",
                     Email = "admin@maitanh.com",
                     PasswordHash = string.Empty,
                     PhoneNumber = "0903456789",
@@ -214,7 +211,6 @@ namespace Pbl3.Data
                 new User
                 {
                     UserID = Guid.NewGuid(),
-                    Username = "nguyenvana",
                     Email = "nguyenvana@gmail.com",
                     PasswordHash = string.Empty,
                     PhoneNumber = "0904567890",
@@ -225,7 +221,6 @@ namespace Pbl3.Data
                 new User
                 {
                     UserID = Guid.NewGuid(),
-                    Username = "tranthib",
                     Email = "tranthib@gmail.com",
                     PasswordHash = string.Empty,
                     PhoneNumber = "0905678901",
@@ -247,8 +242,10 @@ namespace Pbl3.Data
 
         private async Task SeedBusCompaniesAsync()
         {
-            var busAdmin1 = await _context.Users.FirstAsync(u => u.Username == "busadmin_pt");
-            var busAdmin2 = await _context.Users.FirstAsync(u => u.Username == "busadmin_mt");
+            var busAdmin1 = await _context.Users.FirstAsync(u =>
+                u.Email == "admin@phuongtrang.com"
+            );
+            var busAdmin2 = await _context.Users.FirstAsync(u => u.Email == "admin@maitanh.com");
 
             var companies = new List<BusCompany>
             {
@@ -1008,8 +1005,10 @@ namespace Pbl3.Data
 
         private async Task SeedBookingsAsync()
         {
-            var passenger1 = await _context.Users.FirstAsync(u => u.Username == "nguyenvana");
-            var passenger2 = await _context.Users.FirstAsync(u => u.Username == "tranthib");
+            var passenger1 = await _context.Users.FirstAsync(u =>
+                u.Email == "nguyenvana@gmail.com"
+            );
+            var passenger2 = await _context.Users.FirstAsync(u => u.Email == "tranthib@gmail.com");
 
             var bookings = new List<Booking>
             {
@@ -1046,8 +1045,8 @@ namespace Pbl3.Data
 
         private async Task SeedPassengersAsync()
         {
-            var user1 = await _context.Users.FirstAsync(u => u.Username == "nguyenvana");
-            var user2 = await _context.Users.FirstAsync(u => u.Username == "tranthib");
+            var user1 = await _context.Users.FirstAsync(u => u.Email == "nguyenvana@gmail.com");
+            var user2 = await _context.Users.FirstAsync(u => u.Email == "tranthib@gmail.com");
 
             var passengers = new List<Passenger>
             {
@@ -1214,8 +1213,8 @@ namespace Pbl3.Data
 
         private async Task SeedNotificationsAsync()
         {
-            var user1 = await _context.Users.FirstAsync(u => u.Username == "nguyenvana");
-            var user2 = await _context.Users.FirstAsync(u => u.Username == "tranthib");
+            var user1 = await _context.Users.FirstAsync(u => u.Email == "nguyenvana@gmail.com");
+            var user2 = await _context.Users.FirstAsync(u => u.Email == "tranthib@gmail.com");
             var paidBooking = await _context.Bookings.FirstAsync(b =>
                 b.ContactEmail == "nguyenvana@gmail.com" && b.Status == BookingStatus.Paid
             );
@@ -1253,7 +1252,7 @@ namespace Pbl3.Data
 
         private async Task SeedSeatHoldsAsync()
         {
-            var user2 = await _context.Users.FirstAsync(u => u.Username == "tranthib");
+            var user2 = await _context.Users.FirstAsync(u => u.Email == "tranthib@gmail.com");
             var tripVungTauMorning = await _context.Trips.FirstAsync(t =>
                 t.Route!.RouteName == "TP.HCM - Vũng Tàu" && t.DepartureTime.Hour == 8
             );

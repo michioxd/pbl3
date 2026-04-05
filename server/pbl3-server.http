@@ -38,7 +38,6 @@ POST {{pbl3_server_HostAddress}}/api/users
 Content-Type: application/json
 
 {
-  "username": "testuser",
   "email": "testuser@gmail.com",
   "password": "Test123456",
   "phoneNumber": "0909123456",
@@ -52,7 +51,6 @@ PUT {{pbl3_server_HostAddress}}/api/users/{{passengerId}}
 Content-Type: application/json
 
 {
-  "username": "updateduser",
   "email": "updateduser@gmail.com",
   "phoneNumber": "0909999999"
 }

@@ -36,17 +36,15 @@ namespace Pbl3.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
-            var identifier = request.UsernameOrEmail.Trim();
+            var email = request.Email.Trim().ToLowerInvariant();
 
             var user = await _context
                 .Users.Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.Username == identifier || u.Email == identifier);
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == email);
 
             if (user == null)
             {
-                return Unauthorized(
-                    new { message = "Tên đăng nhập/email hoặc mật khẩu không đúng." }
-                );
+                return Unauthorized(new { message = "Email hoặc mật khẩu không đúng." });
             }
 
             if (!user.IsActive)
@@ -71,9 +69,7 @@ namespace Pbl3.Controllers
                 && !isLegacyPlainTextPassword
             )
             {
-                return Unauthorized(
-                    new { message = "Tên đăng nhập/email hoặc mật khẩu không đúng." }
-                );
+                return Unauthorized(new { message = "Email hoặc mật khẩu không đúng." });
             }
 
             if (
@@ -92,19 +88,10 @@ namespace Pbl3.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
         {
-            var username = request.Username.Trim();
             var email = request.Email.Trim().ToLowerInvariant();
             var fullName = request.FullName.Trim();
             var phoneNumber = NormalizeOptional(request.PhoneNumber);
             var identityCard = NormalizeOptional(request.IdentityCard);
-
-            var usernameExists = await _context.Users.AnyAsync(u =>
-                u.Username.ToLower() == username.ToLower()
-            );
-            if (usernameExists)
-            {
-                return Conflict(new { message = "Tên đăng nhập đã tồn tại." });
-            }
 
             var emailExists = await _context.Users.AnyAsync(u => u.Email.ToLower() == email);
             if (emailExists)
@@ -125,7 +112,6 @@ namespace Pbl3.Controllers
                 UserID = Guid.NewGuid(),
                 RoleID = passengerRole.RoleID,
                 Role = passengerRole,
-                Username = username,
                 PasswordHash = string.Empty,
                 Email = email,
                 PhoneNumber = phoneNumber,
@@ -170,7 +156,6 @@ namespace Pbl3.Controllers
                 new(JwtRegisteredClaimNames.Sub, user.UserID.ToString()),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new("email", user.Email),
-                new("username", user.Username),
                 new("role", user.Role.RoleName),
             };
 
@@ -207,7 +192,6 @@ namespace Pbl3.Controllers
                 User = new UserDto
                 {
                     Id = user.UserID,
-                    Username = user.Username,
                     Email = user.Email,
                     PhoneNumber = user.PhoneNumber ?? string.Empty,
                     Role = user.Role.RoleName,

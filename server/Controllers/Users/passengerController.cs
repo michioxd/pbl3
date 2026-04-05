@@ -48,7 +48,6 @@ namespace Pbl3.Controllers.Users
                     p.Email,
                     p.PhoneNumber,
                     p.IdentityCard,
-                    Username = p.User != null ? p.User.Username : null,
                 })
                 .FirstOrDefaultAsync();
 

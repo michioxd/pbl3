@@ -5,7 +5,8 @@ namespace Pbl3.Dtos
     public class LoginRequestDto
     {
         [Required]
-        public string UsernameOrEmail { get; set; } = string.Empty;
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
 
         [Required]
         public string Password { get; set; } = string.Empty;
@@ -13,10 +14,6 @@ namespace Pbl3.Dtos
 
     public class RegisterRequestDto
     {
-        [Required]
-        [StringLength(50, MinimumLength = 3)]
-        public string Username { get; set; } = string.Empty;
-
         [Required]
         [EmailAddress]
         public string Email { get; set; } = string.Empty;

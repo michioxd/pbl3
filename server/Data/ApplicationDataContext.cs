@@ -39,6 +39,8 @@ namespace Pbl3.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
+
             // Register Enums
             modelBuilder.HasPostgresEnum<UserRole>();
             modelBuilder.HasPostgresEnum<TripStatus>();
