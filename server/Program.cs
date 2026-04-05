@@ -1,15 +1,16 @@
-using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Npgsql;
 using Pbl3.Data;
-using Pbl3.Extensions;
 using Pbl3.Enums;
+using Pbl3.Extensions;
 using Pbl3.Models;
-using DotNetEnv;
-using System.Text;
 
 namespace Pbl3
 {
@@ -24,8 +25,9 @@ namespace Pbl3
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddControllers();
 
-            var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL")
-                                   ?? builder.Configuration.GetConnectionString("DefaultConnection");
+            var connectionString =
+                Environment.GetEnvironmentVariable("DATABASE_URL")
+                ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
             if (string.IsNullOrEmpty(connectionString))
                 throw new InvalidOperationException("Connection string not found.");
@@ -46,17 +48,20 @@ namespace Pbl3
             var dataSource = dataSourceBuilder.Build();
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(dataSource));
+                options.UseNpgsql(dataSource)
+            );
 
             builder.Services.AddScoped<DbInitializer>();
             builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
-            var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY")
-                         ?? builder.Configuration["Jwt:Key"];
-            var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER")
-                            ?? builder.Configuration["Jwt:Issuer"];
-            var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE")
-                              ?? builder.Configuration["Jwt:Audience"];
+            var jwtKey =
+                Environment.GetEnvironmentVariable("JWT_KEY") ?? builder.Configuration["Jwt:Key"];
+            var jwtIssuer =
+                Environment.GetEnvironmentVariable("JWT_ISSUER")
+                ?? builder.Configuration["Jwt:Issuer"];
+            var jwtAudience =
+                Environment.GetEnvironmentVariable("JWT_AUDIENCE")
+                ?? builder.Configuration["Jwt:Audience"];
 
             if (string.IsNullOrWhiteSpace(jwtKey))
                 throw new InvalidOperationException("JWT key not found.");
@@ -65,11 +70,12 @@ namespace Pbl3
             if (string.IsNullOrWhiteSpace(jwtAudience))
                 throw new InvalidOperationException("JWT audience not found.");
 
-            builder.Services
-                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            builder
+                .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
                     options.RequireHttpsMetadata = false;
+                    options.MapInboundClaims = false;
 
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
@@ -80,45 +86,67 @@ namespace Pbl3
                         ValidAudience = jwtAudience,
 
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(jwtKey)
-                        ),
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
 
                         ValidateLifetime = true,
                         ClockSkew = TimeSpan.Zero,
 
-                        NameClaimType = "email",
-                        RoleClaimType = "role"
+                        NameClaimType = JwtRegisteredClaimNames.Sub,
+                        RoleClaimType = "role",
                     };
                 });
 
             builder.Services.AddAuthorization(options =>
             {
-                options.AddPolicy("UserOnly", policy =>
-                    policy.RequireRole(UserRole.Passenger.ToString(), UserRole.BusAdmin.ToString(), UserRole.SysAdmin.ToString()));
-                options.AddPolicy("ModOrAdmin", policy =>
-                    policy.RequireRole(UserRole.BusAdmin.ToString(), UserRole.SysAdmin.ToString()));
-                options.AddPolicy("AdminOnly", policy =>
-                    policy.RequireRole(UserRole.SysAdmin.ToString()));
+                options.AddPolicy(
+                    "UserOnly",
+                    policy =>
+                        policy.RequireRole(
+                            UserRole.Passenger.ToString(),
+                            UserRole.BusAdmin.ToString(),
+                            UserRole.SysAdmin.ToString()
+                        )
+                );
+                options.AddPolicy(
+                    "ModOrAdmin",
+                    policy =>
+                        policy.RequireRole(
+                            UserRole.BusAdmin.ToString(),
+                            UserRole.SysAdmin.ToString()
+                        )
+                );
+                options.AddPolicy(
+                    "AdminOnly",
+                    policy => policy.RequireRole(UserRole.SysAdmin.ToString())
+                );
             });
 
             builder.Services.AddSwaggerGen(options =>
             {
-                options.SwaggerDoc("v1", new OpenApiInfo
-                {
-                    Title = "PBL3",
-                    Version = "v1"
-                });
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "PBL3", Version = "v1" });
 
-                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-                {
-                    Name = "Authorization",
-                    Type = SecuritySchemeType.Http,
-                    Scheme = "bearer",
-                    BearerFormat = "JWT",
-                    In = ParameterLocation.Header,
-                    Description = "Bearer {token}"
-                });
+                options.AddSecurityDefinition(
+                    "Bearer",
+                    new OpenApiSecurityScheme
+                    {
+                        Name = "Authorization",
+                        Type = SecuritySchemeType.Http,
+                        Scheme = "bearer",
+                        BearerFormat = "JWT",
+                        In = ParameterLocation.Header,
+                        Description = "Nhập JWT token thuần, Swagger sẽ tự thêm tiền tố Bearer.",
+                    }
+                );
+
+                options.AddSecurityRequirement(document =>
+                    new()
+                    {
+                        {
+                            new OpenApiSecuritySchemeReference("Bearer", document, null),
+                            new List<string>()
+                        },
+                    }
+                );
             });
 
             var app = builder.Build();
