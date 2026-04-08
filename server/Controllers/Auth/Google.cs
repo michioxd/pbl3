@@ -9,7 +9,7 @@ using Pbl3.Enums;
 using Pbl3.Models;
 using Pbl3.Services;
 
-namespace Pbl3.Controllers
+namespace Pbl3.Controllers.Auth
 {
     [ApiController]
     [Route("api/auth/oauth/google")]
