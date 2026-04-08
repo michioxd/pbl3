@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pbl3.Data;
 using Pbl3.Enums;
+using Pbl3.Dtos;
 
 namespace Pbl3.Controllers.Users
 {
@@ -106,12 +107,5 @@ namespace Pbl3.Controllers.Users
             await _context.SaveChangesAsync();
             return Ok(new { message = "Cập nhật thành công." });
         }
-    }
-
-    public class UpdatePassengerDto
-    {
-        public string FullName { get; set; } = null!;
-        public string? PhoneNumber { get; set; }
-        public string? IdentityCard { get; set; }
     }
 }
