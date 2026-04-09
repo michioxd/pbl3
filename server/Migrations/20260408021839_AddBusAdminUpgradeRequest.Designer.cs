@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pbl3.Data;
@@ -11,9 +12,11 @@ using Pbl3.Data;
 namespace pbl3_server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260408021839_AddBusAdminUpgradeRequest")]
+    partial class AddBusAdminUpgradeRequest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -431,18 +434,12 @@ namespace pbl3_server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("BookingID")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("BookingID1")
+                    b.Property<Guid>("BookingID")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<Guid?>("RequestID")
-                        .HasColumnType("uuid");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -456,10 +453,6 @@ namespace pbl3_server.Migrations
                     b.HasKey("NotifID");
 
                     b.HasIndex("BookingID");
-
-                    b.HasIndex("BookingID1");
-
-                    b.HasIndex("RequestID");
 
                     b.HasIndex("UserID");
 
@@ -1047,18 +1040,10 @@ namespace pbl3_server.Migrations
             modelBuilder.Entity("Pbl3.Models.Notification", b =>
                 {
                     b.HasOne("Pbl3.Models.Booking", "Booking")
-                        .WithMany()
+                        .WithMany("Notifications")
                         .HasForeignKey("BookingID")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Pbl3.Models.Booking", null)
-                        .WithMany("Notifications")
-                        .HasForeignKey("BookingID1");
-
-                    b.HasOne("Pbl3.Models.BusAdminUpgradeRequest", "Request")
-                        .WithMany("Notifications")
-                        .HasForeignKey("RequestID")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Pbl3.Models.User", "User")
                         .WithMany("Notifications")
@@ -1067,8 +1052,6 @@ namespace pbl3_server.Migrations
                         .IsRequired();
 
                     b.Navigation("Booking");
-
-                    b.Navigation("Request");
 
                     b.Navigation("User");
                 });
@@ -1314,11 +1297,6 @@ namespace pbl3_server.Migrations
                     b.Navigation("BusImages");
 
                     b.Navigation("Trips");
-                });
-
-            modelBuilder.Entity("Pbl3.Models.BusAdminUpgradeRequest", b =>
-                {
-                    b.Navigation("Notifications");
                 });
 
             modelBuilder.Entity("Pbl3.Models.BusCompany", b =>

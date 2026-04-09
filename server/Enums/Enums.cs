@@ -17,6 +17,13 @@ namespace Pbl3.Enums
         FinanceManagement,
     }
 
+    public enum BusAdminUpgradeRequestStatus
+    {
+        Pending,
+        Approved,
+        Rejected,
+    }
+
     public enum TripStatus
     {
         Scheduled,

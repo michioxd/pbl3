@@ -13,6 +13,7 @@ namespace Pbl3.Data
         public DbSet<User> Users { get; set; }
         public DbSet<BusCompany> BusCompanies { get; set; }
         public DbSet<BusCompanyAdmin> BusCompanyAdmins { get; set; }
+        public DbSet<BusAdminUpgradeRequest> BusAdminUpgradeRequests { get; set; }
         public DbSet<BusType> BusTypes { get; set; }
         public DbSet<SeatLayout> SeatLayouts { get; set; }
         public DbSet<Bus> Buses { get; set; }
@@ -43,6 +44,7 @@ namespace Pbl3.Data
 
             // Register Enums
             modelBuilder.HasPostgresEnum<UserRole>();
+            modelBuilder.HasPostgresEnum<BusAdminUpgradeRequestStatus>();
             modelBuilder.HasPostgresEnum<TripStatus>();
             modelBuilder.HasPostgresEnum<SeatType>();
             modelBuilder.HasPostgresEnum<StationType>();
@@ -63,6 +65,80 @@ namespace Pbl3.Data
                 .HasOne(bca => bca.User)
                 .WithMany(u => u.BusCompanyAdmins)
                 .HasForeignKey(bca => bca.UserID);
+
+            modelBuilder.Entity<BusAdminUpgradeRequest>().HasKey(r => r.RequestID);
+
+            modelBuilder
+                .Entity<BusAdminUpgradeRequest>()
+                .HasOne(r => r.RequesterUser)
+                .WithMany(u => u.BusAdminUpgradeRequests)
+                .HasForeignKey(r => r.RequesterUserID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder
+                .Entity<BusAdminUpgradeRequest>()
+                .HasOne(r => r.ReviewedByUser)
+                .WithMany(u => u.ReviewedBusAdminUpgradeRequests)
+                .HasForeignKey(r => r.ReviewedByUserID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder
+                .Entity<BusAdminUpgradeRequest>()
+                .HasOne(r => r.BusCompany)
+                .WithMany(c => c.BusAdminUpgradeRequests)
+                .HasForeignKey(r => r.CompanyID)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder
+                .Entity<BusAdminUpgradeRequest>()
+                .Property(r => r.CompanyName)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            modelBuilder
+                .Entity<BusAdminUpgradeRequest>()
+                .Property(r => r.LicenseNumber)
+                .HasMaxLength(100);
+
+            modelBuilder
+                .Entity<BusAdminUpgradeRequest>()
+                .Property(r => r.Hotline)
+                .HasMaxLength(20);
+
+            modelBuilder
+                .Entity<BusAdminUpgradeRequest>()
+                .Property(r => r.Reason)
+                .HasMaxLength(1000);
+
+            modelBuilder
+                .Entity<BusAdminUpgradeRequest>()
+                .Property(r => r.ReviewNote)
+                .HasMaxLength(1000);
+
+            modelBuilder
+                .Entity<BusAdminUpgradeRequest>()
+                .HasIndex(r => new { r.RequesterUserID, r.Status, r.RequestedAt });
+
+            modelBuilder
+                .Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany(u => u.Notifications)
+                .HasForeignKey(n => n.UserID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder
+                .Entity<Notification>()
+                .HasOne(n => n.Booking)
+                .WithMany()
+                .HasForeignKey(n => n.BookingID)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder
+                .Entity<Notification>()
+                .HasOne(n => n.Request)
+                .WithMany(r => r.Notifications)
+                .HasForeignKey(n => n.RequestID)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // RouteStop Relations
             modelBuilder

@@ -31,6 +31,22 @@ erDiagram
 	BUS_COMPANY_ADMIN {
 		guid UserID PK, FK
 		guid CompanyID FK
+		string Roles
+	}
+
+	BUS_ADMIN_UPGRADE_REQUEST {
+		guid RequestID PK
+		guid RequesterUserID FK
+		guid ReviewedByUserID FK
+		guid CompanyID FK
+		string CompanyName
+		string LicenseNumber
+		string Hotline
+		string Reason
+		int Status
+		datetime RequestedAt
+		datetime ReviewedAt
+		string ReviewNote
 	}
 
 	BUS_TYPE {
@@ -230,6 +246,9 @@ erDiagram
 	ROLE ||--o{ USER : assigns
 	USER ||--o| BUS_COMPANY_ADMIN : has_admin_profile
 	BUS_COMPANY ||--o{ BUS_COMPANY_ADMIN : employs
+	USER ||--o{ BUS_ADMIN_UPGRADE_REQUEST : submits
+	USER ||--o{ BUS_ADMIN_UPGRADE_REQUEST : reviews
+	BUS_COMPANY ||--o{ BUS_ADMIN_UPGRADE_REQUEST : targets
 
 	BUS_COMPANY ||--o{ BUS : owns
 	BUS_TYPE ||--o{ BUS : classifies

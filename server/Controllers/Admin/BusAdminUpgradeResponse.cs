@@ -4,16 +4,16 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pbl3.Data;
 
-namespace Pbl3.Controllers.Users
+namespace Pbl3.Controllers.Admin
 {
     [ApiController]
-    [Route("api/passenger")]
-    [Authorize(Policy = "UserOnly")]
-    public partial class PassengersController : ControllerBase
+    [Route("api/admin/bus-admin-upgrade-requests")]
+    [Authorize(Policy = "AdminOnly")]
+    public partial class BusAdminUpgradeResponse : ControllerBase
     {
         private readonly ApplicationDbContext _context;
 
-        public PassengersController(ApplicationDbContext context)
+        public BusAdminUpgradeResponse(ApplicationDbContext context)
         {
             _context = context;
         }
@@ -28,7 +28,9 @@ namespace Pbl3.Controllers.Users
             {
                 return userId;
             }
+
             throw new UnauthorizedAccessException("Không tìm thấy UserID trong token.");
         }
+
     }
 }
