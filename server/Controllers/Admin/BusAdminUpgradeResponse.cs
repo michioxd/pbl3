@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Mvc;
 using Pbl3.Data;
 
@@ -9,6 +10,7 @@ namespace Pbl3.Controllers.Admin
     [ApiController]
     [Route("api/admin/bus-admin-upgrade-requests")]
     [Authorize(Policy = "AdminOnly")]
+    [Tags("SystemAdmin")]
     public partial class BusAdminUpgradeResponse : ControllerBase
     {
         private readonly ApplicationDbContext _context;

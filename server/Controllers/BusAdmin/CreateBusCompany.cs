@@ -11,7 +11,7 @@ namespace Pbl3.Controllers.BusAdmin
 {
     [ApiController]
     [Route("Admin")]
-    [Authorize(Policy = "ModOrAdmin")]
+    [Authorize(Policy = "BusAdmin")]
     public partial class CreateBusAdmin : ControllerBase
     {
         private readonly ApplicationDbContext _context;

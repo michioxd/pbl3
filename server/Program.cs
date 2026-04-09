@@ -121,7 +121,7 @@ namespace Pbl3
                         )
                 );
                 options.AddPolicy(
-                    "ModOrAdmin",
+                    "BusAdmin",
                     policy =>
                         policy.RequireRole(
                             UserRole.BusAdmin.ToString(),

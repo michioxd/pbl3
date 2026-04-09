@@ -8,7 +8,7 @@ namespace Pbl3.Controllers.BusAdmin
     public partial class BusesController
     {
         [HttpGet("GetAllBus")]
-        [Authorize(Policy = "ModOrAdmin")]
+        [Authorize(Policy = "BusAdmin")]
         public async Task<IActionResult> GetAll()
         {
             var companyId = await GetCurrentCompanyIdAsync();

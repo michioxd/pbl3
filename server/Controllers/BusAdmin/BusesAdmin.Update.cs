@@ -9,7 +9,7 @@ namespace Pbl3.Controllers.BusAdmin
     public partial class BusesController
     {
         [HttpPut("{id:guid}")]
-        [Authorize(Policy = "ModOrAdmin")]
+        [Authorize(Policy = "BusAdmin")]
         public async Task<IActionResult> UpdateBus(Guid id, [FromBody] UpdateBusDto dto)
         {
             var companyId = await GetCurrentCompanyIdAsync();

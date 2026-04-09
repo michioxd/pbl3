@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pbl3.Data;
@@ -9,7 +10,8 @@ namespace Pbl3.Controllers.BusAdmin
 {
     [ApiController]
     [Route("api/busadmin/buses")]
-    [Authorize(Policy = "ModOrAdmin")]
+    [Authorize(Policy = "BusAdmin")]
+    [Tags("BusAdmin")]
     public partial class BusesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;

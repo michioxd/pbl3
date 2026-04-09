@@ -9,7 +9,7 @@ namespace Pbl3.Controllers.BusAdmin
     public partial class BusesController
     {
         [HttpPost]
-        [Authorize(Policy="ModOrAdmin")]
+        [Authorize(Policy = "BusAdmin")]
         public async Task<IActionResult> CreateBus([FromBody] CreateBusDto dto)
         {
             var companyId = await GetCurrentCompanyIdAsync();
