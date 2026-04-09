@@ -10,6 +10,15 @@ export type AuthResponseDto = {
     user: UserDto;
 };
 
+export type BusAdminUpgradeRequestStatus = 0 | 1 | 2;
+
+export type CreateBusAdminUpgradeRequestDto = {
+    companyName: string;
+    licenseNumber?: string | null;
+    hotline?: string | null;
+    reason?: string | null;
+};
+
 export type CreateBusDto = {
     busTypeID?: string;
     plateNumber?: string | null;
@@ -32,6 +41,12 @@ export type CreateTripDto = {
     departureTime?: string;
     arrivalTime?: string;
     status?: TripStatus;
+};
+
+export type InforBusCompany = {
+    name: string;
+    licenseNumber?: string | null;
+    hotline?: string | null;
 };
 
 export type LoginRequestDto = {
@@ -76,6 +91,11 @@ export type RegisterRequestDto = {
     fullName: string;
     phoneNumber?: string | null;
     identityCard?: string | null;
+};
+
+export type ReviewBusAdminUpgradeRequestDto = {
+    approve: boolean;
+    reviewNote?: string | null;
 };
 
 export type SeatType = 0 | 1 | 2 | 3 | 4 | 5;
@@ -188,6 +208,38 @@ export type PostApiAuthRegisterResponses = {
 };
 
 export type PostApiAuthRegisterResponse = PostApiAuthRegisterResponses[keyof PostApiAuthRegisterResponses];
+
+export type GetApiAdminBusAdminUpgradeRequestsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        status?: BusAdminUpgradeRequestStatus;
+    };
+    url: '/api/admin/bus-admin-upgrade-requests';
+};
+
+export type GetApiAdminBusAdminUpgradeRequestsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PatchApiAdminBusAdminUpgradeRequestsByRequestIdReviewData = {
+    body?: ReviewBusAdminUpgradeRequestDto;
+    path: {
+        requestId: string;
+    };
+    query?: never;
+    url: '/api/admin/bus-admin-upgrade-requests/{requestId}/review';
+};
+
+export type PatchApiAdminBusAdminUpgradeRequestsByRequestIdReviewResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type PostApiBusadminBusesData = {
     body?: CreateBusDto;
@@ -515,44 +567,28 @@ export type PatchApiBusadminBusesTripsByTripIdStatusResponses = {
     200: unknown;
 };
 
-export type GetApiPingData = {
-    body?: never;
+export type PostAddBusCompanyData = {
+    body?: InforBusCompany;
     path?: never;
     query?: never;
-    url: '/api/ping';
+    url: '/addBusCompany';
 };
 
-export type GetApiPingResponses = {
+export type PostAddBusCompanyResponses = {
     /**
      * OK
      */
     200: unknown;
 };
 
-export type GetApiUserMeData = {
-    body?: never;
+export type PostApiPassengerUpgradeRequestsBusadminData = {
+    body?: CreateBusAdminUpgradeRequestDto;
     path?: never;
     query?: never;
-    url: '/api/user/me';
+    url: '/api/passenger/upgrade-requests/busadmin';
 };
 
-export type GetApiUserMeResponses = {
-    /**
-     * OK
-     */
-    200: MeResponseDto;
-};
-
-export type GetApiUserMeResponse = GetApiUserMeResponses[keyof GetApiUserMeResponses];
-
-export type GetApiUserMeTicketsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/user/me/tickets';
-};
-
-export type GetApiUserMeTicketsResponses = {
+export type PostApiPassengerUpgradeRequestsBusadminResponses = {
     /**
      * OK
      */
@@ -595,6 +631,66 @@ export type GetApiPassengerTicketsData = {
 };
 
 export type GetApiPassengerTicketsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiPingData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/ping';
+};
+
+export type GetApiPingResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiLandingProvincesSearchData = {
+    body?: never;
+    path?: never;
+    query?: {
+        query?: string;
+    };
+    url: '/api/landing/provinces/search';
+};
+
+export type GetApiLandingProvincesSearchResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiUserMeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/user/me';
+};
+
+export type GetApiUserMeResponses = {
+    /**
+     * OK
+     */
+    200: MeResponseDto;
+};
+
+export type GetApiUserMeResponse = GetApiUserMeResponses[keyof GetApiUserMeResponses];
+
+export type GetApiUserMeTicketsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/user/me/tickets';
+};
+
+export type GetApiUserMeTicketsResponses = {
     /**
      * OK
      */
