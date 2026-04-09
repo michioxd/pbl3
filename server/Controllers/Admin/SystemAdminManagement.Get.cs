@@ -1,50 +1,46 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pbl3.Enums;
 
-namespace Pbl3.Controllers.BusAdmin
+namespace Pbl3.Controllers.Admin
 {
-    public partial class BusesController
+    public partial class SystemAdminManagementController
     {
-        [HttpGet("company")]
-        public async Task<IActionResult> GetCompanyBuses()
+        [HttpGet("companies")]
+        public async Task<IActionResult> GetCompanies([FromQuery] string? q)
         {
-            var companyId = await GetCurrentCompanyIdAsync();
-            if (companyId == null)
-                return Forbid();
+            var query = _context.BusCompanies.AsNoTracking().AsQueryable();
 
-            var buses = await _context
-                .Buses.Include(b => b.BusType)
-                .Where(b => b.CompanyID == companyId.Value)
-                .Select(b => new
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var keyword = q.Trim().ToLowerInvariant();
+                query = query.Where(c =>
+                    c.Name.ToLower().Contains(keyword)
+                    || (c.LicenseNumber != null && c.LicenseNumber.ToLower().Contains(keyword))
+                );
+            }
+
+            var companies = await query
+                .OrderBy(c => c.Name)
+                .Select(c => new
                 {
-                    b.BusID,
-                    b.PlateNumber,
-                    b.IsActive,
-                    BusType = new
-                    {
-                        b.BusType!.BusTypeID,
-                        b.BusType.Name,
-                        b.BusType.TotalSeats,
-                        Amenities = b.BusType.Description,
-                    },
+                    c.CompanyID,
+                    c.Name,
+                    c.LicenseNumber,
+                    c.Hotline,
+                    c.IsApproved,
                 })
                 .ToListAsync();
 
-            return Ok(buses);
+            return Ok(companies);
         }
 
-        [HttpGet("company/profile")]
-        public async Task<IActionResult> GetCompanyProfile()
+        [HttpGet("companies/{companyId:guid}/profile")]
+        public async Task<IActionResult> GetCompanyProfile(Guid companyId)
         {
-            var companyId = await GetCurrentCompanyIdAsync();
-            if (companyId == null)
-                return Forbid();
-
             var company = await _context
                 .BusCompanies.AsNoTracking()
-                .Where(c => c.CompanyID == companyId.Value)
+                .Where(c => c.CompanyID == companyId)
                 .Select(c => new
                 {
                     c.CompanyID,
@@ -61,16 +57,48 @@ namespace Pbl3.Controllers.BusAdmin
             return Ok(company);
         }
 
-        [HttpGet("tickets")]
-        public async Task<IActionResult> GetBookedTickets([FromQuery] TicketStatus? status)
+        [HttpGet("companies/{companyId:guid}/buses")]
+        public async Task<IActionResult> GetCompanyBuses(Guid companyId)
         {
-            var companyId = await GetCurrentCompanyIdAsync();
-            if (companyId == null)
-                return Forbid();
+            var companyExists = await _context.BusCompanies.AnyAsync(c => c.CompanyID == companyId);
+            if (!companyExists)
+                return NotFound(new { message = "Không tìm thấy nhà xe." });
+
+            var buses = await _context
+                .Buses.AsNoTracking()
+                .Include(b => b.BusType)
+                .Where(b => b.CompanyID == companyId)
+                .Select(b => new
+                {
+                    b.BusID,
+                    b.PlateNumber,
+                    b.IsActive,
+                    b.CompanyID,
+                    BusType = b.BusType == null
+                        ? null
+                        : new
+                        {
+                            b.BusType.BusTypeID,
+                            b.BusType.Name,
+                            b.BusType.TotalSeats,
+                            Amenities = b.BusType.Description,
+                        },
+                })
+                .ToListAsync();
+
+            return Ok(buses);
+        }
+
+        [HttpGet("companies/{companyId:guid}/tickets")]
+        public async Task<IActionResult> GetBookedTickets(Guid companyId, [FromQuery] TicketStatus? status)
+        {
+            var companyExists = await _context.BusCompanies.AnyAsync(c => c.CompanyID == companyId);
+            if (!companyExists)
+                return NotFound(new { message = "Không tìm thấy nhà xe." });
 
             var query = _context
                 .Tickets.AsNoTracking()
-                .Where(t => t.Trip != null && t.Trip.Route != null && t.Trip.Route.CompanyID == companyId.Value);
+                .Where(t => t.Trip != null && t.Trip.Route != null && t.Trip.Route.CompanyID == companyId);
 
             if (status.HasValue)
             {
@@ -113,16 +141,16 @@ namespace Pbl3.Controllers.BusAdmin
             return Ok(tickets);
         }
 
-        [HttpGet("trips")]
-        public async Task<IActionResult> GetTrips([FromQuery] int? year, [FromQuery] int? month)
+        [HttpGet("companies/{companyId:guid}/trips")]
+        public async Task<IActionResult> GetTrips(Guid companyId, [FromQuery] int? year, [FromQuery] int? month)
         {
-            var companyId = await GetCurrentCompanyIdAsync();
-            if (companyId == null)
-                return Forbid();
+            var companyExists = await _context.BusCompanies.AnyAsync(c => c.CompanyID == companyId);
+            if (!companyExists)
+                return NotFound(new { message = "Không tìm thấy nhà xe." });
 
             var query = _context
                 .Trips.AsNoTracking()
-                .Where(t => t.Route != null && t.Route.CompanyID == companyId.Value);
+                .Where(t => t.Route != null && t.Route.CompanyID == companyId);
 
             if (year.HasValue && month.HasValue && month >= 1 && month <= 12)
             {
@@ -157,13 +185,9 @@ namespace Pbl3.Controllers.BusAdmin
         [HttpGet("bus-types/{busTypeId:guid}/seat-layouts")]
         public async Task<IActionResult> GetSeatLayouts(Guid busTypeId)
         {
-            var companyId = await GetCurrentCompanyIdAsync();
-            if (companyId == null)
-                return Forbid();
-
-            var hasOwnership = await IsBusTypeOwnedByCompanyAsync(companyId.Value, busTypeId);
-            if (!hasOwnership)
-                return Forbid();
+            var busTypeExists = await IsBusTypeExistsAsync(busTypeId);
+            if (!busTypeExists)
+                return NotFound(new { message = "Không tìm thấy loại xe." });
 
             var layouts = await _context
                 .SeatLayouts.AsNoTracking()
@@ -189,14 +213,6 @@ namespace Pbl3.Controllers.BusAdmin
         [HttpGet("bus-types/{busTypeId:guid}/amenities")]
         public async Task<IActionResult> GetBusTypeAmenities(Guid busTypeId)
         {
-            var companyId = await GetCurrentCompanyIdAsync();
-            if (companyId == null)
-                return Forbid();
-
-            var hasOwnership = await IsBusTypeOwnedByCompanyAsync(companyId.Value, busTypeId);
-            if (!hasOwnership)
-                return Forbid();
-
             var busType = await _context
                 .BusTypes.AsNoTracking()
                 .Where(b => b.BusTypeID == busTypeId)
@@ -214,6 +230,78 @@ namespace Pbl3.Controllers.BusAdmin
             });
         }
 
+        [HttpGet("users/{userId:guid}")]
+        public async Task<IActionResult> GetUserDetails(Guid userId)
+        {
+            var passenger = await _context
+                .Passengers.AsNoTracking()
+                .FirstOrDefaultAsync(p => p.UserID == userId);
+
+            var user = await _context
+                .Users.AsNoTracking()
+                .Include(u => u.Role)
+                .Where(u => u.UserID == userId)
+                .Select(u => new
+                {
+                    u.UserID,
+                    u.Email,
+                    u.FullName,
+                    u.PhoneNumber,
+                    u.IsActive,
+                    u.CreatedAt,
+                    role = u.Role == null ? null : new { u.Role.RoleID, u.Role.RoleName },
+                })
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+                return NotFound(new { message = "Không tìm thấy người dùng." });
+
+            return Ok(
+                new
+                {
+                    passenger = passenger == null
+                        ? null
+                        : new
+                        {
+                            passenger.PassengerID,
+                            passenger.FullName,
+                            passenger.Email,
+                            passenger.PhoneNumber,
+                        },
+                    user,
+                }
+            );
+        }
+
+        [HttpGet("users/{userId:guid}/tickets")]
+        public async Task<IActionResult> GetUserTickets(Guid userId)
+        {
+            var passenger = await _context.Passengers.AsNoTracking().FirstOrDefaultAsync(p => p.UserID == userId);
+            if (passenger == null)
+                return NotFound(new { message = "Không tìm thấy hồ sơ hành khách." });
+
+            var tickets = await _context
+                .Tickets.AsNoTracking()
+                .Include(t => t.Trip)
+                    .ThenInclude(tr => tr!.Route)
+                .Include(t => t.SeatLayout)
+                .Where(t => t.PassengerID == passenger.PassengerID)
+                .Select(t => new
+                {
+                    t.TicketID,
+                    SeatLabel = t.SeatLayout != null ? t.SeatLayout.SeatLabel : null,
+                    Price = t.FinalPrice,
+                    t.Status,
+                    RouteName = t.Trip != null && t.Trip.Route != null
+                        ? t.Trip.Route.RouteName
+                        : null,
+                    DepartureTime = t.Trip != null ? t.Trip.DepartureTime : default,
+                })
+                .ToListAsync();
+
+            return Ok(tickets);
+        }
+
         [HttpGet("stats/monthly")]
         public async Task<IActionResult> GetMonthlyTicketStats([FromQuery] int year, [FromQuery] int month)
         {
@@ -223,10 +311,6 @@ namespace Pbl3.Controllers.BusAdmin
             if (month < 1 || month > 12)
                 return BadRequest(new { message = "Month phải từ 1 đến 12." });
 
-            var companyId = await GetCurrentCompanyIdAsync();
-            if (companyId == null)
-                return Forbid();
-
             var startDate = new DateOnly(year, month, 1);
             var endDate = startDate.AddMonths(1);
 
@@ -234,8 +318,6 @@ namespace Pbl3.Controllers.BusAdmin
                 .AsNoTracking()
                 .Where(t =>
                     t.Trip != null
-                    && t.Trip.Route != null
-                    && t.Trip.Route.CompanyID == companyId.Value
                     && t.Trip.DepartureDate >= startDate
                     && t.Trip.DepartureDate < endDate
                 );
@@ -253,16 +335,11 @@ namespace Pbl3.Controllers.BusAdmin
 
             var totalTripsInMonth = await _context
                 .Trips.AsNoTracking()
-                .Where(tr =>
-                    tr.Route != null
-                    && tr.Route.CompanyID == companyId.Value
-                    && tr.DepartureDate >= startDate
-                    && tr.DepartureDate < endDate
-                )
+                .Where(tr => tr.DepartureDate >= startDate && tr.DepartureDate < endDate)
                 .CountAsync();
 
             var topRoutes = await ticketsQuery
-                .Where(t => t.Status != TicketStatus.Cancelled)
+                .Where(t => t.Status != TicketStatus.Cancelled && t.Trip != null && t.Trip.Route != null)
                 .GroupBy(t => t.Trip!.Route!.RouteName)
                 .Select(g => new
                 {

@@ -129,7 +129,7 @@ namespace Pbl3.Data
             modelBuilder
                 .Entity<Notification>()
                 .HasOne(n => n.Booking)
-                .WithMany()
+                .WithMany(b => b.Notifications)
                 .HasForeignKey(n => n.BookingID)
                 .OnDelete(DeleteBehavior.SetNull);
 

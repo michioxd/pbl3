@@ -6,17 +6,17 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pbl3.Data;
 
-namespace Pbl3.Controllers.BusAdmin
+namespace Pbl3.Controllers.Admin
 {
     [ApiController]
-    [Route("api/busadmin/buses")]
-    [Authorize(Policy = "BusAdmin")]
-    [Tags("BusAdmin")]
-    public partial class BusesController : ControllerBase
+    [Route("api/admin/system")]
+    [Authorize(Policy = "AdminOnly")]
+    [Tags("SystemAdmin")]
+    public partial class SystemAdminManagementController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
 
-        public BusesController(ApplicationDbContext context)
+        public SystemAdminManagementController(ApplicationDbContext context)
         {
             _context = context;
         }
@@ -35,16 +35,6 @@ namespace Pbl3.Controllers.BusAdmin
             throw new UnauthorizedAccessException("Không tìm thấy UserID trong token.");
         }
 
-        private async Task<Guid?> GetCurrentCompanyIdAsync()
-        {
-            var userId = GetCurrentUserId();
-
-            return await _context
-                .BusCompanyAdmins.Where(x => x.UserID == userId)
-                .Select(x => (Guid?)x.CompanyID)
-                .FirstOrDefaultAsync();
-        }
-
         private Task<bool> IsRouteOwnedByCompanyAsync(Guid companyId, Guid routeId)
         {
             return _context.BusRoutes.AnyAsync(r => r.RouteID == routeId && r.CompanyID == companyId);
@@ -53,16 +43,6 @@ namespace Pbl3.Controllers.BusAdmin
         private Task<bool> IsBusOwnedByCompanyAsync(Guid companyId, Guid busId)
         {
             return _context.Buses.AnyAsync(b => b.BusID == busId && b.CompanyID == companyId);
-        }
-
-        private Task<bool> IsTripOwnedByCompanyAsync(Guid companyId, Guid tripId)
-        {
-            return _context.Trips.AnyAsync(t => t.TripID == tripId && t.Route != null && t.Route.CompanyID == companyId);
-        }
-
-        private Task<bool> IsBusTypeOwnedByCompanyAsync(Guid companyId, Guid busTypeId)
-        {
-            return _context.Buses.AnyAsync(b => b.CompanyID == companyId && b.BusTypeID == busTypeId);
         }
 
         private Task<bool> IsBusTypeExistsAsync(Guid busTypeId)
