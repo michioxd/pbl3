@@ -1,4 +1,3 @@
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./main.css";
 import App from "./App.tsx";
@@ -7,8 +6,8 @@ import "@/locales/i18n";
 import { configure } from "mobx";
 import { BrowserRouter } from "react-router-dom";
 import { client } from "./api/client.gen.ts";
-import { getApiPing } from "./api/sdk.gen.ts";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import DialogProvider from "./shared/dialog/DialogProvider.tsx";
 
 configure({
     enforceActions: "always",
@@ -16,28 +15,29 @@ configure({
 
 client.setConfig({
     baseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:5026",
+    fetch: async (url, options) => {
+        const token = localStorage.getItem("auth_token");
+
+        if (!token) return fetch(url, options);
+
+        return fetch(url, {
+            ...options,
+            headers: {
+                ...options?.headers,
+                Authorization: token ? `Bearer ${token}` : "",
+            },
+        });
+    },
 });
 
 createRoot(document.getElementById("root")!).render(
-    <StrictMode>
-        <BrowserRouter>
-            <ThemeProvider>
-                <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID!}>
+    <BrowserRouter>
+        <ThemeProvider>
+            <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID!}>
+                <DialogProvider>
                     <App />
-                </GoogleOAuthProvider>
-            </ThemeProvider>
-        </BrowserRouter>
-    </StrictMode>,
+                </DialogProvider>
+            </GoogleOAuthProvider>
+        </ThemeProvider>
+    </BrowserRouter>,
 );
-
-// testing
-(async () => {
-    try {
-        const time = Date.now();
-        const r = await getApiPing();
-        console.log("API Ping Response:", r.data, r);
-        console.log("API Pong Time:", Date.now() - time + "ms");
-    } catch (error) {
-        console.error("API Ping Error:", error);
-    }
-})();

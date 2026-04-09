@@ -25,7 +25,7 @@ namespace Pbl3.Controllers.Auth
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
+        public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginRequestDto request)
         {
             var email = request.Email.Trim().ToLowerInvariant();
 
@@ -79,7 +79,9 @@ namespace Pbl3.Controllers.Auth
 
         [AllowAnonymous]
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
+        public async Task<ActionResult<AuthResponseDto>> Register(
+            [FromBody] RegisterRequestDto request
+        )
         {
             var email = request.Email.Trim().ToLowerInvariant();
             var fullName = request.FullName.Trim();

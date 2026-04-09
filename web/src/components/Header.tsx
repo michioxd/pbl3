@@ -1,11 +1,14 @@
 import { useThemeContext } from "@/controller/ThemeProvider";
 import { useState } from "react";
 import { Box, Flex, Container, Heading, Button, Link, IconButton, DropdownMenu } from "@radix-ui/themes";
-import { BusFront, ContrastIcon, Menu, Moon, Sun } from "lucide-react";
+import { BusFront, ContrastIcon, Menu, Moon, Sun, UserIcon } from "lucide-react";
 import LinkRouter from "@/utils/LinkRouter";
 import { LangSelectorComponent } from "./LangSelector";
 import { useTranslation } from "react-i18next";
 import LoginDialog from "@/dialogs/Login";
+import { useStore } from "@/stores";
+import useDialog from "@/shared/dialog/Dialog";
+import { observer } from "mobx-react-lite";
 
 const NAV_ITEMS = [
     { key: "nav.manageOrders", href: "#" },
@@ -13,10 +16,20 @@ const NAV_ITEMS = [
     { key: "nav.becomePartner", href: "#" },
 ];
 
-function MainHeader() {
+const MainHeader = observer(() => {
+    const store = useStore();
+    const dialog = useDialog();
     const { theme, toggleTheme } = useThemeContext();
     const { t } = useTranslation("header");
     const [authDialogOpen, setAuthDialogOpen] = useState(false);
+
+    const askLogoutConfirmation = () => {
+        dialog.confirm({
+            title: t("logout"),
+            content: t("logout_confirmation"),
+            onConfirm: () => store.user.logout(),
+        });
+    };
 
     return (
         <Box
@@ -61,14 +74,38 @@ function MainHeader() {
                                 <ContrastIcon size={18} />
                             )}
                         </IconButton>
-                        <Button
-                            variant="solid"
-                            color="blue"
-                            className="hidden md:inline-flex!"
-                            onClick={() => setAuthDialogOpen(true)}
-                        >
-                            {t("login")}
-                        </Button>
+                        {store.user.isAuthenticated ? (
+                            <DropdownMenu.Root>
+                                <DropdownMenu.Trigger>
+                                    <IconButton variant="soft" color="gray">
+                                        <UserIcon size={24} />
+                                    </IconButton>
+                                </DropdownMenu.Trigger>
+
+                                <DropdownMenu.Content size="2">
+                                    <DropdownMenu.Item>
+                                        {t("hello", { name: store.user.displayName })}
+                                    </DropdownMenu.Item>
+                                    {store.user.user?.role.roleName === "SysAdmin" && (
+                                        <DropdownMenu.Item>Truy cập Admin</DropdownMenu.Item>
+                                    )}
+                                    <DropdownMenu.Separator />
+                                    <DropdownMenu.Item onSelect={askLogoutConfirmation}>
+                                        {t("logout")}
+                                    </DropdownMenu.Item>
+                                </DropdownMenu.Content>
+                            </DropdownMenu.Root>
+                        ) : (
+                            <Button
+                                variant="solid"
+                                color="blue"
+                                className="hidden md:inline-flex!"
+                                onClick={() => setAuthDialogOpen(true)}
+                                loading={store.user.isLoading}
+                            >
+                                {t("login")}
+                            </Button>
+                        )}
                         <DropdownMenu.Root>
                             <DropdownMenu.Trigger>
                                 <IconButton variant="ghost" color="gray" className="inline-flex! md:hidden!">
@@ -83,9 +120,15 @@ function MainHeader() {
                                 ))}
 
                                 <DropdownMenu.Separator />
-                                <DropdownMenu.Item onSelect={() => setAuthDialogOpen(true)}>
-                                    {t("login")}
-                                </DropdownMenu.Item>
+                                {store.user.isAuthenticated ? (
+                                    <DropdownMenu.Item onSelect={askLogoutConfirmation}>
+                                        {t("logout")}
+                                    </DropdownMenu.Item>
+                                ) : (
+                                    <DropdownMenu.Item onSelect={() => setAuthDialogOpen(true)}>
+                                        {t("login")}
+                                    </DropdownMenu.Item>
+                                )}
                             </DropdownMenu.Content>
                         </DropdownMenu.Root>
                         <LoginDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
@@ -94,6 +137,6 @@ function MainHeader() {
             </Container>
         </Box>
     );
-}
+});
 
 export default MainHeader;

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pbl3.Data;
+using Pbl3.Dtos;
 
 namespace Pbl3.Controllers.Users
 {
@@ -30,22 +31,30 @@ namespace Pbl3.Controllers.Users
             {
                 return userId;
             }
-            throw new UnauthorizedAccessException("Không tìm thấy UserID trong token.");
+            throw new UnauthorizedAccessException("common:internal_server_error");
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetDetails()
+        public async Task<ActionResult<MeResponseDto>> GetDetails()
         {
             var userId = GetCurrentUserId();
 
             var passenger = await _context
                 .Passengers.AsNoTracking()
-                .FirstOrDefaultAsync(p => p.UserID == userId);
+                .Where(p => p.UserID == userId)
+                .Select(p => new MePassengerDto
+                {
+                    PassengerID = p.PassengerID,
+                    FullName = p.FullName,
+                    Email = p.Email,
+                    PhoneNumber = p.PhoneNumber,
+                })
+                .FirstOrDefaultAsync();
 
             if (passenger == null)
-                return NotFound(new { message = "Không tìm thấy hồ sơ hành khách." });
+                return NotFound(new { message = "common:internal_server_error" });
 
-            var user = await _context
+            var userData = await _context
                 .Users.AsNoTracking()
                 .Include(u => u.Role)
                 .Where(u => u.UserID == userId)
@@ -57,23 +66,38 @@ namespace Pbl3.Controllers.Users
                     u.PhoneNumber,
                     u.IsActive,
                     u.CreatedAt,
-                    role = u.Role == null ? null : new { u.Role.RoleID, u.Role.RoleName },
+                    Role = u.Role == null ? null : new { u.Role.RoleID, u.Role.RoleName },
                 })
                 .FirstOrDefaultAsync();
 
-            return Ok(
-                new
+            MeUserInfoDto? user = null;
+
+            if (userData != null)
+            {
+                MeUserRoleDto? role = null;
+
+                if (userData.Role != null)
                 {
-                    passenger = new
+                    role = new MeUserRoleDto
                     {
-                        passenger.PassengerID,
-                        passenger.FullName,
-                        passenger.Email,
-                        passenger.PhoneNumber,
-                    },
-                    user,
+                        RoleID = userData.Role.RoleID,
+                        RoleName = userData.Role.RoleName,
+                    };
                 }
-            );
+
+                user = new MeUserInfoDto
+                {
+                    UserID = userData.UserID,
+                    Email = userData.Email,
+                    FullName = userData.FullName,
+                    PhoneNumber = userData.PhoneNumber,
+                    IsActive = userData.IsActive,
+                    CreatedAt = userData.CreatedAt,
+                    Role = role,
+                };
+            }
+
+            return Ok(new MeResponseDto { Passenger = passenger, User = user });
         }
 
         [HttpGet("tickets")]

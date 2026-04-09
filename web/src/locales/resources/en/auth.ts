@@ -12,6 +12,7 @@ const auth = {
         description: "Sign in to manage tickets, track trips, and unlock personalized deals.",
         helper: "Access your booking history and real-time trip status.",
         submit: "Sign in",
+        success: "Login successful!",
         switchPrompt: "Don't have an account?",
         placeholders: {
             email: "Enter your email",
@@ -25,6 +26,7 @@ const auth = {
         description: "Register in just a few steps to save passenger details and receive promotions first.",
         helper: "By signing up, you agree to XeNhanh's terms and privacy policy.",
         submit: "Create account",
+        success: "Registration successful!",
         switchPrompt: "Already have an account?",
         placeholders: {
             fullName: "Enter your full name",
@@ -52,6 +54,10 @@ const auth = {
         account_is_banned: "Account is banned.",
         email_already_in_use: "Email is already in use.",
         password_mismatch: "Password and confirm password do not match.",
+    },
+    google: {
+        success: "Google login successful!",
+        failed: "Google login failed. Please try again.",
     },
 };
 

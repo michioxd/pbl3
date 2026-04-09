@@ -24,7 +24,9 @@ namespace Pbl3.Controllers.Auth
 
         [AllowAnonymous]
         [HttpPost]
-        public async Task<IActionResult> GoogleLogin([FromBody] OAuthGoogleRequestDto request)
+        public async Task<ActionResult<AuthResponseDto>> GoogleLogin(
+            [FromBody] OAuthGoogleRequestDto request
+        )
         {
             if (string.IsNullOrEmpty(request.IdToken))
                 return BadRequest(new { message = "IdToken is required." });

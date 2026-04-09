@@ -1,10 +1,12 @@
-import type { User } from "@/api";
+import { getApiUserMe, type MePassengerDto, type MeUserInfoDto, type MeUserRoleDto } from "@/api";
 import { makeAutoObservable, runInAction } from "mobx";
 
 export type ICurrentUser = {
     id: string;
     email: string;
-    currentUser: User;
+    role: MeUserRoleDto;
+    currentUser: MeUserInfoDto;
+    currentPassenger: MePassengerDto;
 };
 
 export class UserStore {
@@ -23,9 +25,7 @@ export class UserStore {
 
     get displayName() {
         if (!this.user) return "common:guest";
-        if (!this.user.currentUser?.fullName) {
-            return this.user.email;
-        }
+        if (!this.user.currentUser?.fullName) return this.user.email;
         return this.user.currentUser.fullName || "";
     }
 
@@ -37,58 +37,64 @@ export class UserStore {
         );
     }
 
-    async checkAuth() {
+    async checkAuth(): Promise<boolean> {
         console.log("Checking auth...");
         if (localStorage.getItem("auth_token") === null) {
             runInAction(() => {
                 this.isLoading = false;
                 this.user = null;
             });
-            return;
+            return false;
         }
         this.isLoading = true;
         this.error = null;
 
-        // try {
-        //     const f = await aClient.query({
-        //         query: USER_GET_CURRENT,
-        //         fetchPolicy: "network-only",
-        //     });
+        try {
+            const f = await getApiUserMe();
 
-        //     if (!f.data?.currentUser) {
-        //         this.user = null;
-        //         this.error = "Returned empty currentUser";
-        //         return;
-        //     }
+            if (!f.data?.user || !f.data?.passenger) {
+                console.error("[user.checkAuth] check failed: No user or passenger data", f.data);
+                this.user = null;
+                this.error = "common:unauthorized";
+                runInAction(() => this.logout());
+                return false;
+            }
 
-        //     runInAction(() => {
-        //         if (!f.data?.currentUser) return;
-        //         this.user = {
-        //             id: f.data?.currentUser.id || "",
-        //             email: f.data?.currentUser.email || "",
-        //             currentUser: f.data?.currentUser,
-        //         };
-        //         this.error = null;
-        //         this.userToken = localStorage.getItem("auth_token");
-        //     });
-        // } catch (e: any) {
-        // localStorage.removeItem("auth_token");
-        // await aClient.clearStore();
-        // runInAction(() => {
-        //     this.user = null;
-        //     this.error = e.message || "Unknown error";
-        // });
-        // } finally {
-        // runInAction(() => {
-        //     this.isLoading = false;
-        // });
-        // }
+            return (
+                runInAction(() => {
+                    if (!f.data?.user || !f.data?.passenger) return;
+                    this.user = {
+                        id: f.data.user.userID || "",
+                        email: f.data.user.email || "",
+                        role: f.data.user.role || { roleID: "", roleName: "" },
+                        currentUser: f.data.user,
+                        currentPassenger: f.data.passenger,
+                    };
+                    this.error = null;
+                    this.userToken = localStorage.getItem("auth_token");
+                    console.log("[user.checkAuth] User authenticated:", this.user);
+                    return true;
+                }) || false
+            );
+        } catch (e: any) {
+            console.error("[user.checkAuth] Auth check failed", e);
+            localStorage.removeItem("auth_token");
+            runInAction(() => {
+                this.user = null;
+                this.error = e.message || "common:unknown_error";
+            });
+            return false;
+        } finally {
+            runInAction(() => {
+                this.isLoading = false;
+            });
+        }
     }
 
-    async login(token: string) {
+    async login(token: string): Promise<boolean> {
         this.logout();
         localStorage.setItem("auth_token", token);
-        await this.checkAuth();
+        return await this.checkAuth();
     }
 
     async logout() {

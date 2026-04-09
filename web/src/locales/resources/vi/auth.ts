@@ -12,6 +12,7 @@ const auth = {
         description: "Đăng nhập để quản lý vé, theo dõi chuyến đi và nhận ưu đãi cá nhân hóa.",
         helper: "Truy cập lịch sử đặt vé và trạng thái chuyến đi của bạn.",
         submit: "Đăng nhập",
+        success: "Đăng nhập thành công!",
         switchPrompt: "Chưa có tài khoản?",
         placeholders: {
             email: "Nhập email của bạn",
@@ -25,6 +26,7 @@ const auth = {
         description: "Đăng ký trong vài bước để lưu thông tin hành khách và nhận khuyến mãi sớm nhất.",
         helper: "Bằng việc đăng ký, bạn đồng ý với điều khoản và chính sách của XeNhanh.",
         submit: "Tạo tài khoản",
+        success: "Tạo tài khoản thành công!",
         switchPrompt: "Đã có tài khoản?",
         placeholders: {
             fullName: "Nhập họ và tên",
@@ -44,6 +46,18 @@ const auth = {
         placeholders: {
             email: "Nhập email để nhận liên kết",
         },
+    },
+    msg: {
+        invalid_credentials: "Email hoặc mật khẩu không hợp lệ. Vui lòng thử lại.",
+        google_login_failed: "Đăng nhập Google thất bại. Vui lòng thử lại.",
+        legacy_login_is_not_allowed: "Đăng nhập cổ điển không được cho phép.",
+        account_is_banned: "Tài khoản của bạn đã bị cấm.",
+        email_already_in_use: "Email đã được sử dụng.",
+        password_mismatch: "Mật khẩu và xác nhận mật khẩu không khớp.",
+    },
+    google: {
+        success: "Đăng nhập Google thành công!",
+        failed: "Đăng nhập Google thất bại. Vui lòng thử lại.",
     },
 };
 
