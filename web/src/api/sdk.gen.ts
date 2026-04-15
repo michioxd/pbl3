@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteApiBusadminBusesByIdData, DeleteApiBusadminBusesByIdResponses, DeleteApiBusadminBusesSeatLayoutsByLayoutIdData, DeleteApiBusadminBusesSeatLayoutsByLayoutIdResponses, DeleteApiBusadminBusesTripsByTripIdData, DeleteApiBusadminBusesTripsByTripIdResponses, GetApiAdminBusAdminUpgradeRequestsData, GetApiAdminBusAdminUpgradeRequestsResponses, GetApiBusadminBusesBusTypesByBusTypeIdAmenitiesData, GetApiBusadminBusesBusTypesByBusTypeIdAmenitiesResponses, GetApiBusadminBusesBusTypesByBusTypeIdSeatLayoutsData, GetApiBusadminBusesBusTypesByBusTypeIdSeatLayoutsResponses, GetApiBusadminBusesCompanyData, GetApiBusadminBusesCompanyProfileData, GetApiBusadminBusesCompanyProfileResponses, GetApiBusadminBusesCompanyResponses, GetApiBusadminBusesGetAllBusData, GetApiBusadminBusesGetAllBusResponses, GetApiBusadminBusesStatsMonthlyData, GetApiBusadminBusesStatsMonthlyResponses, GetApiBusadminBusesTicketsData, GetApiBusadminBusesTicketsResponses, GetApiBusadminBusesTripsData, GetApiBusadminBusesTripsResponses, GetApiLandingProvincesSearchData, GetApiLandingProvincesSearchResponses, GetApiPassengerProfileData, GetApiPassengerProfileResponses, GetApiPassengerTicketsData, GetApiPassengerTicketsResponses, GetApiPingData, GetApiPingResponses, GetApiUserMeData, GetApiUserMeResponses, GetApiUserMeTicketsData, GetApiUserMeTicketsResponses, PatchApiAdminBusAdminUpgradeRequestsByRequestIdReviewData, PatchApiAdminBusAdminUpgradeRequestsByRequestIdReviewResponses, PatchApiBusadminBusesBusTypesByBusTypeIdAmenitiesData, PatchApiBusadminBusesBusTypesByBusTypeIdAmenitiesResponses, PatchApiBusadminBusesByIdStatusData, PatchApiBusadminBusesByIdStatusResponses, PatchApiBusadminBusesTripsByTripIdStatusData, PatchApiBusadminBusesTripsByTripIdStatusResponses, PostAddBusCompanyData, PostAddBusCompanyResponses, PostApiAuthLoginData, PostApiAuthLoginResponses, PostApiAuthOauthGoogleData, PostApiAuthOauthGoogleResponses, PostApiAuthRegisterData, PostApiAuthRegisterResponses, PostApiBusadminBusesBusTypesByBusTypeIdSeatLayoutsData, PostApiBusadminBusesBusTypesByBusTypeIdSeatLayoutsResponses, PostApiBusadminBusesData, PostApiBusadminBusesResponses, PostApiBusadminBusesTripsData, PostApiBusadminBusesTripsResponses, PostApiPassengerUpgradeRequestsBusadminData, PostApiPassengerUpgradeRequestsBusadminResponses, PutApiBusadminBusesByIdData, PutApiBusadminBusesByIdResponses, PutApiBusadminBusesCompanyProfileData, PutApiBusadminBusesCompanyProfileResponses, PutApiBusadminBusesSeatLayoutsByLayoutIdData, PutApiBusadminBusesSeatLayoutsByLayoutIdResponses, PutApiBusadminBusesTripsByTripIdData, PutApiBusadminBusesTripsByTripIdResponses, PutApiPassengerProfileData, PutApiPassengerProfileResponses } from './types.gen';
+import type { DeleteApiAdminSystemBusesByIdData, DeleteApiAdminSystemBusesByIdResponses, DeleteApiAdminSystemSeatLayoutsByLayoutIdData, DeleteApiAdminSystemSeatLayoutsByLayoutIdResponses, DeleteApiAdminSystemTripsByTripIdData, DeleteApiAdminSystemTripsByTripIdResponses, DeleteApiBusadminBusesByIdData, DeleteApiBusadminBusesByIdResponses, DeleteApiBusadminBusesSeatLayoutsByLayoutIdData, DeleteApiBusadminBusesSeatLayoutsByLayoutIdResponses, DeleteApiBusadminBusesTripsByTripIdData, DeleteApiBusadminBusesTripsByTripIdResponses, GetApiAdminBusAdminUpgradeRequestsData, GetApiAdminBusAdminUpgradeRequestsResponses, GetApiAdminSystemBusTypesByBusTypeIdAmenitiesData, GetApiAdminSystemBusTypesByBusTypeIdAmenitiesResponses, GetApiAdminSystemBusTypesByBusTypeIdSeatLayoutsData, GetApiAdminSystemBusTypesByBusTypeIdSeatLayoutsResponses, GetApiAdminSystemCompaniesByCompanyIdBusesData, GetApiAdminSystemCompaniesByCompanyIdBusesResponses, GetApiAdminSystemCompaniesByCompanyIdProfileData, GetApiAdminSystemCompaniesByCompanyIdProfileResponses, GetApiAdminSystemCompaniesByCompanyIdTicketsData, GetApiAdminSystemCompaniesByCompanyIdTicketsResponses, GetApiAdminSystemCompaniesByCompanyIdTripsData, GetApiAdminSystemCompaniesByCompanyIdTripsResponses, GetApiAdminSystemCompaniesData, GetApiAdminSystemCompaniesResponses, GetApiAdminSystemStatsMonthlyData, GetApiAdminSystemStatsMonthlyResponses, GetApiAdminSystemUsersByUserIdData, GetApiAdminSystemUsersByUserIdResponses, GetApiAdminSystemUsersByUserIdTicketsData, GetApiAdminSystemUsersByUserIdTicketsResponses, GetApiBusadminBusesBusTypesByBusTypeIdAmenitiesData, GetApiBusadminBusesBusTypesByBusTypeIdAmenitiesResponses, GetApiBusadminBusesBusTypesByBusTypeIdSeatLayoutsData, GetApiBusadminBusesBusTypesByBusTypeIdSeatLayoutsResponses, GetApiBusadminBusesCompanyData, GetApiBusadminBusesCompanyProfileData, GetApiBusadminBusesCompanyProfileResponses, GetApiBusadminBusesCompanyResponses, GetApiBusadminBusesStatsMonthlyData, GetApiBusadminBusesStatsMonthlyResponses, GetApiBusadminBusesTicketsData, GetApiBusadminBusesTicketsResponses, GetApiBusadminBusesTripsData, GetApiBusadminBusesTripsResponses, GetApiLandingProvincesSearchData, GetApiLandingProvincesSearchErrors, GetApiLandingProvincesSearchResponses, GetApiPassengerProfileData, GetApiPassengerProfileResponses, GetApiPassengerTicketsData, GetApiPassengerTicketsResponses, GetApiPingData, GetApiPingResponses, GetApiUserMeData, GetApiUserMeResponses, GetApiUserMeTicketsData, GetApiUserMeTicketsResponses, PatchApiAdminBusAdminUpgradeRequestsByRequestIdReviewData, PatchApiAdminBusAdminUpgradeRequestsByRequestIdReviewResponses, PatchApiAdminSystemBusTypesByBusTypeIdAmenitiesData, PatchApiAdminSystemBusTypesByBusTypeIdAmenitiesResponses, PatchApiBusadminBusesBusTypesByBusTypeIdAmenitiesData, PatchApiBusadminBusesBusTypesByBusTypeIdAmenitiesResponses, PostAddBusCompanyData, PostAddBusCompanyResponses, PostApiAdminSystemBusTypesByBusTypeIdSeatLayoutsData, PostApiAdminSystemBusTypesByBusTypeIdSeatLayoutsResponses, PostApiAdminSystemCompaniesByCompanyIdBusesData, PostApiAdminSystemCompaniesByCompanyIdBusesResponses, PostApiAdminSystemCompaniesByCompanyIdTripsData, PostApiAdminSystemCompaniesByCompanyIdTripsResponses, PostApiAuthLoginData, PostApiAuthLoginResponses, PostApiAuthOauthGoogleData, PostApiAuthOauthGoogleResponses, PostApiAuthRegisterData, PostApiAuthRegisterResponses, PostApiBusadminBusesBusTypesByBusTypeIdSeatLayoutsData, PostApiBusadminBusesBusTypesByBusTypeIdSeatLayoutsResponses, PostApiBusadminBusesData, PostApiBusadminBusesResponses, PostApiBusadminBusesTripsData, PostApiBusadminBusesTripsResponses, PostApiPassengerUpgradeRequestsBusadminData, PostApiPassengerUpgradeRequestsBusadminResponses, PutApiAdminSystemBusesByIdData, PutApiAdminSystemBusesByIdResponses, PutApiAdminSystemCompaniesByCompanyIdProfileData, PutApiAdminSystemCompaniesByCompanyIdProfileResponses, PutApiAdminSystemSeatLayoutsByLayoutIdData, PutApiAdminSystemSeatLayoutsByLayoutIdResponses, PutApiAdminSystemTripsByTripIdData, PutApiAdminSystemTripsByTripIdResponses, PutApiBusadminBusesByIdData, PutApiBusadminBusesByIdResponses, PutApiBusadminBusesCompanyProfileData, PutApiBusadminBusesCompanyProfileResponses, PutApiBusadminBusesSeatLayoutsByLayoutIdData, PutApiBusadminBusesSeatLayoutsByLayoutIdResponses, PutApiBusadminBusesTripsByTripIdData, PutApiBusadminBusesTripsByTripIdResponses, PutApiPassengerProfileData, PutApiPassengerProfileResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -45,22 +45,6 @@ export const postApiAuthRegister = <ThrowOnError extends boolean = false>(option
     headers: {
         'Content-Type': 'application/json',
         ...options?.headers
-    }
-});
-
-export const getApiAdminBusAdminUpgradeRequests = <ThrowOnError extends boolean = false>(options?: Options<GetApiAdminBusAdminUpgradeRequestsData, ThrowOnError>) => (options?.client ?? client).get<GetApiAdminBusAdminUpgradeRequestsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/admin/bus-admin-upgrade-requests',
-    ...options
-});
-
-export const patchApiAdminBusAdminUpgradeRequestsByRequestIdReview = <ThrowOnError extends boolean = false>(options: Options<PatchApiAdminBusAdminUpgradeRequestsByRequestIdReviewData, ThrowOnError>) => (options.client ?? client).patch<PatchApiAdminBusAdminUpgradeRequestsByRequestIdReviewResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/admin/bus-admin-upgrade-requests/{requestId}/review',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
     }
 });
 
@@ -154,12 +138,6 @@ export const putApiBusadminBusesSeatLayoutsByLayoutId = <ThrowOnError extends bo
     }
 });
 
-export const getApiBusadminBusesGetAllBus = <ThrowOnError extends boolean = false>(options?: Options<GetApiBusadminBusesGetAllBusData, ThrowOnError>) => (options?.client ?? client).get<GetApiBusadminBusesGetAllBusResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/busadmin/buses/GetAllBus',
-    ...options
-});
-
 export const getApiBusadminBusesCompany = <ThrowOnError extends boolean = false>(options?: Options<GetApiBusadminBusesCompanyData, ThrowOnError>) => (options?.client ?? client).get<GetApiBusadminBusesCompanyResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/busadmin/buses/company',
@@ -210,26 +188,6 @@ export const getApiBusadminBusesStatsMonthly = <ThrowOnError extends boolean = f
     ...options
 });
 
-export const patchApiBusadminBusesByIdStatus = <ThrowOnError extends boolean = false>(options: Options<PatchApiBusadminBusesByIdStatusData, ThrowOnError>) => (options.client ?? client).patch<PatchApiBusadminBusesByIdStatusResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/busadmin/buses/{id}/status',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-export const patchApiBusadminBusesTripsByTripIdStatus = <ThrowOnError extends boolean = false>(options: Options<PatchApiBusadminBusesTripsByTripIdStatusData, ThrowOnError>) => (options.client ?? client).patch<PatchApiBusadminBusesTripsByTripIdStatusResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/busadmin/buses/trips/{tripId}/status',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
 export const postAddBusCompany = <ThrowOnError extends boolean = false>(options?: Options<PostAddBusCompanyData, ThrowOnError>) => (options?.client ?? client).post<PostAddBusCompanyResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/addBusCompany',
@@ -278,9 +236,183 @@ export const getApiPing = <ThrowOnError extends boolean = false>(options?: Optio
     ...options
 });
 
-export const getApiLandingProvincesSearch = <ThrowOnError extends boolean = false>(options?: Options<GetApiLandingProvincesSearchData, ThrowOnError>) => (options?.client ?? client).get<GetApiLandingProvincesSearchResponses, unknown, ThrowOnError>({
+export const getApiLandingProvincesSearch = <ThrowOnError extends boolean = false>(options?: Options<GetApiLandingProvincesSearchData, ThrowOnError>) => (options?.client ?? client).get<GetApiLandingProvincesSearchResponses, GetApiLandingProvincesSearchErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/landing/provinces/search',
+    ...options
+});
+
+export const getApiAdminBusAdminUpgradeRequests = <ThrowOnError extends boolean = false>(options?: Options<GetApiAdminBusAdminUpgradeRequestsData, ThrowOnError>) => (options?.client ?? client).get<GetApiAdminBusAdminUpgradeRequestsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/bus-admin-upgrade-requests',
+    ...options
+});
+
+export const patchApiAdminBusAdminUpgradeRequestsByRequestIdReview = <ThrowOnError extends boolean = false>(options: Options<PatchApiAdminBusAdminUpgradeRequestsByRequestIdReviewData, ThrowOnError>) => (options.client ?? client).patch<PatchApiAdminBusAdminUpgradeRequestsByRequestIdReviewResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/bus-admin-upgrade-requests/{requestId}/review',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getApiAdminSystemCompaniesByCompanyIdBuses = <ThrowOnError extends boolean = false>(options: Options<GetApiAdminSystemCompaniesByCompanyIdBusesData, ThrowOnError>) => (options.client ?? client).get<GetApiAdminSystemCompaniesByCompanyIdBusesResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/companies/{companyId}/buses',
+    ...options
+});
+
+export const postApiAdminSystemCompaniesByCompanyIdBuses = <ThrowOnError extends boolean = false>(options: Options<PostApiAdminSystemCompaniesByCompanyIdBusesData, ThrowOnError>) => (options.client ?? client).post<PostApiAdminSystemCompaniesByCompanyIdBusesResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/companies/{companyId}/buses',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const deleteApiAdminSystemBusesById = <ThrowOnError extends boolean = false>(options: Options<DeleteApiAdminSystemBusesByIdData, ThrowOnError>) => (options.client ?? client).delete<DeleteApiAdminSystemBusesByIdResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/buses/{id}',
+    ...options
+});
+
+export const putApiAdminSystemBusesById = <ThrowOnError extends boolean = false>(options: Options<PutApiAdminSystemBusesByIdData, ThrowOnError>) => (options.client ?? client).put<PutApiAdminSystemBusesByIdResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/buses/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getApiAdminSystemCompaniesByCompanyIdTrips = <ThrowOnError extends boolean = false>(options: Options<GetApiAdminSystemCompaniesByCompanyIdTripsData, ThrowOnError>) => (options.client ?? client).get<GetApiAdminSystemCompaniesByCompanyIdTripsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/companies/{companyId}/trips',
+    ...options
+});
+
+export const postApiAdminSystemCompaniesByCompanyIdTrips = <ThrowOnError extends boolean = false>(options: Options<PostApiAdminSystemCompaniesByCompanyIdTripsData, ThrowOnError>) => (options.client ?? client).post<PostApiAdminSystemCompaniesByCompanyIdTripsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/companies/{companyId}/trips',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const deleteApiAdminSystemTripsByTripId = <ThrowOnError extends boolean = false>(options: Options<DeleteApiAdminSystemTripsByTripIdData, ThrowOnError>) => (options.client ?? client).delete<DeleteApiAdminSystemTripsByTripIdResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/trips/{tripId}',
+    ...options
+});
+
+export const putApiAdminSystemTripsByTripId = <ThrowOnError extends boolean = false>(options: Options<PutApiAdminSystemTripsByTripIdData, ThrowOnError>) => (options.client ?? client).put<PutApiAdminSystemTripsByTripIdResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/trips/{tripId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getApiAdminSystemBusTypesByBusTypeIdSeatLayouts = <ThrowOnError extends boolean = false>(options: Options<GetApiAdminSystemBusTypesByBusTypeIdSeatLayoutsData, ThrowOnError>) => (options.client ?? client).get<GetApiAdminSystemBusTypesByBusTypeIdSeatLayoutsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/bus-types/{busTypeId}/seat-layouts',
+    ...options
+});
+
+export const postApiAdminSystemBusTypesByBusTypeIdSeatLayouts = <ThrowOnError extends boolean = false>(options: Options<PostApiAdminSystemBusTypesByBusTypeIdSeatLayoutsData, ThrowOnError>) => (options.client ?? client).post<PostApiAdminSystemBusTypesByBusTypeIdSeatLayoutsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/bus-types/{busTypeId}/seat-layouts',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const deleteApiAdminSystemSeatLayoutsByLayoutId = <ThrowOnError extends boolean = false>(options: Options<DeleteApiAdminSystemSeatLayoutsByLayoutIdData, ThrowOnError>) => (options.client ?? client).delete<DeleteApiAdminSystemSeatLayoutsByLayoutIdResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/seat-layouts/{layoutId}',
+    ...options
+});
+
+export const putApiAdminSystemSeatLayoutsByLayoutId = <ThrowOnError extends boolean = false>(options: Options<PutApiAdminSystemSeatLayoutsByLayoutIdData, ThrowOnError>) => (options.client ?? client).put<PutApiAdminSystemSeatLayoutsByLayoutIdResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/seat-layouts/{layoutId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getApiAdminSystemCompanies = <ThrowOnError extends boolean = false>(options?: Options<GetApiAdminSystemCompaniesData, ThrowOnError>) => (options?.client ?? client).get<GetApiAdminSystemCompaniesResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/companies',
+    ...options
+});
+
+export const getApiAdminSystemCompaniesByCompanyIdProfile = <ThrowOnError extends boolean = false>(options: Options<GetApiAdminSystemCompaniesByCompanyIdProfileData, ThrowOnError>) => (options.client ?? client).get<GetApiAdminSystemCompaniesByCompanyIdProfileResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/companies/{companyId}/profile',
+    ...options
+});
+
+export const putApiAdminSystemCompaniesByCompanyIdProfile = <ThrowOnError extends boolean = false>(options: Options<PutApiAdminSystemCompaniesByCompanyIdProfileData, ThrowOnError>) => (options.client ?? client).put<PutApiAdminSystemCompaniesByCompanyIdProfileResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/companies/{companyId}/profile',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getApiAdminSystemCompaniesByCompanyIdTickets = <ThrowOnError extends boolean = false>(options: Options<GetApiAdminSystemCompaniesByCompanyIdTicketsData, ThrowOnError>) => (options.client ?? client).get<GetApiAdminSystemCompaniesByCompanyIdTicketsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/companies/{companyId}/tickets',
+    ...options
+});
+
+export const getApiAdminSystemBusTypesByBusTypeIdAmenities = <ThrowOnError extends boolean = false>(options: Options<GetApiAdminSystemBusTypesByBusTypeIdAmenitiesData, ThrowOnError>) => (options.client ?? client).get<GetApiAdminSystemBusTypesByBusTypeIdAmenitiesResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/bus-types/{busTypeId}/amenities',
+    ...options
+});
+
+export const patchApiAdminSystemBusTypesByBusTypeIdAmenities = <ThrowOnError extends boolean = false>(options: Options<PatchApiAdminSystemBusTypesByBusTypeIdAmenitiesData, ThrowOnError>) => (options.client ?? client).patch<PatchApiAdminSystemBusTypesByBusTypeIdAmenitiesResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/bus-types/{busTypeId}/amenities',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getApiAdminSystemUsersByUserId = <ThrowOnError extends boolean = false>(options: Options<GetApiAdminSystemUsersByUserIdData, ThrowOnError>) => (options.client ?? client).get<GetApiAdminSystemUsersByUserIdResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/users/{userId}',
+    ...options
+});
+
+export const getApiAdminSystemUsersByUserIdTickets = <ThrowOnError extends boolean = false>(options: Options<GetApiAdminSystemUsersByUserIdTicketsData, ThrowOnError>) => (options.client ?? client).get<GetApiAdminSystemUsersByUserIdTicketsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/users/{userId}/tickets',
+    ...options
+});
+
+export const getApiAdminSystemStatsMonthly = <ThrowOnError extends boolean = false>(options?: Options<GetApiAdminSystemStatsMonthlyData, ThrowOnError>) => (options?.client ?? client).get<GetApiAdminSystemStatsMonthlyResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/system/stats/monthly',
     ...options
 });
 

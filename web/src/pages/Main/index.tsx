@@ -1,23 +1,11 @@
-import {
-    Box,
-    Flex,
-    Grid,
-    Container,
-    Heading,
-    Text,
-    Button,
-    Card,
-    Inset,
-    TextField,
-    Tabs,
-    Badge,
-    Avatar,
-    Link,
-} from "@radix-ui/themes";
+import { Box, Flex, Grid, Container, Heading, Text, Button, Card, Inset, Badge, Avatar, Link } from "@radix-ui/themes";
 import { useThemeContext } from "@/controller/ThemeProvider";
-import { ArrowRight, Calendar, Headset, MapPin, Search, ShieldCheck, Sparkles, Star, Ticket } from "lucide-react";
+import { ArrowRight, Headset, MapPin, PlusIcon, Search, ShieldCheck, Sparkles, Star, Ticket } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+import { DatePickerInput } from "@/components/ui/datepicker";
+import { useState } from "react";
+import AddressSearch from "@/components/Main/AddressSearch";
 
 const PROMOS = [
     {
@@ -81,6 +69,7 @@ const POPULAR_ROUTES = [
 function HeroAndSearch() {
     const { mode } = useThemeContext();
     const { t } = useTranslation("hero");
+    const [withReturnDate, setWithReturnDate] = useState(false);
 
     return (
         <Box position="relative" pb="9" style={{ backgroundColor: "var(--gray-2)" }}>
@@ -107,117 +96,71 @@ function HeroAndSearch() {
 
             <Container size="4" px="4" style={{ marginTop: "-64px", position: "relative", zIndex: 10 }}>
                 <Card size="3" variant="surface" className="pt-3!">
-                    <Tabs.Root defaultValue="oneway">
-                        <Tabs.List size="2" mb="4" color="blue">
-                            <Tabs.Trigger value="oneway">
-                                <Flex align="center" gap="2">
-                                    {t("tabs.oneway")}
-                                </Flex>
-                            </Tabs.Trigger>
-                            <Tabs.Trigger value="roundtrip">
-                                <Flex align="center" gap="2">
-                                    {t("tabs.roundtrip")}
-                                </Flex>
-                            </Tabs.Trigger>
-                        </Tabs.List>
+                    <Box pt="2">
+                        <Grid columns={{ initial: "1", md: "1" }} gap="6" align="start">
+                            <Grid columns={{ initial: "1", md: "3" }} gap="4" align="end">
+                                <Box>
+                                    <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
+                                        {t("fields.from")}
+                                    </Text>
+                                    <AddressSearch
+                                        inputProps={{
+                                            placeholder: t("placeholders.fromFull"),
+                                        }}
+                                    />
+                                </Box>
 
-                        <Box pt="2">
-                            <Tabs.Content value="oneway">
-                                <Grid columns={{ initial: "1", md: "4" }} gap="4" align="end">
-                                    <Box>
-                                        <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
-                                            {t("fields.from")}
-                                        </Text>
-                                        <TextField.Root size="3" placeholder={t("placeholders.fromFull")}>
-                                            <TextField.Slot>
-                                                <MapPin size={18} />
-                                            </TextField.Slot>
-                                        </TextField.Root>
-                                    </Box>
-
-                                    <Box>
-                                        <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
-                                            {t("fields.to")}
-                                        </Text>
-                                        <TextField.Root size="3" placeholder={t("placeholders.toFull")}>
-                                            <TextField.Slot>
-                                                <MapPin size={18} />
-                                            </TextField.Slot>
-                                        </TextField.Root>
-                                    </Box>
-
+                                <Box>
+                                    <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
+                                        {t("fields.to")}
+                                    </Text>
+                                    <AddressSearch
+                                        inputProps={{
+                                            placeholder: t("placeholders.toFull"),
+                                        }}
+                                    />
+                                </Box>
+                                <Grid columns={{ initial: "2", md: "2" }} gap="4" align="end">
                                     <Box>
                                         <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
                                             {t("fields.departureDate")}
                                         </Text>
-                                        <TextField.Root size="3" type="date">
-                                            <TextField.Slot>
-                                                <Calendar size={18} />
-                                            </TextField.Slot>
-                                        </TextField.Root>
+                                        <DatePickerInput
+                                            inputProps={{
+                                                placeholder: t("fields.departureDate"),
+                                            }}
+                                        />
                                     </Box>
-
-                                    <Button size="3" color="amber" variant="solid" style={{ cursor: "pointer" }}>
-                                        <Search size={18} />
-                                        {t("actions.searchTrip")}
-                                    </Button>
-                                </Grid>
-                            </Tabs.Content>
-
-                            <Tabs.Content value="roundtrip">
-                                <Grid columns={{ initial: "1", md: "5" }} gap="4" align="end">
-                                    <Box>
-                                        <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
-                                            {t("fields.from")}
-                                        </Text>
-                                        <TextField.Root size="3" placeholder={t("placeholders.fromShort")}>
-                                            <TextField.Slot>
-                                                <MapPin size={18} />
-                                            </TextField.Slot>
-                                        </TextField.Root>
-                                    </Box>
-
-                                    <Box>
-                                        <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
-                                            {t("fields.to")}
-                                        </Text>
-                                        <TextField.Root size="3" placeholder={t("placeholders.toShort")}>
-                                            <TextField.Slot>
-                                                <MapPin size={18} />
-                                            </TextField.Slot>
-                                        </TextField.Root>
-                                    </Box>
-
-                                    <Box>
-                                        <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
-                                            {t("fields.departureDate")}
-                                        </Text>
-                                        <TextField.Root size="3" type="date">
-                                            <TextField.Slot>
-                                                <Calendar size={18} />
-                                            </TextField.Slot>
-                                        </TextField.Root>
-                                    </Box>
-
                                     <Box>
                                         <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
                                             {t("fields.returnDate")}
                                         </Text>
-                                        <TextField.Root size="3" type="date">
-                                            <TextField.Slot>
-                                                <Calendar size={18} />
-                                            </TextField.Slot>
-                                        </TextField.Root>
+                                        {withReturnDate ? (
+                                            <DatePickerInput
+                                                inputProps={{
+                                                    placeholder: t("fields.returnDate"),
+                                                }}
+                                            />
+                                        ) : (
+                                            <Button
+                                                variant="soft"
+                                                color="gray"
+                                                size="3"
+                                                onClick={() => setWithReturnDate(true)}
+                                            >
+                                                <PlusIcon size={14} />
+                                                {t("actions.addReturnDate")}
+                                            </Button>
+                                        )}
                                     </Box>
-
-                                    <Button size="3" color="amber" variant="solid" style={{ cursor: "pointer" }}>
-                                        <Search size={18} />
-                                        {t("actions.search")}
-                                    </Button>
                                 </Grid>
-                            </Tabs.Content>
-                        </Box>
-                    </Tabs.Root>
+                            </Grid>
+                            <Button size="3" color="amber" variant="solid" style={{ cursor: "pointer" }}>
+                                <Search size={18} />
+                                {t("actions.search")}
+                            </Button>
+                        </Grid>
+                    </Box>
                 </Card>
             </Container>
         </Box>

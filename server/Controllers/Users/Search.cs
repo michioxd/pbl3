@@ -86,7 +86,11 @@ namespace Pbl3.Controllers
         // GET /api/landing/provinces/search?query=hoà khánh lien chieu da nang
         [AllowAnonymous]
         [HttpGet]
-        public async Task<IActionResult> Search([FromQuery(Name = "query")] string? query)
+        [ProducesResponseType(typeof(List<ProvinceResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<List<ProvinceResponse>>> Search(
+            [FromQuery(Name = "query")] string? query
+        )
         {
             if (string.IsNullOrWhiteSpace(query))
                 return BadRequest(new { message = "Query is required." });
