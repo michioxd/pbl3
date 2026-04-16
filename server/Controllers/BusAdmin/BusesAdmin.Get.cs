@@ -70,7 +70,11 @@ namespace Pbl3.Controllers.BusAdmin
 
             var query = _context
                 .Tickets.AsNoTracking()
-                .Where(t => t.Trip != null && t.Trip.Route != null && t.Trip.Route.CompanyID == companyId.Value);
+                .Where(t =>
+                    t.Trip != null
+                    && t.Trip.Route != null
+                    && t.Trip.Route.CompanyID == companyId.Value
+                );
 
             if (status.HasValue)
             {
@@ -200,22 +204,32 @@ namespace Pbl3.Controllers.BusAdmin
             var busType = await _context
                 .BusTypes.AsNoTracking()
                 .Where(b => b.BusTypeID == busTypeId)
-                .Select(b => new { b.BusTypeID, b.Name, b.Description })
+                .Select(b => new
+                {
+                    b.BusTypeID,
+                    b.Name,
+                    b.Description,
+                })
                 .FirstOrDefaultAsync();
 
             if (busType == null)
                 return NotFound(new { message = "Không tìm thấy loại xe." });
 
-            return Ok(new
-            {
-                busType.BusTypeID,
-                busType.Name,
-                Amenities = busType.Description,
-            });
+            return Ok(
+                new
+                {
+                    busType.BusTypeID,
+                    busType.Name,
+                    Amenities = busType.Description,
+                }
+            );
         }
 
         [HttpGet("stats/monthly")]
-        public async Task<IActionResult> GetMonthlyTicketStats([FromQuery] int year, [FromQuery] int month)
+        public async Task<IActionResult> GetMonthlyTicketStats(
+            [FromQuery] int year,
+            [FromQuery] int month
+        )
         {
             if (year < 2000 || year > 3000)
                 return BadRequest(new { message = "Year không hợp lệ." });
@@ -230,8 +244,8 @@ namespace Pbl3.Controllers.BusAdmin
             var startDate = new DateOnly(year, month, 1);
             var endDate = startDate.AddMonths(1);
 
-            var ticketsQuery = _context.Tickets
-                .AsNoTracking()
+            var ticketsQuery = _context
+                .Tickets.AsNoTracking()
                 .Where(t =>
                     t.Trip != null
                     && t.Trip.Route != null
@@ -241,12 +255,20 @@ namespace Pbl3.Controllers.BusAdmin
                 );
 
             var totalTickets = await ticketsQuery.CountAsync();
-            var soldTickets = await ticketsQuery.CountAsync(t => t.Status != TicketStatus.Cancelled);
-            var cancelledTickets = await ticketsQuery.CountAsync(t => t.Status == TicketStatus.Cancelled);
-            var checkedInTickets = await ticketsQuery.CountAsync(t => t.Status == TicketStatus.CheckedIn);
+            var soldTickets = await ticketsQuery.CountAsync(t =>
+                t.Status != TicketStatus.Cancelled
+            );
+            var cancelledTickets = await ticketsQuery.CountAsync(t =>
+                t.Status == TicketStatus.Cancelled
+            );
+            var checkedInTickets = await ticketsQuery.CountAsync(t =>
+                t.Status == TicketStatus.CheckedIn
+            );
 
             var grossRevenue =
-                await ticketsQuery.Where(t => t.Status != TicketStatus.Cancelled).SumAsync(t => (decimal?)t.FinalPrice)
+                await ticketsQuery
+                    .Where(t => t.Status != TicketStatus.Cancelled)
+                    .SumAsync(t => (decimal?)t.FinalPrice)
                 ?? 0m;
 
             var avgTicketPrice = soldTickets == 0 ? 0m : grossRevenue / soldTickets;
@@ -283,31 +305,39 @@ namespace Pbl3.Controllers.BusAdmin
                     TotalTickets = g.Count(),
                     SoldTickets = g.Count(x => x.Status != TicketStatus.Cancelled),
                     CancelledTickets = g.Count(x => x.Status == TicketStatus.Cancelled),
-                    Revenue = g.Where(x => x.Status != TicketStatus.Cancelled).Sum(x => x.FinalPrice),
+                    Revenue = g.Where(x => x.Status != TicketStatus.Cancelled)
+                        .Sum(x => x.FinalPrice),
                 })
                 .OrderBy(x => x.Date)
                 .ToListAsync();
 
-            var cancellationRate = totalTickets == 0 ? 0m : Math.Round((decimal)cancelledTickets * 100m / totalTickets, 2);
+            var cancellationRate =
+                totalTickets == 0
+                    ? 0m
+                    : Math.Round((decimal)cancelledTickets * 100m / totalTickets, 2);
             var avgSoldTicketsPerTrip =
-                totalTripsInMonth == 0 ? 0m : Math.Round((decimal)soldTickets / totalTripsInMonth, 2);
+                totalTripsInMonth == 0
+                    ? 0m
+                    : Math.Round((decimal)soldTickets / totalTripsInMonth, 2);
 
-            return Ok(new
-            {
-                Year = year,
-                Month = month,
-                TotalTickets = totalTickets,
-                SoldTickets = soldTickets,
-                CancelledTickets = cancelledTickets,
-                CheckedInTickets = checkedInTickets,
-                CancellationRatePercent = cancellationRate,
-                GrossRevenue = grossRevenue,
-                AverageTicketPrice = Math.Round(avgTicketPrice, 2),
-                TotalTrips = totalTripsInMonth,
-                AverageSoldTicketsPerTrip = avgSoldTicketsPerTrip,
-                TopRoutes = topRoutes,
-                DailyStats = dailyStats,
-            });
+            return Ok(
+                new
+                {
+                    Year = year,
+                    Month = month,
+                    TotalTickets = totalTickets,
+                    SoldTickets = soldTickets,
+                    CancelledTickets = cancelledTickets,
+                    CheckedInTickets = checkedInTickets,
+                    CancellationRatePercent = cancellationRate,
+                    GrossRevenue = grossRevenue,
+                    AverageTicketPrice = Math.Round(avgTicketPrice, 2),
+                    TotalTrips = totalTripsInMonth,
+                    AverageSoldTicketsPerTrip = avgSoldTicketsPerTrip,
+                    TopRoutes = topRoutes,
+                    DailyStats = dailyStats,
+                }
+            );
         }
     }
 }

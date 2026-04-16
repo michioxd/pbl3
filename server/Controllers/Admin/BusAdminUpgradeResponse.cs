@@ -33,6 +33,5 @@ namespace Pbl3.Controllers.Admin
 
             throw new UnauthorizedAccessException("Không tìm thấy UserID trong token.");
         }
-
     }
 }

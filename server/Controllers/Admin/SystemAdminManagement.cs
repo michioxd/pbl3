@@ -37,7 +37,9 @@ namespace Pbl3.Controllers.Admin
 
         private Task<bool> IsRouteOwnedByCompanyAsync(Guid companyId, Guid routeId)
         {
-            return _context.BusRoutes.AnyAsync(r => r.RouteID == routeId && r.CompanyID == companyId);
+            return _context.BusRoutes.AnyAsync(r =>
+                r.RouteID == routeId && r.CompanyID == companyId
+            );
         }
 
         private Task<bool> IsBusOwnedByCompanyAsync(Guid companyId, Guid busId)

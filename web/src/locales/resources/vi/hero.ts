@@ -20,6 +20,7 @@ const hero = {
     actions: {
         searchTrip: "Tìm chuyến xe",
         search: "Tìm",
+        addReturnDate: "Thêm ngày về",
     },
     promotions: {
         badge: "Khuyến mãi hôm nay",

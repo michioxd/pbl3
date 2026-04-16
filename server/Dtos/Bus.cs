@@ -1,6 +1,5 @@
 using System;
 
-
 namespace Pbl3.Dtos
 {
     public class CreateBusDto

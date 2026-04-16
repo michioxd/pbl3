@@ -14,15 +14,14 @@ namespace pbl3_server.Migrations
                 name: "FullName",
                 table: "Users",
                 type: "text",
-                nullable: true);
+                nullable: true
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "FullName",
-                table: "Users");
+            migrationBuilder.DropColumn(name: "FullName", table: "Users");
         }
     }
 }

@@ -14,5 +14,4 @@ namespace Pbl3.Dtos
         [Phone]
         public string? Hotline { get; set; }
     }
-
 }

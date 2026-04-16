@@ -49,10 +49,7 @@ namespace Pbl3.Controllers.BusAdmin
             var hasTripsUsingBus = await _context.Trips.AnyAsync(t => t.BusID == id);
             if (hasTripsUsingBus)
             {
-                return BadRequest(new
-                {
-                    message = "Xe đã được gán cho chuyến xe, không thể xóa."
-                });
+                return BadRequest(new { message = "Xe đã được gán cho chuyến xe, không thể xóa." });
             }
 
             if (bus.CompanyID != companyId.Value)
@@ -135,7 +132,10 @@ namespace Pbl3.Controllers.BusAdmin
         }
 
         [HttpPost("bus-types/{busTypeId:guid}/seat-layouts")]
-        public async Task<IActionResult> CreateSeatLayout(Guid busTypeId, [FromBody] CreateSeatLayoutDto dto)
+        public async Task<IActionResult> CreateSeatLayout(
+            Guid busTypeId,
+            [FromBody] CreateSeatLayoutDto dto
+        )
         {
             var companyId = await GetCurrentCompanyIdAsync();
             if (companyId == null)
@@ -159,7 +159,9 @@ namespace Pbl3.Controllers.BusAdmin
             _context.SeatLayouts.Add(seatLayout);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Tạo sơ đồ ghế thành công.", layoutId = seatLayout.LayoutID });
+            return Ok(
+                new { message = "Tạo sơ đồ ghế thành công.", layoutId = seatLayout.LayoutID }
+            );
         }
 
         [HttpDelete("seat-layouts/{layoutId:guid}")]
@@ -169,11 +171,16 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
-            var seatLayout = await _context.SeatLayouts.FirstOrDefaultAsync(s => s.LayoutID == layoutId);
+            var seatLayout = await _context.SeatLayouts.FirstOrDefaultAsync(s =>
+                s.LayoutID == layoutId
+            );
             if (seatLayout == null)
                 return NotFound(new { message = "Không tìm thấy sơ đồ ghế." });
 
-            var hasOwnership = await IsBusTypeOwnedByCompanyAsync(companyId.Value, seatLayout.BusTypeID);
+            var hasOwnership = await IsBusTypeOwnedByCompanyAsync(
+                companyId.Value,
+                seatLayout.BusTypeID
+            );
             if (!hasOwnership)
                 return Forbid();
 

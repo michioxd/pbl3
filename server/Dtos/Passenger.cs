@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 
-
 namespace Pbl3.Dtos
 {
     public class UpdatePassengerDto

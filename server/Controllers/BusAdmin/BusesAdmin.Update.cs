@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pbl3.Dtos;
 
-
 namespace Pbl3.Controllers.BusAdmin
 {
     public partial class BusesController
@@ -32,13 +31,17 @@ namespace Pbl3.Controllers.BusAdmin
         }
 
         [HttpPut("company/profile")]
-        public async Task<IActionResult> UpdateCompanyProfile([FromBody] UpdateCompanyProfileDto dto)
+        public async Task<IActionResult> UpdateCompanyProfile(
+            [FromBody] UpdateCompanyProfileDto dto
+        )
         {
             var companyId = await GetCurrentCompanyIdAsync();
             if (companyId == null)
                 return Forbid();
 
-            var company = await _context.BusCompanies.FirstOrDefaultAsync(c => c.CompanyID == companyId.Value);
+            var company = await _context.BusCompanies.FirstOrDefaultAsync(c =>
+                c.CompanyID == companyId.Value
+            );
             if (company == null)
                 return NotFound(new { message = "Không tìm thấy nhà xe." });
 
@@ -89,7 +92,10 @@ namespace Pbl3.Controllers.BusAdmin
         }
 
         [HttpPatch("bus-types/{busTypeId:guid}/amenities")]
-        public async Task<IActionResult> UpdateBusTypeAmenities(Guid busTypeId, [FromBody] UpdateBusTypeAmenitiesDto dto)
+        public async Task<IActionResult> UpdateBusTypeAmenities(
+            Guid busTypeId,
+            [FromBody] UpdateBusTypeAmenitiesDto dto
+        )
         {
             var companyId = await GetCurrentCompanyIdAsync();
             if (companyId == null)
@@ -99,7 +105,9 @@ namespace Pbl3.Controllers.BusAdmin
             if (!hasOwnership)
                 return Forbid();
 
-            var busType = await _context.BusTypes.FirstOrDefaultAsync(b => b.BusTypeID == busTypeId);
+            var busType = await _context.BusTypes.FirstOrDefaultAsync(b =>
+                b.BusTypeID == busTypeId
+            );
             if (busType == null)
                 return NotFound(new { message = "Không tìm thấy loại xe." });
 
@@ -110,17 +118,25 @@ namespace Pbl3.Controllers.BusAdmin
         }
 
         [HttpPut("seat-layouts/{layoutId:guid}")]
-        public async Task<IActionResult> UpdateSeatLayout(Guid layoutId, [FromBody] UpdateSeatLayoutDto dto)
+        public async Task<IActionResult> UpdateSeatLayout(
+            Guid layoutId,
+            [FromBody] UpdateSeatLayoutDto dto
+        )
         {
             var companyId = await GetCurrentCompanyIdAsync();
             if (companyId == null)
                 return Forbid();
 
-            var seatLayout = await _context.SeatLayouts.FirstOrDefaultAsync(s => s.LayoutID == layoutId);
+            var seatLayout = await _context.SeatLayouts.FirstOrDefaultAsync(s =>
+                s.LayoutID == layoutId
+            );
             if (seatLayout == null)
                 return NotFound(new { message = "Không tìm thấy sơ đồ ghế." });
 
-            var hasOwnership = await IsBusTypeOwnedByCompanyAsync(companyId.Value, seatLayout.BusTypeID);
+            var hasOwnership = await IsBusTypeOwnedByCompanyAsync(
+                companyId.Value,
+                seatLayout.BusTypeID
+            );
             if (!hasOwnership)
                 return Forbid();
 

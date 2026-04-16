@@ -29,7 +29,6 @@ namespace Pbl3.Models
         public DateTime? ReviewedAt { get; set; }
         public string? ReviewNote { get; set; }
 
-        public ICollection<Notification> Notifications { get; set; } =
-            new List<Notification>();
+        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }
 }

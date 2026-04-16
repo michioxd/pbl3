@@ -38,13 +38,15 @@ const MainHeader = observer(() => {
         >
             <Container size="4" px="4">
                 <Flex justify="between" align="center">
-                    <Flex align="center" gap="3" className="cursor-pointer">
-                        <IconButton variant="soft" color="blue" size="3">
-                            <BusFront size={24} />
-                        </IconButton>
-                        <Heading size="5" color="blue" weight="bold">
-                            XeNhanh
-                        </Heading>
+                    <Flex asChild align="center" gap="3" className="cursor-pointer">
+                        <LinkRouter to="/" style={{ textDecoration: "none" }}>
+                            <IconButton variant="soft" color="blue" size="3">
+                                <BusFront size={24} />
+                            </IconButton>
+                            <Heading size="5" color="blue" weight="bold">
+                                XeNhanh
+                            </Heading>
+                        </LinkRouter>
                     </Flex>
 
                     <Flex align="center" gap="5" className="md:inline-flex! hidden!">

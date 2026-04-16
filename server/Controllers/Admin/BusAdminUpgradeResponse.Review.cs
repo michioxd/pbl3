@@ -9,10 +9,12 @@ namespace Pbl3.Controllers.Admin
     public partial class BusAdminUpgradeResponse
     {
         [HttpGet]
-        public async Task<IActionResult> GetRequests([FromQuery] BusAdminUpgradeRequestStatus? status)
+        public async Task<IActionResult> GetRequests(
+            [FromQuery] BusAdminUpgradeRequestStatus? status
+        )
         {
-            var query = _context.BusAdminUpgradeRequests
-                .AsNoTracking()
+            var query = _context
+                .BusAdminUpgradeRequests.AsNoTracking()
                 .Include(r => r.RequesterUser)
                 .Include(r => r.ReviewedByUser)
                 .Include(r => r.BusCompany)

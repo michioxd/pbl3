@@ -119,7 +119,10 @@ namespace Pbl3.Controllers.Admin
         }
 
         [HttpPost("bus-types/{busTypeId:guid}/seat-layouts")]
-        public async Task<IActionResult> CreateSeatLayout(Guid busTypeId, [FromBody] CreateSeatLayoutDto dto)
+        public async Task<IActionResult> CreateSeatLayout(
+            Guid busTypeId,
+            [FromBody] CreateSeatLayoutDto dto
+        )
         {
             var busTypeExists = await IsBusTypeExistsAsync(busTypeId);
             if (!busTypeExists)
@@ -139,13 +142,17 @@ namespace Pbl3.Controllers.Admin
             _context.SeatLayouts.Add(seatLayout);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Tạo sơ đồ ghế thành công.", layoutId = seatLayout.LayoutID });
+            return Ok(
+                new { message = "Tạo sơ đồ ghế thành công.", layoutId = seatLayout.LayoutID }
+            );
         }
 
         [HttpDelete("seat-layouts/{layoutId:guid}")]
         public async Task<IActionResult> DeleteSeatLayout(Guid layoutId)
         {
-            var seatLayout = await _context.SeatLayouts.FirstOrDefaultAsync(s => s.LayoutID == layoutId);
+            var seatLayout = await _context.SeatLayouts.FirstOrDefaultAsync(s =>
+                s.LayoutID == layoutId
+            );
             if (seatLayout == null)
                 return NotFound(new { message = "Không tìm thấy sơ đồ ghế." });
 

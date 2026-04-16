@@ -100,10 +100,7 @@ namespace Pbl3.Data
                 .Property(r => r.LicenseNumber)
                 .HasMaxLength(100);
 
-            modelBuilder
-                .Entity<BusAdminUpgradeRequest>()
-                .Property(r => r.Hotline)
-                .HasMaxLength(20);
+            modelBuilder.Entity<BusAdminUpgradeRequest>().Property(r => r.Hotline).HasMaxLength(20);
 
             modelBuilder
                 .Entity<BusAdminUpgradeRequest>()
@@ -117,7 +114,12 @@ namespace Pbl3.Data
 
             modelBuilder
                 .Entity<BusAdminUpgradeRequest>()
-                .HasIndex(r => new { r.RequesterUserID, r.Status, r.RequestedAt });
+                .HasIndex(r => new
+                {
+                    r.RequesterUserID,
+                    r.Status,
+                    r.RequestedAt,
+                });
 
             modelBuilder
                 .Entity<Notification>()

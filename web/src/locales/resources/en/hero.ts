@@ -20,6 +20,7 @@ const hero = {
     actions: {
         searchTrip: "Search trips",
         search: "Search",
+        addReturnDate: "Add return date",
     },
     promotions: {
         badge: "Today's promotions",

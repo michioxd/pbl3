@@ -47,7 +47,9 @@ namespace Pbl3.Controllers.BusAdmin
 
         private Task<bool> IsRouteOwnedByCompanyAsync(Guid companyId, Guid routeId)
         {
-            return _context.BusRoutes.AnyAsync(r => r.RouteID == routeId && r.CompanyID == companyId);
+            return _context.BusRoutes.AnyAsync(r =>
+                r.RouteID == routeId && r.CompanyID == companyId
+            );
         }
 
         private Task<bool> IsBusOwnedByCompanyAsync(Guid companyId, Guid busId)
@@ -57,12 +59,16 @@ namespace Pbl3.Controllers.BusAdmin
 
         private Task<bool> IsTripOwnedByCompanyAsync(Guid companyId, Guid tripId)
         {
-            return _context.Trips.AnyAsync(t => t.TripID == tripId && t.Route != null && t.Route.CompanyID == companyId);
+            return _context.Trips.AnyAsync(t =>
+                t.TripID == tripId && t.Route != null && t.Route.CompanyID == companyId
+            );
         }
 
         private Task<bool> IsBusTypeOwnedByCompanyAsync(Guid companyId, Guid busTypeId)
         {
-            return _context.Buses.AnyAsync(b => b.CompanyID == companyId && b.BusTypeID == busTypeId);
+            return _context.Buses.AnyAsync(b =>
+                b.CompanyID == companyId && b.BusTypeID == busTypeId
+            );
         }
 
         private Task<bool> IsBusTypeExistsAsync(Guid busTypeId)

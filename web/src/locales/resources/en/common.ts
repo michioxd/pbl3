@@ -5,6 +5,8 @@ const I18nCommon = {
     cancel: "Cancel",
     confirm: "Confirm",
     unauthorized: "Unauthorized",
+    no_results_found: "No results found",
+    please_enter_address: "Please enter an address to search.",
 };
 
 export default I18nCommon;

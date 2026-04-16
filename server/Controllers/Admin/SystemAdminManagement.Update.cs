@@ -26,9 +26,14 @@ namespace Pbl3.Controllers.Admin
         }
 
         [HttpPut("companies/{companyId:guid}/profile")]
-        public async Task<IActionResult> UpdateCompanyProfile(Guid companyId, [FromBody] UpdateCompanyProfileDto dto)
+        public async Task<IActionResult> UpdateCompanyProfile(
+            Guid companyId,
+            [FromBody] UpdateCompanyProfileDto dto
+        )
         {
-            var company = await _context.BusCompanies.FirstOrDefaultAsync(c => c.CompanyID == companyId);
+            var company = await _context.BusCompanies.FirstOrDefaultAsync(c =>
+                c.CompanyID == companyId
+            );
             if (company == null)
                 return NotFound(new { message = "Không tìm thấy nhà xe." });
 
@@ -47,8 +52,8 @@ namespace Pbl3.Controllers.Admin
             if (trip == null)
                 return NotFound(new { message = "Không tìm thấy chuyến xe." });
 
-            var route = await _context.BusRoutes
-                .AsNoTracking()
+            var route = await _context
+                .BusRoutes.AsNoTracking()
                 .Where(r => r.RouteID == dto.RouteID)
                 .Select(r => new { r.RouteID, r.CompanyID })
                 .FirstOrDefaultAsync();
@@ -79,9 +84,14 @@ namespace Pbl3.Controllers.Admin
         }
 
         [HttpPatch("bus-types/{busTypeId:guid}/amenities")]
-        public async Task<IActionResult> UpdateBusTypeAmenities(Guid busTypeId, [FromBody] UpdateBusTypeAmenitiesDto dto)
+        public async Task<IActionResult> UpdateBusTypeAmenities(
+            Guid busTypeId,
+            [FromBody] UpdateBusTypeAmenitiesDto dto
+        )
         {
-            var busType = await _context.BusTypes.FirstOrDefaultAsync(b => b.BusTypeID == busTypeId);
+            var busType = await _context.BusTypes.FirstOrDefaultAsync(b =>
+                b.BusTypeID == busTypeId
+            );
             if (busType == null)
                 return NotFound(new { message = "Không tìm thấy loại xe." });
 
@@ -92,9 +102,14 @@ namespace Pbl3.Controllers.Admin
         }
 
         [HttpPut("seat-layouts/{layoutId:guid}")]
-        public async Task<IActionResult> UpdateSeatLayout(Guid layoutId, [FromBody] UpdateSeatLayoutDto dto)
+        public async Task<IActionResult> UpdateSeatLayout(
+            Guid layoutId,
+            [FromBody] UpdateSeatLayoutDto dto
+        )
         {
-            var seatLayout = await _context.SeatLayouts.FirstOrDefaultAsync(s => s.LayoutID == layoutId);
+            var seatLayout = await _context.SeatLayouts.FirstOrDefaultAsync(s =>
+                s.LayoutID == layoutId
+            );
             if (seatLayout == null)
                 return NotFound(new { message = "Không tìm thấy sơ đồ ghế." });
 

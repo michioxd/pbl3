@@ -40,7 +40,9 @@ namespace Pbl3.Controllers.BusAdmin
         {
             var userId = GetCurrentUserId();
 
-            var alreadyCompanyAdmin = await _context.BusCompanyAdmins.AnyAsync(x => x.UserID == userId);
+            var alreadyCompanyAdmin = await _context.BusCompanyAdmins.AnyAsync(x =>
+                x.UserID == userId
+            );
             if (alreadyCompanyAdmin)
             {
                 return Conflict(new { message = "Tài khoản đã thuộc một nhà xe." });
@@ -53,7 +55,8 @@ namespace Pbl3.Controllers.BusAdmin
             if (normalizedLicense != null)
             {
                 var duplicatedLicense = await _context.BusCompanies.AnyAsync(c =>
-                    c.LicenseNumber != null && c.LicenseNumber.ToLower() == normalizedLicense.ToLower()
+                    c.LicenseNumber != null
+                    && c.LicenseNumber.ToLower() == normalizedLicense.ToLower()
                 );
 
                 if (duplicatedLicense)
@@ -67,7 +70,9 @@ namespace Pbl3.Controllers.BusAdmin
                 CompanyID = Guid.NewGuid(),
                 Name = company.Name.Trim(),
                 LicenseNumber = normalizedLicense,
-                Hotline = string.IsNullOrWhiteSpace(company.Hotline) ? null : company.Hotline.Trim(),
+                Hotline = string.IsNullOrWhiteSpace(company.Hotline)
+                    ? null
+                    : company.Hotline.Trim(),
                 IsApproved = true,
             };
 
