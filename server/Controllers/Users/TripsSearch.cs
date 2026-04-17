@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pbl3.Data;
@@ -14,6 +15,7 @@ namespace Pbl3.Controllers
 {
     [ApiController]
     [Route("api/trips/search")]
+    [Tags("Search")]
     public class TripsSearchController : ControllerBase
     {
         private readonly ITripSearchService _searchService;

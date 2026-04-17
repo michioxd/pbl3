@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pbl3.Data;
@@ -15,6 +16,7 @@ namespace Pbl3.Controllers.Users
     [ApiController]
     [Route("api/user/me/orders")]
     [Authorize(Policy = "UserOnly")]
+    [Tags("User")]
     public class UserMyOrdersController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -74,7 +76,7 @@ namespace Pbl3.Controllers.Users
             var response = new MyOrdersResponseDto
             {
                 Booked = tickets
-                    .Where(t => t.Status == "Issued" && t.DepartureTime > now)
+                    //.Where(t => t.Status == "Issued" && t.DepartureTime > now)
                     .OrderByDescending(t => t.DepartureTime)
                     .ToList(),
                 Completed = tickets
