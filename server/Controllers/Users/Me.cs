@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pbl3.Data;
@@ -11,6 +12,7 @@ namespace Pbl3.Controllers.Users
     [ApiController]
     [Route("api/user/me")]
     [Authorize(Policy = "UserOnly")]
+    [Tags("User")]
     public class UserMeController : ControllerBase
     {
         private readonly ApplicationDbContext _context;

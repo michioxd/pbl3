@@ -10,8 +10,9 @@ using Pbl3.Models;
 namespace Pbl3.Controllers.BusAdmin
 {
     [ApiController]
-    [Route("Admin")]
+    [Route("api/busadmin")]
     [Authorize(Policy = "BusAdmin")]
+    [Tags("BusAdmin")]
     public partial class CreateBusAdmin : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -35,7 +36,7 @@ namespace Pbl3.Controllers.BusAdmin
             throw new UnauthorizedAccessException("Không tìm thấy UserID trong token.");
         }
 
-        [HttpPost("/addBusCompany")]
+        [HttpPost("addBusCompany")]
         public async Task<IActionResult> AddBusCompany([FromBody] Infor_BusCompany company)
         {
             var userId = GetCurrentUserId();

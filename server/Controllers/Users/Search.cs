@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,7 @@ namespace Pbl3.Controllers
 {
     [ApiController]
     [Route("api/landing/provinces/search")]
+    [Tags("Search")]
     public class ProvincesSearchController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
