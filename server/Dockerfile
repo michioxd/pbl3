@@ -14,5 +14,6 @@ EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 
 COPY --from=build /app/publish ./
+COPY seed/locations/data.sql ./seed/locations/data.sql
 
 ENTRYPOINT ["dotnet", "pbl3-server.dll"]
