@@ -1,36 +1,61 @@
-version: "3.9"
+# create .env file with the following content before running `docker-compose up`:
+# POSTGRES_PASSWORD=db_pass
+# DATABASE_URL=Host=postgres;Database=pbl3;Username=pbl3;Password=db_pass;Port=5432
+# JWT_KEY=jwt-key
+# JWT_ISSUER=jwt-issuer
+# JWT_AUDIENCE=jwt-audience
+# GOOGLE_CLIENT_ID=12345-abcd.apps.googleusercontent.com
+# ASPNETCORE_URLS=http://+:8080
 
 services:
   postgres:
     image: postgres:18
-    container_name: postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
-      POSTGRES_DB: root
+      POSTGRES_USER: pbl3
+      POSTGRES_DB: pbl3
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "60011:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U pbl3 -d pbl3" ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
 
   server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    container_name: pbl3-server
+    image: ghcr.io/michioxd/pbl3-server:latest
     restart: unless-stopped
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     ports:
-      - "8080:8080"
-    environment:
-      DATABASE_URL: Host=postgres;Database=root;Username=root;Password=root;Port=5432
-      JWT_KEY: your_jwt_secret_key_here
-      JWT_ISSUER: your_jwt_issuer_here
-      JWT_AUDIENCE: your_jwt_audience_here
-      GOOGLE_CLIENT_ID: 123456789-abcdef.apps.googleusercontent.com
-      ASPNETCORE_URLS: http://+:8080
+      - "60010:8080"
+    env_file:
+      - .env
+
+  migrate:
+    image: ghcr.io/michioxd/pbl3-server:latest
+    profiles: [ "tools" ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    command: [ "--migrate" ]
+
+  seed:
+    image: ghcr.io/michioxd/pbl3-server:latest
+    profiles: [ "tools" ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    command: [ "--seed" ]
 
 volumes:
   pgdata:
