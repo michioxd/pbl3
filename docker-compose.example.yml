@@ -19,24 +19,15 @@ services:
       - "60011:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U pbl3 -d pbl3" ]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-      start_period: 10s
 
   server:
     image: ghcr.io/michioxd/pbl3-server:latest
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
     ports:
       - "60010:8080"
     env_file:
       - .env
-
+  
   migrate:
     image: ghcr.io/michioxd/pbl3-server:latest
     profiles: [ "tools" ]

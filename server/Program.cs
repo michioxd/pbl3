@@ -7,12 +7,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Npgsql;
+using Pbl3.Controllers;
 using Pbl3.Data;
 using Pbl3.Enums;
 using Pbl3.Extensions;
 using Pbl3.Models;
 using Pbl3.Services;
-using Pbl3.Controllers;
 
 namespace Pbl3
 {
@@ -67,7 +67,10 @@ namespace Pbl3
             builder.Services.AddScoped<DbInitializer>();
             builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
             builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-            builder.Services.AddScoped<Pbl3.Controllers.ITripSearchService, Pbl3.Controllers.TripSearchService>();
+            builder.Services.AddScoped<
+                Pbl3.Controllers.ITripSearchService,
+                Pbl3.Controllers.TripSearchService
+            >();
 
             var jwtKey =
                 Environment.GetEnvironmentVariable("JWT_KEY") ?? builder.Configuration["Jwt:Key"];
@@ -181,11 +184,18 @@ namespace Pbl3
 
             app.MapControllers();
 
+            if (args.Contains("--migrate"))
+            {
+                await app.MigrateDatabaseAsync();
+                return;
+            }
+
             await app.InitializeDatabaseAsync();
 
             if (args.Contains("--seed"))
             {
                 await app.SeedDatabaseAsync();
+                return;
             }
 
             app.Run();
