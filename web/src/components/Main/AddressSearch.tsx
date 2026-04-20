@@ -5,13 +5,25 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export default function AddressSearch({ inputProps }: { inputProps?: TextField.RootProps }) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [open, setOpen] = useState(false);
     const [txt, setTxt] = useState("");
     const [loading, setLoading] = useState(false);
     const [res, setRes] = useState<ProvinceResponse[] | null>(null);
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const isVietnamese = i18n.language.toLowerCase().startsWith("vi");
+
+    const getDisplayName = useCallback(
+        (item: { name?: string | null; name_en?: string | null }) => {
+            if (isVietnamese) {
+                return item.name ?? "";
+            }
+
+            return item.name_en || item.name || "";
+        },
+        [isVietnamese],
+    );
 
     const handleProvinceSearch = useCallback(async (query: string) => {
         if (query.trim() === "") {
@@ -70,9 +82,9 @@ export default function AddressSearch({ inputProps }: { inputProps?: TextField.R
                     setTxt(e.target.value);
                 }}
                 onFocus={() => {
-                    // if (res && res.length > 0) {
-                    //     setOpen(true);
-                    // }
+                    if (res && res.length > 0) {
+                        setTimeout(() => setOpen(true), 100);
+                    }
                 }}
             >
                 <TextField.Slot side="left">
@@ -92,11 +104,7 @@ export default function AddressSearch({ inputProps }: { inputProps?: TextField.R
                 data-slot="card-content"
                 onOpenAutoFocus={(e) => e.preventDefault()}
             >
-                <ScrollArea
-                    type="auto"
-                    scrollbars="vertical"
-                    style={{ maxHeight: 300, width: inputRef.current?.offsetWidth ?? 300 }}
-                >
+                <ScrollArea type="auto" scrollbars="vertical" className="w-60! max-h-80">
                     <Box p="2">
                         {loading ? (
                             <Text size="2" color="gray" className="p-2 flex items-center justify-center">
@@ -107,7 +115,7 @@ export default function AddressSearch({ inputProps }: { inputProps?: TextField.R
                                 {res.map((province) => (
                                     <div key={province.id} className="flex flex-col">
                                         <Text size="2" className="block pb-1" color="gray">
-                                            {province.name}
+                                            {getDisplayName(province)}
                                         </Text>
                                         {province.districts?.map((district) => (
                                             <div key={district.id} className="flex flex-col">
@@ -120,13 +128,13 @@ export default function AddressSearch({ inputProps }: { inputProps?: TextField.R
                                                             variant="ghost"
                                                             onClick={() => {
                                                                 setTxt(
-                                                                    `${ward.name}, ${district.name}, ${province.name}`,
+                                                                    `${getDisplayName(ward)}, ${getDisplayName(district)}, ${getDisplayName(province)}`,
                                                                 );
                                                                 setOpen(false);
                                                             }}
                                                         >
                                                             <Text size="2">
-                                                                {ward.name}, {district.name}
+                                                                {getDisplayName(ward)}, {getDisplayName(district)}
                                                             </Text>
                                                         </Button>
                                                     ))
@@ -137,11 +145,13 @@ export default function AddressSearch({ inputProps }: { inputProps?: TextField.R
                                                         className="text-right! w-full! justify-start! mb-1!"
                                                         variant="ghost"
                                                         onClick={() => {
-                                                            setTxt(`${district.name}, ${province.name}`);
+                                                            setTxt(
+                                                                `${getDisplayName(district)}, ${getDisplayName(province)}`,
+                                                            );
                                                             setOpen(false);
                                                         }}
                                                     >
-                                                        <Text size="2">{district.name}</Text>
+                                                        <Text size="2">{getDisplayName(district)}</Text>
                                                     </Button>
                                                 )}
                                             </div>
