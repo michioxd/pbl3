@@ -10,9 +10,21 @@ namespace Pbl3.Controllers.Admin
     {
         [HttpGet]
         public async Task<IActionResult> GetRequests(
-            [FromQuery] BusAdminUpgradeRequestStatus? status
+            [FromQuery] BusAdminUpgradeRequestStatus? status,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 25
         )
         {
+            if (page < 1)
+            {
+                return BadRequest(new { message = "page phải lớn hơn hoặc bằng 1." });
+            }
+
+            if (pageSize != 25 && pageSize != 50 && pageSize != 100 && pageSize != 200)
+            {
+                return BadRequest(new { message = "pageSize chỉ chấp nhận: 25, 50, 100, 200." });
+            }
+
             var query = _context
                 .BusAdminUpgradeRequests.AsNoTracking()
                 .Include(r => r.RequesterUser)
@@ -25,8 +37,13 @@ namespace Pbl3.Controllers.Admin
                 query = query.Where(r => r.Status == status.Value);
             }
 
+            var totalRecords = await query.CountAsync();
+            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+
             var requests = await query
                 .OrderByDescending(r => r.RequestedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(r => new
                 {
                     r.RequestID,
@@ -63,7 +80,16 @@ namespace Pbl3.Controllers.Admin
                 })
                 .ToListAsync();
 
-            return Ok(requests);
+            return Ok(
+                new
+                {
+                    page,
+                    pageSize,
+                    totalRecords,
+                    totalPages,
+                    records = requests,
+                }
+            );
         }
 
         [HttpPatch("{requestId:guid}/review")]

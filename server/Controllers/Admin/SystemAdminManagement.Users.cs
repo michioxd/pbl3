@@ -16,11 +16,18 @@ namespace Pbl3.Controllers.Admin
             [FromQuery] string? role,
             [FromQuery] bool? isActive,
             [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 10
+            [FromQuery] int pageSize = 25
         )
         {
-            page = Math.Max(1, page);
-            pageSize = Math.Clamp(pageSize, 5, 100);
+            if (page < 1)
+            {
+                return BadRequest(new { message = "page phải lớn hơn hoặc bằng 1." });
+            }
+
+            if (pageSize != 25 && pageSize != 50 && pageSize != 100 && pageSize != 200)
+            {
+                return BadRequest(new { message = "pageSize chỉ chấp nhận: 25, 50, 100, 200." });
+            }
 
             var normalizedRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
