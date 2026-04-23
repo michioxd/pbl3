@@ -78,6 +78,7 @@ export function DatePickerInput({ date, setDate, onDateChange, inputProps }: Dat
     );
 
     React.useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setValue(formatDate(currentDate));
         if (currentDate) {
             setMonth(currentDate);
@@ -86,59 +87,57 @@ export function DatePickerInput({ date, setDate, onDateChange, inputProps }: Dat
 
     return (
         <Popover.Root open={open} onOpenChange={setOpen}>
-            <TextField.Root
-                {...restInputProps}
-                id={id ?? "date-required"}
-                size={size ?? "3"}
-                className={["mx-auto", className].filter(Boolean).join(" ")}
-                value={value}
-                placeholder="01-06-2025"
-                onPointerDown={(e) => {
-                    inputOnPointerDown?.(e);
-                    if (e.defaultPrevented) {
-                        return;
-                    }
+            <Popover.Trigger>
+                <div>
+                    <TextField.Root
+                        {...restInputProps}
+                        id={id ?? "date-required"}
+                        size={size ?? "3"}
+                        className={["mx-auto", className].filter(Boolean).join(" ")}
+                        value={value}
+                        placeholder="01-06-2025"
+                        onPointerDown={(e) => {
+                            inputOnPointerDown?.(e);
+                            if (e.defaultPrevented) {
+                                return;
+                            }
+                        }}
+                        onChange={(e) => {
+                            inputOnChange?.(e);
+                            if (e.defaultPrevented) {
+                                return;
+                            }
 
-                    if (e.target instanceof HTMLInputElement) {
-                        setOpen(true);
-                    }
-                }}
-                onChange={(e) => {
-                    inputOnChange?.(e);
-                    if (e.defaultPrevented) {
-                        return;
-                    }
+                            const nextValue = e.target.value;
+                            const parsedDate = parseDate(nextValue);
 
-                    const nextValue = e.target.value;
-                    const parsedDate = parseDate(nextValue);
+                            setValue(nextValue);
+                            if (parsedDate) {
+                                updateDate(parsedDate);
+                                setMonth(parsedDate);
+                            }
+                        }}
+                        onKeyDown={(e) => {
+                            inputOnKeyDown?.(e);
+                            if (e.defaultPrevented) {
+                                return;
+                            }
 
-                    setValue(nextValue);
-                    if (parsedDate) {
-                        updateDate(parsedDate);
-                        setMonth(parsedDate);
-                    }
-                }}
-                onKeyDown={(e) => {
-                    inputOnKeyDown?.(e);
-                    if (e.defaultPrevented) {
-                        return;
-                    }
-
-                    if (e.key === "ArrowDown") {
-                        e.preventDefault();
-                        setOpen(true);
-                    }
-                }}
-            >
-                <TextField.Slot side="right">
-                    <Popover.Trigger>
-                        <IconButton id="date-picker" variant="ghost" size="1" aria-label="Select date">
-                            <CalendarIcon size={16} />
-                            <span className="sr-only">Select date</span>
-                        </IconButton>
-                    </Popover.Trigger>
-                </TextField.Slot>
-            </TextField.Root>
+                            if (e.key === "ArrowDown") {
+                                e.preventDefault();
+                                setOpen(true);
+                            }
+                        }}
+                    >
+                        <TextField.Slot side="right">
+                            <IconButton id="date-picker" variant="ghost" size="1" aria-label="Select date">
+                                <CalendarIcon size={16} />
+                                <span className="sr-only">Select date</span>
+                            </IconButton>
+                        </TextField.Slot>
+                    </TextField.Root>
+                </div>
+            </Popover.Trigger>
             <Popover.Content
                 size="1"
                 className="w-auto overflow-hidden p-0"
