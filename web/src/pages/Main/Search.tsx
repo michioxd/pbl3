@@ -78,6 +78,8 @@ function parseSearchQuery(searchParams: URLSearchParams): ParsedSearchQuery | nu
         return null;
     }
 
+    const parsedDepartureDate = new Date(departureDate);
+
     return {
         fromProvinceCode,
         fromDistrictCode: searchParams.get("fd")?.trim() || undefined,
@@ -85,7 +87,10 @@ function parseSearchQuery(searchParams: URLSearchParams): ParsedSearchQuery | nu
         toProvinceCode,
         toDistrictCode: searchParams.get("td")?.trim() || undefined,
         toWardCode: searchParams.get("tw")?.trim() || undefined,
-        departureDate,
+        departureDate:
+            /^\d{4}-\d{2}-\d{2}$/.test(departureDate) || Number.isNaN(parsedDepartureDate.getTime())
+                ? departureDate
+                : format(parsedDepartureDate, "yyyy-MM-dd"),
     };
 }
 
@@ -117,7 +122,11 @@ function parseApiErrorMessage(error: unknown, fallback: string) {
     return fallback;
 }
 
-function formatCurrency(value: number) {
+function formatCurrency(value?: number) {
+    if (value === undefined) {
+        return "--";
+    }
+
     return new Intl.NumberFormat("vi-VN", {
         style: "currency",
         currency: "VND",
@@ -125,7 +134,11 @@ function formatCurrency(value: number) {
     }).format(value);
 }
 
-function formatDateLabel(value: string) {
+function formatDateLabel(value?: string) {
+    if (!value) {
+        return "--";
+    }
+
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
         return value;
@@ -134,7 +147,11 @@ function formatDateLabel(value: string) {
     return format(date, "dd/MM/yyyy", { locale: vi });
 }
 
-function formatTimeLabel(value: string) {
+function formatTimeLabel(value?: string) {
+    if (!value) {
+        return "--";
+    }
+
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
         return value;
@@ -143,7 +160,11 @@ function formatTimeLabel(value: string) {
     return format(date, "HH:mm", { locale: vi });
 }
 
-function formatDurationLabel(durationMinutes: number) {
+function formatDurationLabel(durationMinutes?: number) {
+    if (durationMinutes === undefined) {
+        return "--";
+    }
+
     if (durationMinutes <= 0) {
         return "--";
     }
@@ -275,17 +296,25 @@ function FilterSidebar({
                         Giờ đi
                     </Heading>
                     <Flex direction="column" gap="2">
-                        {result.filters?.departureTimeRanges?.map((option) => (
-                            <Text as="label" size="2" key={option.value}>
-                                <Flex gap="2" align="center">
-                                    <Checkbox
-                                        checked={filters.timeRanges.includes(option.value ?? 0)}
-                                        onCheckedChange={() => onToggleTimeRange(option.value ?? 0)}
-                                    />
-                                    {TIME_RANGE_LABELS[option.value ?? 0] || option.value} ({option.count ?? 0})
-                                </Flex>
-                            </Text>
-                        ))}
+                        {result.filters?.departureTimeRanges?.map((option) => {
+                            if (option.value === undefined) {
+                                return null;
+                            }
+
+                            const timeRangeValue = option.value;
+
+                            return (
+                                <Text as="label" size="2" key={timeRangeValue}>
+                                    <Flex gap="2" align="center">
+                                        <Checkbox
+                                            checked={filters.timeRanges.includes(timeRangeValue)}
+                                            onCheckedChange={() => onToggleTimeRange(timeRangeValue)}
+                                        />
+                                        {TIME_RANGE_LABELS[timeRangeValue] || timeRangeValue} ({option.count ?? 0})
+                                    </Flex>
+                                </Text>
+                            );
+                        })}
                     </Flex>
                 </Box>
 
@@ -342,6 +371,11 @@ function FilterSidebar({
 }
 
 function TicketCard({ ticket }: { ticket: TripSearchItemDto }) {
+    const busCompanyName = ticket.busCompanyName ?? "--";
+    const rating = ticket.rating ?? 0;
+    const reviewCount = ticket.reviewCount ?? 0;
+    const availableSeats = ticket.availableSeats ?? 0;
+
     return (
         <Card size="3" variant="surface" style={{ backgroundColor: "var(--color-panel-solid)", overflow: "visible" }}>
             <Grid columns={{ initial: "1", sm: "1fr 220px" }} gap="4">
@@ -350,7 +384,7 @@ function TicketCard({ ticket }: { ticket: TripSearchItemDto }) {
                         {ticket.imageUrl ? (
                             <img
                                 src={ticket.imageUrl}
-                                alt={ticket.busCompanyName ?? ""}
+                                alt={busCompanyName}
                                 style={{
                                     width: "100%",
                                     height: "140px",
@@ -374,11 +408,11 @@ function TicketCard({ ticket }: { ticket: TripSearchItemDto }) {
                         <Box>
                             <Flex align="center" gap="2" mb="1" wrap="wrap">
                                 <Heading size="4" weight="bold">
-                                    {ticket.busCompanyName}
+                                    {busCompanyName}
                                 </Heading>
                                 <Badge color="green" size="1" variant="soft">
                                     <Star size={12} className="inline mr-1" />
-                                    {ticket.rating.toFixed(1)} ({ticket.reviewCount})
+                                    {rating.toFixed(1)} ({reviewCount})
                                 </Badge>
                             </Flex>
                             <Text size="2" color="gray" as="div" mb="1">
@@ -485,8 +519,8 @@ function TicketCard({ ticket }: { ticket: TripSearchItemDto }) {
                     </Box>
 
                     <Flex direction="column" align="end" gap="2">
-                        <Text size="2" color={ticket.availableSeats && ticket.availableSeats < 5 ? "orange" : "green"}>
-                            Còn {ticket.availableSeats} chỗ trống
+                        <Text size="2" color={availableSeats < 5 ? "orange" : "green"}>
+                            Còn {availableSeats} chỗ trống
                         </Text>
                         <Button size="3" color="amber" variant="solid" style={{ cursor: "pointer", width: "100%" }}>
                             Chọn chuyến
@@ -556,21 +590,21 @@ const PageMainSearch = observer(() => {
             try {
                 const response = await getApiTripsSearch({
                     query: {
-                        fromProvinceCode: parsedQuery.fromProvinceCode,
-                        fromDistrictCode: parsedQuery.fromDistrictCode,
-                        fromWardCode: parsedQuery.fromWardCode,
-                        toProvinceCode: parsedQuery.toProvinceCode,
-                        toDistrictCode: parsedQuery.toDistrictCode,
-                        toWardCode: parsedQuery.toWardCode,
-                        departureDate: parsedQuery.departureDate,
-                        sortBy: debouncedFilters.sortBy,
-                        busCompanyIds: debouncedFilters.companyIds,
-                        departureTimeRanges: debouncedFilters.timeRanges,
-                        amenities: debouncedFilters.amenities,
-                        minPrice: debouncedFilters.minPrice ? Number(debouncedFilters.minPrice) : undefined,
-                        maxPrice: debouncedFilters.maxPrice ? Number(debouncedFilters.maxPrice) : undefined,
-                        page: 1,
-                        pageSize: 20,
+                        FromProvinceCode: parsedQuery.fromProvinceCode,
+                        FromDistrictCode: parsedQuery.fromDistrictCode,
+                        FromWardCode: parsedQuery.fromWardCode,
+                        ToProvinceCode: parsedQuery.toProvinceCode,
+                        ToDistrictCode: parsedQuery.toDistrictCode,
+                        ToWardCode: parsedQuery.toWardCode,
+                        DepartureDate: parsedQuery.departureDate,
+                        SortBy: debouncedFilters.sortBy,
+                        BusCompanyIds: debouncedFilters.companyIds,
+                        DepartureTimeRanges: debouncedFilters.timeRanges,
+                        Amenities: debouncedFilters.amenities,
+                        MinPrice: debouncedFilters.minPrice ? Number(debouncedFilters.minPrice) : undefined,
+                        MaxPrice: debouncedFilters.maxPrice ? Number(debouncedFilters.maxPrice) : undefined,
+                        Page: 1,
+                        PageSize: 20,
                     },
                 });
 
