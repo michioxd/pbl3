@@ -3,8 +3,8 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pbl3.Data;
@@ -27,10 +27,13 @@ namespace Pbl3.Controllers
         private sealed record SearchMatchItem(
             string Type,
             string Name,
+            string? NameEn,
             string ProvinceCode,
             string ProvinceName,
+            string? ProvinceNameEn,
             string? DistrictCode,
             string? DistrictName,
+            string? DistrictNameEn,
             string? WardCode,
             int Score
         );
@@ -290,10 +293,13 @@ namespace Pbl3.Controllers
                                 new SearchMatchItem(
                                     Type: "Ward",
                                     Name: ward.Name,
+                                    NameEn: ward.NameEn,
                                     ProvinceCode: province.Code,
                                     ProvinceName: province.Name,
+                                    ProvinceNameEn: province.NameEn,
                                     DistrictCode: district.Code,
                                     DistrictName: district.Name,
+                                    DistrictNameEn: district.NameEn,
                                     WardCode: ward.Code,
                                     Score: overallScore
                                 )
@@ -334,10 +340,13 @@ namespace Pbl3.Controllers
                         new SearchMatchItem(
                             Type: "District",
                             Name: district.Name,
+                            NameEn: district.NameEn,
                             ProvinceCode: province.Code,
                             ProvinceName: province.Name,
+                            ProvinceNameEn: province.NameEn,
                             DistrictCode: district.Code,
                             DistrictName: district.Name,
+                            DistrictNameEn: district.NameEn,
                             WardCode: null,
                             Score: districtScore
                         )
@@ -362,10 +371,13 @@ namespace Pbl3.Controllers
                         new SearchMatchItem(
                             Type: "Province",
                             Name: province.Name,
+                            NameEn: province.NameEn,
                             ProvinceCode: province.Code,
                             ProvinceName: province.Name,
+                            ProvinceNameEn: province.NameEn,
                             DistrictCode: null,
                             DistrictName: null,
+                            DistrictNameEn: null,
                             WardCode: null,
                             Score: provinceScore
                         )
@@ -385,25 +397,28 @@ namespace Pbl3.Controllers
                 .ToList();
 
             var groupedProvinces = topMatches
-                .GroupBy(x => (x.ProvinceCode, x.ProvinceName))
+                .GroupBy(x => (x.ProvinceCode, x.ProvinceName, x.ProvinceNameEn))
                 .Select(provinceGroup => new ProvinceResponse
                 {
                     Id = provinceGroup.Key.ProvinceCode,
                     Name = provinceGroup.Key.ProvinceName,
+                    NameEn = provinceGroup.Key.ProvinceNameEn ?? string.Empty,
                     Districts = provinceGroup
                         .Where(x => x.Type == "District" || x.Type == "Ward")
-                        .GroupBy(x => (x.DistrictCode, x.DistrictName))
+                        .GroupBy(x => (x.DistrictCode, x.DistrictName, x.DistrictNameEn))
                         .Select(districtGroup => new DistrictResponse
                         {
                             Id = districtGroup.Key.DistrictCode ?? string.Empty,
                             Name = districtGroup.Key.DistrictName ?? string.Empty,
+                            NameEn = districtGroup.Key.DistrictNameEn ?? string.Empty,
                             Wards = districtGroup
                                 .Where(x => x.Type == "Ward")
-                                .GroupBy(x => (x.WardCode, x.Name))
+                                .GroupBy(x => (x.WardCode, x.Name, x.NameEn))
                                 .Select(wardGroup => new WardResponse
                                 {
                                     Id = wardGroup.Key.WardCode!,
                                     Name = wardGroup.Key.Name,
+                                    NameEn = wardGroup.Key.NameEn ?? string.Empty,
                                 })
                                 .ToList(),
                         })

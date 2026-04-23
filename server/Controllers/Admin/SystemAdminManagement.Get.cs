@@ -7,8 +7,22 @@ namespace Pbl3.Controllers.Admin
     public partial class SystemAdminManagementController
     {
         [HttpGet("companies")]
-        public async Task<IActionResult> GetCompanies([FromQuery] string? q)
+        public async Task<IActionResult> GetCompanies(
+            [FromQuery] string? q,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 25
+        )
         {
+            if (page < 1)
+            {
+                return BadRequest(new { message = "page phải lớn hơn hoặc bằng 1." });
+            }
+
+            if (pageSize != 25 && pageSize != 50 && pageSize != 100 && pageSize != 200)
+            {
+                return BadRequest(new { message = "pageSize chỉ chấp nhận: 25, 50, 100, 200." });
+            }
+
             var query = _context.BusCompanies.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(q))
@@ -20,8 +34,13 @@ namespace Pbl3.Controllers.Admin
                 );
             }
 
+            var totalRecords = await query.CountAsync();
+            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+
             var companies = await query
                 .OrderBy(c => c.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(c => new
                 {
                     c.CompanyID,
@@ -32,7 +51,16 @@ namespace Pbl3.Controllers.Admin
                 })
                 .ToListAsync();
 
-            return Ok(companies);
+            return Ok(
+                new
+                {
+                    page,
+                    pageSize,
+                    totalRecords,
+                    totalPages,
+                    records = companies,
+                }
+            );
         }
 
         [HttpGet("companies/{companyId:guid}/profile")]
@@ -92,9 +120,21 @@ namespace Pbl3.Controllers.Admin
         [HttpGet("companies/{companyId:guid}/tickets")]
         public async Task<IActionResult> GetBookedTickets(
             Guid companyId,
-            [FromQuery] TicketStatus? status
+            [FromQuery] TicketStatus? status,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 25
         )
         {
+            if (page < 1)
+            {
+                return BadRequest(new { message = "page phải lớn hơn hoặc bằng 1." });
+            }
+
+            if (pageSize != 25 && pageSize != 50 && pageSize != 100 && pageSize != 200)
+            {
+                return BadRequest(new { message = "pageSize chỉ chấp nhận: 25, 50, 100, 200." });
+            }
+
             var companyExists = await _context.BusCompanies.AnyAsync(c => c.CompanyID == companyId);
             if (!companyExists)
                 return NotFound(new { message = "Không tìm thấy nhà xe." });
@@ -110,8 +150,13 @@ namespace Pbl3.Controllers.Admin
                 query = query.Where(t => t.Status == status.Value);
             }
 
+            var totalRecords = await query.CountAsync();
+            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+
             var tickets = await query
                 .OrderByDescending(t => t.Booking!.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(t => new
                 {
                     t.TicketID,
@@ -143,16 +188,37 @@ namespace Pbl3.Controllers.Admin
                 })
                 .ToListAsync();
 
-            return Ok(tickets);
+            return Ok(
+                new
+                {
+                    page,
+                    pageSize,
+                    totalRecords,
+                    totalPages,
+                    records = tickets,
+                }
+            );
         }
 
         [HttpGet("companies/{companyId:guid}/trips")]
         public async Task<IActionResult> GetTrips(
             Guid companyId,
             [FromQuery] int? year,
-            [FromQuery] int? month
+            [FromQuery] int? month,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 25
         )
         {
+            if (page < 1)
+            {
+                return BadRequest(new { message = "page phải lớn hơn hoặc bằng 1." });
+            }
+
+            if (pageSize != 25 && pageSize != 50 && pageSize != 100 && pageSize != 200)
+            {
+                return BadRequest(new { message = "pageSize chỉ chấp nhận: 25, 50, 100, 200." });
+            }
+
             var companyExists = await _context.BusCompanies.AnyAsync(c => c.CompanyID == companyId);
             if (!companyExists)
                 return NotFound(new { message = "Không tìm thấy nhà xe." });
@@ -168,9 +234,14 @@ namespace Pbl3.Controllers.Admin
                 query = query.Where(t => t.DepartureDate >= start && t.DepartureDate < end);
             }
 
+            var totalRecords = await query.CountAsync();
+            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+
             var trips = await query
                 .OrderByDescending(t => t.DepartureDate)
                 .ThenByDescending(t => t.DepartureTime)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(t => new
                 {
                     t.TripID,
@@ -188,7 +259,16 @@ namespace Pbl3.Controllers.Admin
                 })
                 .ToListAsync();
 
-            return Ok(trips);
+            return Ok(
+                new
+                {
+                    page,
+                    pageSize,
+                    totalRecords,
+                    totalPages,
+                    records = trips,
+                }
+            );
         }
 
         [HttpGet("bus-types/{busTypeId:guid}/seat-layouts")]

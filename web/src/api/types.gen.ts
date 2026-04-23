@@ -4,6 +4,95 @@ export type ClientOptions = {
     baseUrl: 'http://localhost:5026' | (string & {});
 };
 
+export type AdminCreateUserDto = {
+    email: string;
+    password: string;
+    fullName: string;
+    phoneNumber?: string | null;
+    role: string;
+    isActive?: boolean;
+};
+
+export type AdminDashboardDailyStatDto = {
+    date?: string | null;
+    label?: string | null;
+    soldTickets?: number;
+    cancelledTickets?: number;
+    revenue?: number;
+};
+
+export type AdminDashboardKpiDto = {
+    current?: number;
+    previous?: number;
+    delta?: number;
+    deltaPercent?: number;
+};
+
+export type AdminDashboardMonthlyStatDto = {
+    label?: string | null;
+    monthKey?: string | null;
+    revenue?: number;
+    soldTickets?: number;
+};
+
+export type AdminDashboardOverviewDto = {
+    currentMonthLabel?: string | null;
+    lastUpdatedAt?: string;
+    revenue?: AdminDashboardKpiDto;
+    soldTickets?: AdminDashboardKpiDto;
+    totalTrips?: AdminDashboardKpiDto;
+    newUsers?: AdminDashboardKpiDto;
+    snapshot?: AdminDashboardSnapshotDto;
+    monthlyStats?: Array<AdminDashboardMonthlyStatDto> | null;
+    dailyStats?: Array<AdminDashboardDailyStatDto> | null;
+    topRoutes?: Array<AdminDashboardTopRouteDto> | null;
+    recentBookings?: Array<AdminDashboardRecentBookingDto> | null;
+    ticketStatusBreakdown?: Array<AdminDashboardStatusStatDto> | null;
+    upgradeRequestBreakdown?: Array<AdminDashboardStatusStatDto> | null;
+};
+
+export type AdminDashboardRecentBookingDto = {
+    bookingId?: string;
+    contactName?: string | null;
+    contactEmail?: string | null;
+    totalAmount?: number;
+    ticketCount?: number;
+    routeName?: string | null;
+    status?: string | null;
+    createdAt?: string;
+};
+
+export type AdminDashboardSnapshotDto = {
+    totalUsers?: number;
+    totalCompanies?: number;
+    approvedCompanies?: number;
+    totalRoutes?: number;
+    activeTripsToday?: number;
+    totalTripsThisMonth?: number;
+    pendingUpgradeRequests?: number;
+    cancellationRatePercent?: number;
+    averageTicketPrice?: number;
+};
+
+export type AdminDashboardStatusStatDto = {
+    label?: string | null;
+    value?: number;
+};
+
+export type AdminDashboardTopRouteDto = {
+    routeName?: string | null;
+    ticketsSold?: number;
+    revenue?: number;
+};
+
+export type AdminUpdateUserDto = {
+    email: string;
+    fullName: string;
+    phoneNumber?: string | null;
+    role: string;
+    isActive?: boolean;
+};
+
 export type AuthResponseDto = {
     token: string | null;
     expiresAt?: string;
@@ -46,6 +135,7 @@ export type CreateTripDto = {
 export type DistrictResponse = {
     id?: string | null;
     name?: string | null;
+    name_en?: string | null;
     wards?: Array<WardResponse> | null;
 };
 
@@ -103,6 +193,7 @@ export type ProblemDetails = {
 export type ProvinceResponse = {
     id?: string | null;
     name?: string | null;
+    name_en?: string | null;
     districts?: Array<DistrictResponse> | null;
 };
 
@@ -177,6 +268,7 @@ export type UserDto = {
 export type WardResponse = {
     id?: string | null;
     name?: string | null;
+    name_en?: string | null;
 };
 
 export type PostApiAuthOauthGoogleData = {
@@ -507,14 +599,14 @@ export type GetApiBusadminBusesStatsMonthlyResponses = {
     200: unknown;
 };
 
-export type PostAddBusCompanyData = {
+export type PostApiBusadminAddBusCompanyData = {
     body?: InforBusCompany;
     path?: never;
     query?: never;
-    url: '/addBusCompany';
+    url: '/api/busadmin/addBusCompany';
 };
 
-export type PostAddBusCompanyResponses = {
+export type PostApiBusadminAddBusCompanyResponses = {
     /**
      * OK
      */
@@ -617,6 +709,24 @@ export type GetApiLandingProvincesSearchResponses = {
 };
 
 export type GetApiLandingProvincesSearchResponse = GetApiLandingProvincesSearchResponses[keyof GetApiLandingProvincesSearchResponses];
+
+export type GetApiTripsSearchData = {
+    body?: never;
+    path?: never;
+    query?: {
+        origin?: string;
+        destination?: string;
+        departureDate?: string;
+    };
+    url: '/api/trips/search';
+};
+
+export type GetApiTripsSearchResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetApiAdminBusAdminUpgradeRequestsData = {
     body?: never;
@@ -943,6 +1053,22 @@ export type PatchApiAdminSystemBusTypesByBusTypeIdAmenitiesResponses = {
     200: unknown;
 };
 
+export type DeleteApiAdminSystemUsersByUserIdData = {
+    body?: never;
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: '/api/admin/system/users/{userId}';
+};
+
+export type DeleteApiAdminSystemUsersByUserIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type GetApiAdminSystemUsersByUserIdData = {
     body?: never;
     path: {
@@ -953,6 +1079,22 @@ export type GetApiAdminSystemUsersByUserIdData = {
 };
 
 export type GetApiAdminSystemUsersByUserIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PutApiAdminSystemUsersByUserIdData = {
+    body?: AdminUpdateUserDto;
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: '/api/admin/system/users/{userId}';
+};
+
+export type PutApiAdminSystemUsersByUserIdResponses = {
     /**
      * OK
      */
@@ -992,6 +1134,58 @@ export type GetApiAdminSystemStatsMonthlyResponses = {
     200: unknown;
 };
 
+export type GetApiAdminSystemDashboardOverviewData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/system/dashboard/overview';
+};
+
+export type GetApiAdminSystemDashboardOverviewResponses = {
+    /**
+     * OK
+     */
+    200: AdminDashboardOverviewDto;
+};
+
+export type GetApiAdminSystemDashboardOverviewResponse = GetApiAdminSystemDashboardOverviewResponses[keyof GetApiAdminSystemDashboardOverviewResponses];
+
+export type GetApiAdminSystemUsersData = {
+    body?: never;
+    path?: never;
+    query?: {
+        q?: string;
+        roles?: Array<string>;
+        statuses?: Array<string>;
+        role?: string;
+        isActive?: boolean;
+        page?: number;
+        pageSize?: number;
+    };
+    url: '/api/admin/system/users';
+};
+
+export type GetApiAdminSystemUsersResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiAdminSystemUsersData = {
+    body?: AdminCreateUserDto;
+    path?: never;
+    query?: never;
+    url: '/api/admin/system/users';
+};
+
+export type PostApiAdminSystemUsersResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type GetApiUserMeData = {
     body?: never;
     path?: never;
@@ -1016,6 +1210,20 @@ export type GetApiUserMeTicketsData = {
 };
 
 export type GetApiUserMeTicketsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiUserMeOrdersData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/user/me/orders';
+};
+
+export type GetApiUserMeOrdersResponses = {
     /**
      * OK
      */

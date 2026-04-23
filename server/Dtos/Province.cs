@@ -10,6 +10,9 @@ namespace Pbl3.Dtos
 
         [JsonPropertyName("name")]
         public string Name { get; set; } = default!;
+
+        [JsonPropertyName("name_en")]
+        public string NameEn { get; set; } = default!;
     }
 
     public class DistrictResponse
@@ -19,6 +22,9 @@ namespace Pbl3.Dtos
 
         [JsonPropertyName("name")]
         public string Name { get; set; } = default!;
+
+        [JsonPropertyName("name_en")]
+        public string NameEn { get; set; } = default!;
 
         [JsonPropertyName("wards")]
         public List<WardResponse> Wards { get; set; } = new List<WardResponse>();
@@ -31,6 +37,9 @@ namespace Pbl3.Dtos
 
         [JsonPropertyName("name")]
         public string Name { get; set; } = default!;
+
+        [JsonPropertyName("name_en")]
+        public string NameEn { get; set; } = default!;
 
         [JsonPropertyName("districts")]
         public List<DistrictResponse> Districts { get; set; } = new List<DistrictResponse>();

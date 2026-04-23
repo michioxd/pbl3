@@ -2,9 +2,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Metadata;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pbl3.Data;
+using Pbl3.Models;
 
 namespace Pbl3.Controllers.Admin
 {
@@ -15,10 +17,15 @@ namespace Pbl3.Controllers.Admin
     public partial class SystemAdminManagementController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IPasswordHasher<User> _passwordHasher;
 
-        public SystemAdminManagementController(ApplicationDbContext context)
+        public SystemAdminManagementController(
+            ApplicationDbContext context,
+            IPasswordHasher<User> passwordHasher
+        )
         {
             _context = context;
+            _passwordHasher = passwordHasher;
         }
 
         private Guid GetCurrentUserId()

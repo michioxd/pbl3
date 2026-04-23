@@ -10,7 +10,7 @@ function getLangInfo(localeCode: string) {
         const region = new Intl.Locale(localeCode).maximize().region;
         const languageName = new Intl.DisplayNames([localeCode], { type: "language" }).of(localeCode);
         const emoji = region?.toUpperCase().replace(/./g, (char) => String.fromCodePoint(char.charCodeAt(0) + 0x1f1a5));
-        let flag = null;
+        let flag: string | null = null;
 
         try {
             const locale = new Intl.Locale(localeCode).maximize();

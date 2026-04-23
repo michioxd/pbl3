@@ -1,7 +1,7 @@
 import { useThemeContext } from "@/controller/ThemeProvider";
 import { useState } from "react";
 import { Box, Flex, Container, Heading, Button, Link, IconButton, DropdownMenu } from "@radix-ui/themes";
-import { BusFront, ContrastIcon, Menu, Moon, Sun, UserIcon } from "lucide-react";
+import { BusFront, CogIcon, ContrastIcon, LogOutIcon, Menu, Moon, Sun, UserIcon } from "lucide-react";
 import LinkRouter from "@/utils/LinkRouter";
 import { LangSelectorComponent } from "./LangSelector";
 import { useTranslation } from "react-i18next";
@@ -89,10 +89,16 @@ const MainHeader = observer(() => {
                                         {t("hello", { name: store.user.displayName })}
                                     </DropdownMenu.Item>
                                     {store.user.user?.role.roleName === "SysAdmin" && (
-                                        <DropdownMenu.Item>Truy cập Admin</DropdownMenu.Item>
+                                        <DropdownMenu.Item asChild>
+                                            <LinkRouter to="/admin">
+                                                <CogIcon size={18} />
+                                                Admin
+                                            </LinkRouter>
+                                        </DropdownMenu.Item>
                                     )}
                                     <DropdownMenu.Separator />
                                     <DropdownMenu.Item onSelect={askLogoutConfirmation}>
+                                        <LogOutIcon size={18} />
                                         {t("logout")}
                                     </DropdownMenu.Item>
                                 </DropdownMenu.Content>

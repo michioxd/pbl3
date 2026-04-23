@@ -1,9 +1,12 @@
 import { Route, Routes } from "react-router-dom";
 import ScreenMain from "./screens/Main";
-import { useEffect } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { useStore } from "./stores";
 import { observer } from "mobx-react-lite";
-import RouterAdmin from "./routers/admin";
+import ScreenLoading from "./screens/Loading";
+
+// eslint-disable-next-line react-refresh/only-export-components
+const RouterAdmin = lazy(() => import("./routers/admin"));
 
 // eslint-disable-next-line react-refresh/only-export-components
 const App = () => {
@@ -18,7 +21,16 @@ const App = () => {
         <>
             <Routes>
                 <Route path="/*" element={<ScreenMain />} />
-                <Route path="/admin/*" element={<RouterAdmin />} />
+                {store.user.isAuthenticated && store.user.user?.role.roleName === "SysAdmin" && (
+                    <Route
+                        path="/admin/*"
+                        element={
+                            <Suspense fallback={<ScreenLoading />}>
+                                <RouterAdmin />
+                            </Suspense>
+                        }
+                    />
+                )}
             </Routes>
         </>
     );

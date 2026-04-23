@@ -75,5 +75,10 @@ namespace Pbl3.Controllers.BusAdmin
         {
             return _context.BusTypes.AnyAsync(bt => bt.BusTypeID == busTypeId);
         }
+
+        private static bool IsValidPageSize(int pageSize)
+        {
+            return pageSize == 25 || pageSize == 50 || pageSize == 100 || pageSize == 200;
+        }
     }
 }
