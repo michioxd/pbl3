@@ -4,12 +4,29 @@ import { MapPin } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-export default function AddressSearch({ inputProps }: { inputProps?: TextField.RootProps }) {
+export interface SelectedAddress {
+    provinceId: number;
+    districtId?: number;
+    wardId?: number;
+}
+
+export default function AddressSearch({
+    inputProps,
+    text,
+    setText,
+    setSelected,
+}: {
+    inputProps?: TextField.RootProps;
+    text?: string;
+    setText?: (text: string) => void;
+    setSelected?: (address: SelectedAddress | null) => void;
+}) {
     const { t, i18n } = useTranslation();
     const [open, setOpen] = useState(false);
     const [txt, setTxt] = useState("");
     const [loading, setLoading] = useState(false);
     const [res, setRes] = useState<ProvinceResponse[] | null>(null);
+    const [, setSelectedBt] = useState<SelectedAddress | null>(null);
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const isVietnamese = i18n.language.toLowerCase().startsWith("vi");
@@ -76,10 +93,10 @@ export default function AddressSearch({ inputProps }: { inputProps?: TextField.R
                 ref={inputRef}
                 size={inputProps?.size ?? "3"}
                 className={["mx-auto", inputProps?.className].filter(Boolean).join(" ")}
-                value={txt}
+                value={text ?? txt}
                 placeholder={inputProps?.placeholder ?? "Nhập địa điểm"}
                 onChange={(e) => {
-                    setTxt(e.target.value);
+                    (setText ?? setTxt)(e.target.value);
                 }}
                 onFocus={() => {
                     if (res && res.length > 0) {
@@ -127,7 +144,12 @@ export default function AddressSearch({ inputProps }: { inputProps?: TextField.R
                                                             className="text-right! w-full! justify-start! mb-1!"
                                                             variant="ghost"
                                                             onClick={() => {
-                                                                setTxt(
+                                                                (setSelected ?? setSelectedBt)({
+                                                                    provinceId: Number(province.id),
+                                                                    districtId: Number(district.id),
+                                                                    wardId: Number(ward.id),
+                                                                });
+                                                                (setText ?? setTxt)(
                                                                     `${getDisplayName(ward)}, ${getDisplayName(district)}, ${getDisplayName(province)}`,
                                                                 );
                                                                 setOpen(false);
@@ -145,7 +167,11 @@ export default function AddressSearch({ inputProps }: { inputProps?: TextField.R
                                                         className="text-right! w-full! justify-start! mb-1!"
                                                         variant="ghost"
                                                         onClick={() => {
-                                                            setTxt(
+                                                            (setSelected ?? setSelectedBt)({
+                                                                provinceId: Number(province.id),
+                                                                districtId: Number(district.id),
+                                                            });
+                                                            (setText ?? setTxt)(
                                                                 `${getDisplayName(district)}, ${getDisplayName(province)}`,
                                                             );
                                                             setOpen(false);
