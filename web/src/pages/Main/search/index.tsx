@@ -3,6 +3,7 @@ import type { ProblemDetails, TimeRangeFilter, TripSearchItemDto, TripSearchResu
 import AmenityIcon from "@/pages/Main/search/components/AmenityIcon";
 import TripDetailDialog from "@/pages/Main/search/components/TripDetailDialog";
 import { observer } from "mobx-react-lite";
+import { useTranslation } from "react-i18next";
 import {
     Badge,
     Box,
@@ -54,21 +55,6 @@ const DEFAULT_FILTERS: SearchFiltersState = {
     maxPrice: "",
 };
 
-const SORT_OPTIONS: Array<{ value: TripSortBy; label: string }> = [
-    { value: 0, label: "Mặc định" },
-    { value: 1, label: "Giờ đi sớm nhất" },
-    { value: 2, label: "Giờ đi muộn nhất" },
-    { value: 4, label: "Giá tăng dần" },
-    { value: 5, label: "Giá giảm dần" },
-    { value: 3, label: "Đánh giá cao nhất" },
-];
-
-const TIME_RANGE_LABELS: Record<number, string> = {
-    1: "Sáng sớm 00:00 - 06:00",
-    2: "Sáng 06:00 - 12:00",
-    3: "Chiều 12:00 - 18:00",
-    4: "Tối 18:00 - 24:00",
-};
 
 function parseSearchQuery(searchParams: URLSearchParams): ParsedSearchQuery | null {
     const fromProvinceCode = searchParams.get("fp")?.trim() ?? "";
@@ -185,6 +171,8 @@ function formatDurationLabel(durationMinutes?: number) {
 }
 
 function SearchSummary({ result, onChangeSearch }: { result: TripSearchResult; onChangeSearch: () => void }) {
+    const { t } = useTranslation();
+
     return (
         <Box py="3" style={{ backgroundColor: "var(--blue-2)", borderBottom: "1px solid var(--blue-4)" }}>
             <Container size="4" px="4">
@@ -201,11 +189,11 @@ function SearchSummary({ result, onChangeSearch }: { result: TripSearchResult; o
                         </Text>
                         <Separator orientation="vertical" size="1" color="blue" className="hidden sm:block" />
                         <Text size="3" color="blue">
-                            {result.totalResults} chuyến phù hợp
+                            {t("search:summary_trips_count", { count: result.totalResults })}
                         </Text>
                     </Flex>
                     <Button variant="soft" color="blue" size="2" onClick={onChangeSearch}>
-                        Thay đổi tìm kiếm
+                        {t("search:summary_change_search")}
                     </Button>
                 </Flex>
             </Container>
@@ -232,19 +220,37 @@ function FilterSidebar({
     onPriceChange: (field: "minPrice" | "maxPrice", value: string) => void;
     onReset: () => void;
 }) {
+    const { t } = useTranslation();
+
+    const SORT_OPTIONS: Array<{ value: TripSortBy; label: string }> = [
+        { value: 0, label: t("search:filter_sort_default") },
+        { value: 1, label: t("search:filter_sort_earliest") },
+        { value: 2, label: t("search:filter_sort_latest") },
+        { value: 4, label: t("search:filter_sort_price_asc") },
+        { value: 5, label: t("search:filter_sort_price_desc") },
+        { value: 3, label: t("search:filter_sort_rating") },
+    ];
+
+    const TIME_RANGE_LABELS: Record<number, string> = {
+        1: t("search:filter_time_early_morning"),
+        2: t("search:filter_time_morning"),
+        3: t("search:filter_time_afternoon"),
+        4: t("search:filter_time_evening"),
+    };
+
     return (
         <Card size="3" variant="surface" style={{ backgroundColor: "var(--color-panel-solid)" }}>
             <Flex direction="column" gap="5">
                 <Flex justify="between" align="center">
-                    <Heading size="4">Bộ lọc</Heading>
+                    <Heading size="4">{t("search:filter_title")}</Heading>
                     <Button variant="ghost" size="1" color="gray" onClick={onReset}>
-                        Đặt lại
+                        {t("search:filter_reset")}
                     </Button>
                 </Flex>
 
                 <Box>
                     <Heading size="3" mb="3">
-                        Sắp xếp
+                        {t("search:filter_sort_title")}
                     </Heading>
                     <RadioGroup.Root
                         value={String(filters.sortBy)}
@@ -266,7 +272,7 @@ function FilterSidebar({
 
                 <Box>
                     <Heading size="3" mb="3">
-                        Khoảng giá
+                        {t("search:filter_price_title")}
                     </Heading>
                     <Flex direction="column" gap="2">
                         <TextField.Root
@@ -274,8 +280,8 @@ function FilterSidebar({
                             onChange={(event) => onPriceChange("minPrice", event.target.value)}
                             placeholder={
                                 result.filters?.priceRange?.min !== undefined
-                                    ? `Từ ${formatCurrency(result.filters.priceRange.min)}`
-                                    : "Giá thấp nhất"
+                                    ? t("search:filter_price_from", { price: formatCurrency(result.filters.priceRange.min) })
+                                    : t("search:filter_price_min_placeholder")
                             }
                         />
                         <TextField.Root
@@ -283,8 +289,8 @@ function FilterSidebar({
                             onChange={(event) => onPriceChange("maxPrice", event.target.value)}
                             placeholder={
                                 result.filters?.priceRange?.max !== undefined
-                                    ? `Đến ${formatCurrency(result.filters.priceRange.max)}`
-                                    : "Giá cao nhất"
+                                    ? t("search:filter_price_to", { price: formatCurrency(result.filters.priceRange.max) })
+                                    : t("search:filter_price_max_placeholder")
                             }
                         />
                     </Flex>
@@ -294,7 +300,7 @@ function FilterSidebar({
 
                 <Box>
                     <Heading size="3" mb="3">
-                        Giờ đi
+                        {t("search:filter_time_title")}
                     </Heading>
                     <Flex direction="column" gap="2">
                         {result.filters?.departureTimeRanges?.map((option) => {
@@ -323,7 +329,7 @@ function FilterSidebar({
 
                 <Box>
                     <Heading size="3" mb="3">
-                        Nhà xe
+                        {t("search:filter_company_title")}
                     </Heading>
                     <Flex direction="column" gap="2">
                         {result.filters?.busCompanies?.map((option) => (
@@ -344,7 +350,7 @@ function FilterSidebar({
 
                 <Box>
                     <Heading size="3" mb="3">
-                        Tiện ích
+                        {t("search:filter_amenity_title")}
                     </Heading>
                     <Flex direction="column" gap="2">
                         {result.filters?.amenities?.length ? (
@@ -369,7 +375,7 @@ function FilterSidebar({
                             })
                         ) : (
                             <Text size="2" color="gray">
-                                Chưa có dữ liệu tiện ích.
+                                {t("search:filter_amenity_no_data")}
                             </Text>
                         )}
                     </Flex>
@@ -380,6 +386,7 @@ function FilterSidebar({
 }
 
 function TicketCard({ ticket, onShowDetail }: { ticket: TripSearchItemDto; onShowDetail: (tripId: string) => void }) {
+    const { t } = useTranslation();
     const busCompanyName = ticket.busCompanyName ?? "--";
     const rating = ticket.rating ?? 0;
     const reviewCount = ticket.reviewCount ?? 0;
@@ -547,10 +554,10 @@ function TicketCard({ ticket, onShowDetail }: { ticket: TripSearchItemDto; onSho
 
                     <Flex direction="column" align="end" gap="2">
                         <Text size="2" color={availableSeats < 5 ? "orange" : "green"}>
-                            Còn {availableSeats} chỗ trống
+                            {t("search:ticket_available_seats", { count: availableSeats })}
                         </Text>
                         <Button size="3" color="amber" variant="solid" style={{ cursor: "pointer", width: "100%" }}>
-                            Chọn chuyến
+                            {t("search:ticket_select_trip")}
                         </Button>
                         <Button
                             variant="ghost"
@@ -561,7 +568,7 @@ function TicketCard({ ticket, onShowDetail }: { ticket: TripSearchItemDto; onSho
                                 onShowDetail(ticket.tripId ?? "");
                             }}
                         >
-                            Thông tin chi tiết <ChevronDown size={14} className="inline align-middle" />
+                            {t("search:ticket_detail")} <ChevronDown size={14} className="inline align-middle" />
                         </Button>
                     </Flex>
                 </Flex>
@@ -587,6 +594,7 @@ function SearchPageSkeleton() {
 }
 
 const PageMainSearch = observer(() => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const parsedQuery = useMemo(() => parseSearchQuery(searchParams), [searchParams]);
@@ -613,7 +621,7 @@ const PageMainSearch = observer(() => {
     useEffect(() => {
         if (!parsedQuery) {
             setResult(null);
-            setError("Thiếu thông tin tìm kiếm.");
+            setError(t("search:page_missing_query"));
             return;
         }
 
@@ -649,7 +657,7 @@ const PageMainSearch = observer(() => {
                 }
 
                 if (response.error || !response.data) {
-                    throw response.error ?? new Error("Không thể tải kết quả tìm kiếm.");
+                    throw response.error ?? new Error(t("search:page_fetch_error"));
                 }
 
                 setResult(response.data as TripSearchResult);
@@ -658,7 +666,7 @@ const PageMainSearch = observer(() => {
                     return;
                 }
 
-                const message = parseApiErrorMessage(fetchError, "Không thể tải kết quả tìm kiếm.");
+                const message = parseApiErrorMessage(fetchError, t("search:page_fetch_error"));
                 setError(message);
                 setResult(null);
                 toast.error(message);
@@ -674,7 +682,7 @@ const PageMainSearch = observer(() => {
         return () => {
             active = false;
         };
-    }, [parsedQuery, debouncedFilters]);
+    }, [parsedQuery, debouncedFilters, t]);
 
     const toggleCompany = (companyId: string) => {
         setFilters((current) => ({
@@ -714,11 +722,11 @@ const PageMainSearch = observer(() => {
                             <Flex align="center" gap="2">
                                 <SlidersHorizontal size={16} />
                                 <Text size="3" weight="bold">
-                                    Tìm kiếm chuyến xe
+                                    {t("search:page_title_searching")}
                                 </Text>
                             </Flex>
                             <Button variant="soft" color="blue" size="2" onClick={() => navigate("/")}>
-                                Thay đổi tìm kiếm
+                                {t("search:summary_change_search")}
                             </Button>
                         </Flex>
                     </Container>
@@ -756,8 +764,11 @@ const PageMainSearch = observer(() => {
                         <Box style={{ gridColumn: "span 3" }}>
                             <Heading size="5" mb="4" highContrast>
                                 {result
-                                    ? `Đặt mua vé xe đi ${result.summary?.destination?.displayName ?? ""} từ ${result.summary?.origin?.displayName ?? ""}`
-                                    : "Đang tìm chuyến xe phù hợp"}
+                                    ? t("search:page_title_result", {
+                                          destination: result.summary?.destination?.displayName ?? "",
+                                          origin: result.summary?.origin?.displayName ?? "",
+                                      })
+                                    : t("search:page_loading")}
                             </Heading>
 
                             {loading ? (
@@ -766,12 +777,12 @@ const PageMainSearch = observer(() => {
                                 <Card size="3">
                                     <Flex direction="column" gap="3" align="center" py="6">
                                         <Text size="4" weight="bold">
-                                            Không thể tải kết quả
+                                            {t("search:page_error_title")}
                                         </Text>
                                         <Text size="2" color="gray">
                                             {error}
                                         </Text>
-                                        <Button onClick={() => navigate("/")}>Quay lại tìm kiếm</Button>
+                                        <Button onClick={() => navigate("/")}>{t("search:page_error_back")}</Button>
                                     </Flex>
                                 </Card>
                             ) : result && result.items?.length ? (
@@ -789,10 +800,10 @@ const PageMainSearch = observer(() => {
                                     <Flex direction="column" gap="3" align="center" py="6">
                                         <Search size={96} color="gray" />
                                         <Heading size="6" weight="bold">
-                                            Không tìm thấy chuyến phù hợp
+                                            {t("search:page_no_results_title")}
                                         </Heading>
                                         <Text size="2" color="gray" align="center">
-                                            Hãy thử thay đổi điểm đón, điểm trả hoặc bộ lọc để xem thêm kết quả.
+                                            {t("search:page_no_results_desc")}
                                         </Text>
                                     </Flex>
                                 </Card>

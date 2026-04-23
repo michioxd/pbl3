@@ -126,7 +126,7 @@ export default function TripDetailDialog({ tripId, onClose }: TripDetailDialogPr
                             flexShrink: 0,
                         }}
                     >
-                        <Heading size="5">{t("trip:detail_title")}</Heading>
+                        <Heading size="5">{t("search:detail_title")}</Heading>
                         <Dialog.Close>
                             <Button variant="ghost" size="2">
                                 <X size={18} />
@@ -211,8 +211,10 @@ export default function TripDetailDialog({ tripId, onClose }: TripDetailDialogPr
                                                     <Flex justify="between" align="center">
                                                         <Flex gap="4">
                                                             <Text size="2" color="gray">
-                                                                {trip.availableSeats ?? 0}/{trip.totalSeats ?? 0} chỗ
-                                                                trống
+                                                                {t("search:detail_seats_available", {
+                                                                    available: trip.availableSeats ?? 0,
+                                                                    total: trip.totalSeats ?? 0,
+                                                                })}
                                                             </Text>
                                                         </Flex>
                                                         <Text size="5" weight="bold" color="blue">
@@ -223,13 +225,13 @@ export default function TripDetailDialog({ tripId, onClose }: TripDetailDialogPr
 
                                                 <Tabs.Root defaultValue="pickup">
                                                     <Tabs.List>
-                                                        <Tabs.Trigger value="pickup">Điểm đón</Tabs.Trigger>
-                                                        <Tabs.Trigger value="dropoff">Điểm trả</Tabs.Trigger>
-                                                        <Tabs.Trigger value="reviews">Đánh giá</Tabs.Trigger>
-                                                        <Tabs.Trigger value="policy">Chính sách</Tabs.Trigger>
-                                                        <Tabs.Trigger value="amenities">Tiện ích</Tabs.Trigger>
+                                                        <Tabs.Trigger value="pickup">{t("search:detail_tab_pickup")}</Tabs.Trigger>
+                                                        <Tabs.Trigger value="dropoff">{t("search:detail_tab_dropoff")}</Tabs.Trigger>
+                                                        <Tabs.Trigger value="reviews">{t("search:detail_tab_reviews")}</Tabs.Trigger>
+                                                        <Tabs.Trigger value="policy">{t("search:detail_tab_policy")}</Tabs.Trigger>
+                                                        <Tabs.Trigger value="amenities">{t("search:detail_tab_amenities")}</Tabs.Trigger>
                                                         {images.length > 0 && (
-                                                            <Tabs.Trigger value="images">Hình ảnh</Tabs.Trigger>
+                                                            <Tabs.Trigger value="images">{t("search:detail_tab_images")}</Tabs.Trigger>
                                                         )}
                                                     </Tabs.List>
 
@@ -271,11 +273,9 @@ export default function TripDetailDialog({ tripId, onClose }: TripDetailDialogPr
                                                                                     <Flex align="center" gap="1">
                                                                                         <Clock size={12} />
                                                                                         <Text size="1" color="gray">
-                                                                                            +
-                                                                                            {formatDuration(
-                                                                                                stop.durationFromStart,
-                                                                                            )}{" "}
-                                                                                            từ điểm xuất phát
+                                                                                            {t("search:detail_duration_from_start", {
+                                                                                                duration: formatDuration(stop.durationFromStart),
+                                                                                            })}
                                                                                         </Text>
                                                                                     </Flex>
                                                                                 )}
@@ -323,11 +323,9 @@ export default function TripDetailDialog({ tripId, onClose }: TripDetailDialogPr
                                                                                     <Flex align="center" gap="1">
                                                                                         <Clock size={12} />
                                                                                         <Text size="1" color="gray">
-                                                                                            +
-                                                                                            {formatDuration(
-                                                                                                stop.durationFromStart,
-                                                                                            )}{" "}
-                                                                                            từ điểm xuất phát
+                                                                                            {t("search:detail_duration_from_start", {
+                                                                                                duration: formatDuration(stop.durationFromStart),
+                                                                                            })}
                                                                                         </Text>
                                                                                     </Flex>
                                                                                 )}
@@ -341,7 +339,7 @@ export default function TripDetailDialog({ tripId, onClose }: TripDetailDialogPr
                                                         <Tabs.Content value="reviews">
                                                             <Card>
                                                                 <Text size="2" color="gray">
-                                                                    Tính năng đánh giá đang được phát triển
+                                                                    {t("search:detail_reviews_coming_soon")}
                                                                 </Text>
                                                             </Card>
                                                         </Tabs.Content>
@@ -351,7 +349,7 @@ export default function TripDetailDialog({ tripId, onClose }: TripDetailDialogPr
                                                                 {trip.cancellationPolicy ? (
                                                                     <Box>
                                                                         <Heading size="4" mb="2">
-                                                                            Chính sách huỷ vé
+                                                                            {t("search:detail_policy_cancellation")}
                                                                         </Heading>
                                                                         <Text
                                                                             size="2"
@@ -362,13 +360,13 @@ export default function TripDetailDialog({ tripId, onClose }: TripDetailDialogPr
                                                                     </Box>
                                                                 ) : (
                                                                     <Text size="2" color="gray">
-                                                                        Không có thông tin chính sách
+                                                                        {t("search:detail_policy_no_info")}
                                                                     </Text>
                                                                 )}
                                                                 {trip.notes && (
                                                                     <Box mt="3">
                                                                         <Heading size="4" mb="2">
-                                                                            Lưu ý
+                                                                            {t("search:detail_policy_notes")}
                                                                         </Heading>
                                                                         <Text
                                                                             size="2"
@@ -472,7 +470,7 @@ export default function TripDetailDialog({ tripId, onClose }: TripDetailDialogPr
                                 </Flex>
                             ) : (
                                 <Text size="2" color="gray" align="center">
-                                    Không tìm thấy thông tin chuyến đi
+                                    {t("search:detail_not_found")}
                                 </Text>
                             )}
                         </Box>
@@ -489,14 +487,14 @@ export default function TripDetailDialog({ tripId, onClose }: TripDetailDialogPr
                             <Flex justify="between" align="center">
                                 <Box>
                                     <Text size="1" color="gray">
-                                        Tổng giá
+                                        {t("search:detail_total_price")}
                                     </Text>
                                     <Text size="5" weight="bold" color="blue">
                                         {formatPrice(trip.lowestPrice)}
                                     </Text>
                                 </Box>
                                 <Button size="3" color="amber" style={{ minWidth: "150px" }}>
-                                    Chọn chuyến
+                                    {t("search:detail_select_trip")}
                                 </Button>
                             </Flex>
                         </Box>
