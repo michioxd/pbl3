@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pbl3.Data;
@@ -11,9 +12,11 @@ using Pbl3.Data;
 namespace pbl3_server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260423224003_SyncModelChanges")]
+    partial class SyncModelChanges
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -103,48 +106,6 @@ namespace pbl3_server.Migrations
                     b.HasKey("AdministrativeUnitID");
 
                     b.ToTable("administrative_units");
-                });
-
-            modelBuilder.Entity("Pbl3.Models.Amenity", b =>
-                {
-                    b.Property<Guid>("AmenityID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("IconName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("AmenityID");
-
-                    b.ToTable("Amenities");
                 });
 
             modelBuilder.Entity("Pbl3.Models.Booking", b =>
@@ -432,51 +393,23 @@ namespace pbl3_server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.PrimitiveCollection<string>("Amenities")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.Property<int>("TotalSeats")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.HasKey("BusTypeID");
 
                     b.ToTable("BusTypes");
-                });
-
-            modelBuilder.Entity("Pbl3.Models.BusTypeAmenity", b =>
-                {
-                    b.Property<Guid>("BusTypeAmenityID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AmenityID")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("BusTypeID")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("BusTypeAmenityID");
-
-                    b.HasIndex("AmenityID");
-
-                    b.HasIndex("BusTypeID");
-
-                    b.ToTable("BusTypeAmenities");
                 });
 
             modelBuilder.Entity("Pbl3.Models.District", b =>
@@ -1128,25 +1061,6 @@ namespace pbl3_server.Migrations
                     b.Navigation("Station");
                 });
 
-            modelBuilder.Entity("Pbl3.Models.BusTypeAmenity", b =>
-                {
-                    b.HasOne("Pbl3.Models.Amenity", "Amenity")
-                        .WithMany("BusTypeAmenities")
-                        .HasForeignKey("AmenityID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Pbl3.Models.BusType", "BusType")
-                        .WithMany("BusTypeAmenities")
-                        .HasForeignKey("BusTypeID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Amenity");
-
-                    b.Navigation("BusType");
-                });
-
             modelBuilder.Entity("Pbl3.Models.District", b =>
                 {
                     b.HasOne("Pbl3.Models.AdministrativeUnit", "AdministrativeUnit")
@@ -1412,11 +1326,6 @@ namespace pbl3_server.Migrations
                     b.Navigation("Wards");
                 });
 
-            modelBuilder.Entity("Pbl3.Models.Amenity", b =>
-                {
-                    b.Navigation("BusTypeAmenities");
-                });
-
             modelBuilder.Entity("Pbl3.Models.Booking", b =>
                 {
                     b.Navigation("Notifications");
@@ -1460,8 +1369,6 @@ namespace pbl3_server.Migrations
 
             modelBuilder.Entity("Pbl3.Models.BusType", b =>
                 {
-                    b.Navigation("BusTypeAmenities");
-
                     b.Navigation("Buses");
 
                     b.Navigation("SeatLayouts");

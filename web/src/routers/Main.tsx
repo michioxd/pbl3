@@ -1,5 +1,5 @@
 import PageMainIndex from "@/pages/Main";
-import PageMainSearch from "@/pages/Main/Search";
+import PageMainSearch from "@/pages/Main/search";
 import Page404 from "@/screens/Main/404";
 import { Route, Routes } from "react-router-dom";
 

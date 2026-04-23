@@ -1,6 +1,7 @@
 import { getApiTripsSearch } from "@/api";
 import type { ProblemDetails, TimeRangeFilter, TripSearchItemDto, TripSearchResult, TripSortBy } from "@/api";
-import TripDetailDialog from "@/components/TripDetailDialog";
+import AmenityIcon from "@/pages/Main/search/components/AmenityIcon";
+import TripDetailDialog from "@/pages/Main/search/components/TripDetailDialog";
 import { observer } from "mobx-react-lite";
 import {
     Badge,
@@ -347,17 +348,25 @@ function FilterSidebar({
                     </Heading>
                     <Flex direction="column" gap="2">
                         {result.filters?.amenities?.length ? (
-                            result.filters.amenities.map((option) => (
-                                <Text as="label" size="2" key={option.value}>
-                                    <Flex gap="2" align="center">
-                                        <Checkbox
-                                            checked={filters.amenities.includes(option.value ?? "")}
-                                            onCheckedChange={() => onToggleAmenity(option.value ?? "")}
-                                        />
-                                        {option.value} ({option.count ?? 0})
-                                    </Flex>
-                                </Text>
-                            ))
+                            result.filters.amenities.map((option) => {
+                                const amenity = option.amenity;
+                                if (!amenity?.amenityId) return null;
+
+                                const amenityId = amenity.amenityId;
+
+                                return (
+                                    <Text as="label" size="2" key={amenityId}>
+                                        <Flex gap="2" align="center">
+                                            <Checkbox
+                                                checked={filters.amenities.includes(amenityId)}
+                                                onCheckedChange={() => onToggleAmenity(amenityId)}
+                                            />
+                                            {amenity.iconName && <AmenityIcon iconName={amenity.iconName} size={14} />}
+                                            {amenity.name} ({option.count ?? 0})
+                                        </Flex>
+                                    </Text>
+                                );
+                            })
                         ) : (
                             <Text size="2" color="gray">
                                 Chưa có dữ liệu tiện ích.
@@ -423,11 +432,29 @@ function TicketCard({ ticket, onShowDetail }: { ticket: TripSearchItemDto; onSho
                             </Text>
                             {ticket.amenities?.length ? (
                                 <Flex gap="2" wrap="wrap" mb="3">
-                                    {ticket.amenities.map((amenity) => (
-                                        <Badge key={amenity} variant="soft" color="gray">
-                                            {amenity}
+                                    {ticket.amenities.slice(0, 5).map((amenity) => {
+                                        const isObj = typeof amenity !== "string";
+                                        const displayName = isObj ? (amenity as any).displayName : amenity;
+                                        const iconName = isObj ? (amenity as any).iconName : "";
+
+                                        return (
+                                            <Badge key={displayName} variant="soft" color="gray">
+                                                {iconName && (
+                                                    <AmenityIcon
+                                                        iconName={iconName}
+                                                        size={12}
+                                                        className="inline mr-1"
+                                                    />
+                                                )}
+                                                {displayName}
+                                            </Badge>
+                                        );
+                                    })}
+                                    {ticket.amenities.length > 5 && (
+                                        <Badge variant="soft" color="gray">
+                                            +{ticket.amenities.length - 5}
                                         </Badge>
-                                    ))}
+                                    )}
                                 </Flex>
                             ) : null}
                         </Box>
@@ -609,7 +636,7 @@ const PageMainSearch = observer(() => {
                         SortBy: debouncedFilters.sortBy,
                         BusCompanyIds: debouncedFilters.companyIds,
                         DepartureTimeRanges: debouncedFilters.timeRanges,
-                        Amenities: debouncedFilters.amenities,
+                        AmenityIds: debouncedFilters.amenities,
                         MinPrice: debouncedFilters.minPrice ? Number(debouncedFilters.minPrice) : undefined,
                         MaxPrice: debouncedFilters.maxPrice ? Number(debouncedFilters.maxPrice) : undefined,
                         Page: 1,

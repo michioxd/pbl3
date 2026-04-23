@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Pbl3.Data;
 using Pbl3.Dtos;
 using Pbl3.Enums;
-using Pbl3.Models;
 
 namespace Pbl3.Services
 {
@@ -110,7 +109,7 @@ namespace Pbl3.Services
                         .Select(stop => stop.Station!.Name)
                         .FirstOrDefault()
                     ?? string.Empty,
-                AmenitiesText = t.BusType!.Description,
+                BusTypeAmenityIds = t.BusType!.BusTypeAmenities.Select(bta => bta.AmenityID).ToList(),
                 ImageUrl =
                     t.Bus != null
                         ? t
@@ -154,62 +153,73 @@ namespace Pbl3.Services
                     .ToList();
             }
 
-            var normalizedRequestedAmenities = request
-                .Amenities?.Select(NormalizeAmenity)
-                .Where(value => !string.IsNullOrWhiteSpace(value))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
-            if (normalizedRequestedAmenities is { Count: > 0 })
+            if (request.AmenityIds is { Count: > 0 })
             {
                 projectedTripList = projectedTripList
                     .Where(trip =>
-                    {
-                        var amenitySet = ParseAmenities(trip.AmenitiesText);
-                        return normalizedRequestedAmenities.All(amenity =>
-                            amenitySet.Contains(amenity)
-                        );
-                    })
+                        request.AmenityIds.All(amenityId => trip.BusTypeAmenityIds.Contains(amenityId))
+                    )
                     .ToList();
             }
 
             var total = projectedTripList.Count;
-            var filters = BuildFilters(projectedTripList);
+            var filters = await BuildFiltersAsync(projectedTripList);
             var summary = await BuildSummaryAsync(request);
 
             var orderedTrips = ApplySorting(projectedTripList, request.SortBy);
-            var items = orderedTrips
+            var pagedTrips = orderedTrips
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(trip =>
+                .ToList();
+
+            var allAmenityIds = pagedTrips
+                .SelectMany(trip => trip.BusTypeAmenityIds)
+                .Distinct()
+                .ToList();
+
+            var amenities = await _context.Amenities
+                .AsNoTracking()
+                .Where(a => allAmenityIds.Contains(a.AmenityID) && a.IsActive)
+                .ToDictionaryAsync(a => a.AmenityID);
+
+            var items = pagedTrips
+                .Select(trip => new TripSearchItemDto
                 {
-                    var amenitySet = ParseAmenities(trip.AmenitiesText);
-                    return new TripSearchItemDto
-                    {
-                        TripId = trip.TripId,
-                        RouteId = trip.RouteId,
-                        CompanyId = trip.CompanyId,
-                        BusCompanyName = trip.BusCompanyName,
-                        BusTypeName = trip.BusTypeName,
-                        RouteName = trip.RouteName,
-                        DepartureLocation = trip.DepartureLocation,
-                        ArrivalLocation = trip.ArrivalLocation,
-                        DepartureTime = trip.DepartureTime,
-                        ArrivalTime = trip.ArrivalTime,
-                        DurationMinutes = Math.Max(
-                            0,
-                            (int)Math.Round((trip.ArrivalTime - trip.DepartureTime).TotalMinutes)
-                        ),
-                        LowestPrice = trip.LowestPrice,
-                        AvailableSeats = Math.Max(
-                            0,
-                            trip.TotalSeats - trip.SoldSeats - trip.HeldSeats
-                        ),
-                        Rating = trip.Rating,
-                        ReviewCount = trip.ReviewCount,
-                        Amenities = amenitySet.OrderBy(value => value).ToList(),
-                        ImageUrl = trip.ImageUrl,
-                    };
+                    TripId = trip.TripId,
+                    RouteId = trip.RouteId,
+                    CompanyId = trip.CompanyId,
+                    BusCompanyName = trip.BusCompanyName,
+                    BusTypeName = trip.BusTypeName,
+                    RouteName = trip.RouteName,
+                    DepartureLocation = trip.DepartureLocation,
+                    ArrivalLocation = trip.ArrivalLocation,
+                    DepartureTime = trip.DepartureTime,
+                    ArrivalTime = trip.ArrivalTime,
+                    DurationMinutes = Math.Max(
+                        0,
+                        (int)Math.Round((trip.ArrivalTime - trip.DepartureTime).TotalMinutes)
+                    ),
+                    LowestPrice = trip.LowestPrice,
+                    AvailableSeats = Math.Max(
+                        0,
+                        trip.TotalSeats - trip.SoldSeats - trip.HeldSeats
+                    ),
+                    Rating = trip.Rating,
+                    ReviewCount = trip.ReviewCount,
+                    Amenities = trip.BusTypeAmenityIds
+                        .Where(id => amenities.ContainsKey(id))
+                        .Select(id => amenities[id])
+                        .OrderBy(a => a.DisplayOrder)
+                        .Select(a => new AmenityDto
+                        {
+                            AmenityId = a.AmenityID,
+                            Name = a.Name,
+                            Description = a.Description,
+                            IconName = a.IconName,
+                            Category = a.Category,
+                        })
+                        .ToList(),
+                    ImageUrl = trip.ImageUrl,
                 })
                 .ToList();
 
@@ -269,34 +279,22 @@ namespace Pbl3.Services
             };
         }
 
-        private static HashSet<string> ParseAmenities(string? amenitiesText)
-        {
-            if (string.IsNullOrWhiteSpace(amenitiesText))
-            {
-                return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            }
-
-            return amenitiesText
-                .Split(
-                    [',', ';', '\n', '\r'],
-                    StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
-                )
-                .Select(NormalizeAmenity)
-                .Where(value => !string.IsNullOrWhiteSpace(value))
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        }
-
-        private static string NormalizeAmenity(string amenity)
-        {
-            return amenity.Trim().ToLowerInvariant();
-        }
-
-        private static TripSearchFilterMetadataDto BuildFilters(
+        private async Task<TripSearchFilterMetadataDto> BuildFiltersAsync(
             IEnumerable<TripSearchProjection> trips
         )
         {
             var tripList = trips.ToList();
             var prices = tripList.Select(trip => trip.LowestPrice).ToList();
+
+            var allAmenityIds = tripList
+                .SelectMany(trip => trip.BusTypeAmenityIds)
+                .Distinct()
+                .ToList();
+
+            var amenities = await _context.Amenities
+                .AsNoTracking()
+                .Where(a => allAmenityIds.Contains(a.AmenityID) && a.IsActive)
+                .ToDictionaryAsync(a => a.AmenityID);
 
             return new TripSearchFilterMetadataDto
             {
@@ -319,14 +317,23 @@ namespace Pbl3.Services
                     .Where(option => option.Count > 0)
                     .ToList(),
                 Amenities = tripList
-                    .SelectMany(trip => ParseAmenities(trip.AmenitiesText))
-                    .GroupBy(value => value, StringComparer.OrdinalIgnoreCase)
+                    .SelectMany(trip => trip.BusTypeAmenityIds)
+                    .Where(id => amenities.ContainsKey(id))
+                    .GroupBy(id => id)
                     .Select(group => new TripSearchAmenityFilterOptionDto
                     {
-                        Value = group.Key,
+                        Amenity = new AmenityDto
+                        {
+                            AmenityId = amenities[group.Key].AmenityID,
+                            Name = amenities[group.Key].Name,
+                            Description = amenities[group.Key].Description,
+                            IconName = amenities[group.Key].IconName,
+                            Category = amenities[group.Key].Category,
+                        },
                         Count = group.Count(),
                     })
-                    .OrderBy(option => option.Value)
+                    .OrderBy(option => option.Amenity.Category)
+                    .ThenBy(option => option.Amenity.Name)
                     .ToList(),
                 PriceRange =
                     prices.Count == 0
@@ -440,7 +447,7 @@ namespace Pbl3.Services
 
             public string ArrivalLocation { get; set; } = string.Empty;
 
-            public string? AmenitiesText { get; set; }
+            public List<Guid> BusTypeAmenityIds { get; set; } = [];
 
             public string? ImageUrl { get; set; }
         }

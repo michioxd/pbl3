@@ -57,7 +57,7 @@ namespace Pbl3.Dtos
 
         public int ReviewCount { get; set; }
 
-        public List<string> Amenities { get; set; } = [];
+        public List<AmenityDto> Amenities { get; set; } = [];
 
         public List<string> Images { get; set; } = [];
 

@@ -35,6 +35,8 @@ namespace Pbl3.Data
         public DbSet<Province> Provinces { get; set; }
         public DbSet<District> Districts { get; set; }
         public DbSet<Ward> Wards { get; set; }
+        public DbSet<Amenity> Amenities { get; set; }
+        public DbSet<BusTypeAmenity> BusTypeAmenities { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

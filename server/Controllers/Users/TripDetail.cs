@@ -44,6 +44,7 @@ namespace Pbl3.Controllers
                     BusCompanyName = t.Route.BusCompany!.Name,
                     BusTypeName = t.BusType!.Name,
                     BusTypeDescription = t.BusType.Description,
+                    BusTypeAmenityIds = t.BusType.BusTypeAmenities.Select(bta => bta.AmenityID).ToList(),
                     RouteName = t.Route.RouteName,
                     TotalSeats = t.BusType.TotalSeats,
                     SoldSeats = t.Tickets.Count(ticket => ticket.Status != TicketStatus.Cancelled),
@@ -91,7 +92,19 @@ namespace Pbl3.Controllers
                 return NotFound(new { message = "Trip is not available" });
             }
 
-            var amenities = ParseAmenities(trip.BusTypeDescription);
+            var amenities = await _context.Amenities
+                .AsNoTracking()
+                .Where(a => trip.BusTypeAmenityIds.Contains(a.AmenityID) && a.IsActive)
+                .OrderBy(a => a.DisplayOrder)
+                .Select(a => new AmenityDto
+                {
+                    AmenityId = a.AmenityID,
+                    Name = a.Name,
+                    Description = a.Description,
+                    IconName = a.IconName,
+                    Category = a.Category,
+                })
+                .ToListAsync();
 
             var pickupStops = trip.RouteStops
                 .Where(stop => stop.IsPickUp)
@@ -159,25 +172,6 @@ namespace Pbl3.Controllers
             };
 
             return Ok(result);
-        }
-
-        private static List<string> ParseAmenities(string? amenitiesText)
-        {
-            if (string.IsNullOrWhiteSpace(amenitiesText))
-            {
-                return [];
-            }
-
-            return amenitiesText
-                .Split(
-                    [',', ';', '\n', '\r'],
-                    StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
-                )
-                .Select(a => a.Trim())
-                .Where(value => !string.IsNullOrWhiteSpace(value))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(value => value)
-                .ToList();
         }
     }
 }

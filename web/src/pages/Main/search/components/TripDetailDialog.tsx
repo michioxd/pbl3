@@ -1,5 +1,6 @@
 import { getApiTripsByTripId } from "@/api";
 import type { TripDetailDto } from "@/api";
+import AmenityIcon from "./AmenityIcon";
 import {
     Badge,
     Box,
@@ -381,17 +382,60 @@ export default function TripDetailDialog({ tripId, onClose }: TripDetailDialogPr
                                                         </Tabs.Content>
 
                                                         <Tabs.Content value="amenities">
-                                                            <Flex gap="2" wrap="wrap">
-                                                                {amenities.map((amenity) => (
-                                                                    <Badge
-                                                                        key={amenity}
-                                                                        variant="soft"
-                                                                        color="blue"
-                                                                        size="2"
-                                                                    >
-                                                                        {amenity}
-                                                                    </Badge>
-                                                                ))}
+                                                            <Flex direction="column" gap="3">
+                                                                {(() => {
+                                                                    const grouped = amenities.reduce(
+                                                                        (acc, amenity) => {
+                                                                            const category =
+                                                                                amenity.category ?? "other";
+                                                                            if (!acc[category]) {
+                                                                                acc[category] = [];
+                                                                            }
+                                                                            acc[category].push(amenity);
+                                                                            return acc;
+                                                                        },
+                                                                        {} as Record<string, typeof amenities>,
+                                                                    );
+
+                                                                    return Object.entries(grouped).map(
+                                                                        ([category, items]) => (
+                                                                            <Box key={category}>
+                                                                                <Text
+                                                                                    size="2"
+                                                                                    weight="bold"
+                                                                                    color="gray"
+                                                                                    mb="2"
+                                                                                    style={{
+                                                                                        textTransform: "capitalize",
+                                                                                    }}
+                                                                                >
+                                                                                    {category}
+                                                                                </Text>
+                                                                                <Flex gap="2" wrap="wrap">
+                                                                                    {items.map((amenity) => (
+                                                                                        <Badge
+                                                                                            key={amenity.amenityId}
+                                                                                            variant="soft"
+                                                                                            color="blue"
+                                                                                            size="2"
+                                                                                        >
+                                                                                            {amenity.iconName && (
+                                                                                                <AmenityIcon
+                                                                                                    iconName={
+                                                                                                        amenity.iconName
+                                                                                                    }
+                                                                                                    size={14}
+                                                                                                    className="inline mr-1"
+                                                                                                />
+                                                                                            )}
+                                                                                            {amenity.name}
+                                                                                        </Badge>
+                                                                                    ))}
+                                                                                </Flex>
+                                                                            </Box>
+                                                                        ),
+                                                                    );
+                                                                })()}
                                                             </Flex>
                                                         </Tabs.Content>
 

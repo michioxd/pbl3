@@ -93,6 +93,14 @@ export type AdminUpdateUserDto = {
     isActive?: boolean;
 };
 
+export type AmenityDto = {
+    amenityId?: string;
+    name?: string | null;
+    description?: string | null;
+    iconName?: string | null;
+    category?: string | null;
+};
+
 export type AuthResponseDto = {
     token: string | null;
     expiresAt?: string;
@@ -233,7 +241,7 @@ export type TripDetailDto = {
     lowestPrice?: number;
     rating?: number;
     reviewCount?: number;
-    amenities?: Array<string> | null;
+    amenities?: Array<AmenityDto> | null;
     images?: Array<string> | null;
     pickupStops?: Array<TripDetailRouteStopDto> | null;
     dropoffStops?: Array<TripDetailRouteStopDto> | null;
@@ -264,7 +272,7 @@ export type TripRouteStopDto = {
 };
 
 export type TripSearchAmenityFilterOptionDto = {
-    value?: string | null;
+    amenity?: AmenityDto;
     count?: number;
 };
 
@@ -297,7 +305,7 @@ export type TripSearchItemDto = {
     availableSeats?: number;
     rating?: number;
     reviewCount?: number;
-    amenities?: Array<string> | null;
+    amenities?: Array<AmenityDto> | null;
     imageUrl?: string | null;
     pickupStops?: Array<TripRouteStopDto> | null;
     dropoffStops?: Array<TripRouteStopDto> | null;
@@ -859,7 +867,7 @@ export type GetApiTripsSearchData = {
         BusCompanyIds?: Array<string>;
         MinPrice?: number;
         MaxPrice?: number;
-        Amenities?: Array<string>;
+        AmenityIds?: Array<string>;
         Page?: number;
         PageSize?: number;
     };

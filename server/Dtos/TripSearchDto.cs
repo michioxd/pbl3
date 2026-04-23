@@ -33,7 +33,7 @@ namespace Pbl3.Dtos
 
     public class TripSearchAmenityFilterOptionDto
     {
-        public string Value { get; set; } = default!;
+        public AmenityDto Amenity { get; set; } = default!;
 
         public int Count { get; set; }
     }
@@ -110,7 +110,7 @@ namespace Pbl3.Dtos
 
         public int ReviewCount { get; set; }
 
-        public List<string> Amenities { get; set; } = new();
+        public List<AmenityDto> Amenities { get; set; } = [];
 
         public string? ImageUrl { get; set; }
 
@@ -166,7 +166,7 @@ namespace Pbl3.Dtos
 
         public decimal? MaxPrice { get; set; }
 
-        public List<string>? Amenities { get; set; }
+        public List<Guid>? AmenityIds { get; set; }
 
         public int Page { get; set; } = 1;
 
