@@ -58,9 +58,9 @@ namespace Pbl3.Controllers.BusAdmin
             return _ownershipService.IsBusTypeExistsAsync(busTypeId);
         }
 
-        private static bool IsValidPageSize(int pageSize)
-        {
-            return pageSize == 25 || pageSize == 50 || pageSize == 100 || pageSize == 200;
-        }
+        // private static bool IsValidPageSize(int pageSize)
+        // {
+        //     return pageSize == 25 || pageSize == 50 || pageSize == 100 || pageSize == 200;
+        // }
     }
 }
