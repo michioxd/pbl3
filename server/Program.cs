@@ -26,7 +26,10 @@ namespace Pbl3
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddControllers();
+            builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<ITripSearchService, TripSearchService>();
+            builder.Services.AddScoped<ICurrentUserContext, CurrentUserContext>();
+            builder.Services.AddScoped<IBusAdminOwnershipService, BusAdminOwnershipService>();
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy(

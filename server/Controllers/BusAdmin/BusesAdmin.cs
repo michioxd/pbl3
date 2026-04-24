@@ -1,10 +1,8 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Pbl3.Data;
+using Pbl3.Services;
 
 namespace Pbl3.Controllers.BusAdmin
 {
@@ -15,65 +13,49 @@ namespace Pbl3.Controllers.BusAdmin
     public partial class BusesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICurrentUserContext _currentUserContext;
+        private readonly IBusAdminOwnershipService _ownershipService;
 
-        public BusesController(ApplicationDbContext context)
+        public BusesController(
+            ApplicationDbContext context,
+            ICurrentUserContext currentUserContext,
+            IBusAdminOwnershipService ownershipService
+        )
         {
             _context = context;
-        }
-
-        private Guid GetCurrentUserId()
-        {
-            var userIdString =
-                User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
-                ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (Guid.TryParse(userIdString, out Guid userId))
-            {
-                return userId;
-            }
-
-            throw new UnauthorizedAccessException("Không tìm thấy UserID trong token.");
+            _currentUserContext = currentUserContext;
+            _ownershipService = ownershipService;
         }
 
         private async Task<Guid?> GetCurrentCompanyIdAsync()
         {
-            var userId = GetCurrentUserId();
-
-            return await _context
-                .BusCompanyAdmins.Where(x => x.UserID == userId)
-                .Select(x => (Guid?)x.CompanyID)
-                .FirstOrDefaultAsync();
+            var userId = _currentUserContext.GetRequiredUserId();
+            return await _ownershipService.GetCurrentCompanyIdAsync(userId);
         }
 
         private Task<bool> IsRouteOwnedByCompanyAsync(Guid companyId, Guid routeId)
         {
-            return _context.BusRoutes.AnyAsync(r =>
-                r.RouteID == routeId && r.CompanyID == companyId
-            );
+            return _ownershipService.IsRouteOwnedByCompanyAsync(companyId, routeId);
         }
 
         private Task<bool> IsBusOwnedByCompanyAsync(Guid companyId, Guid busId)
         {
-            return _context.Buses.AnyAsync(b => b.BusID == busId && b.CompanyID == companyId);
+            return _ownershipService.IsBusOwnedByCompanyAsync(companyId, busId);
         }
 
         private Task<bool> IsTripOwnedByCompanyAsync(Guid companyId, Guid tripId)
         {
-            return _context.Trips.AnyAsync(t =>
-                t.TripID == tripId && t.Route != null && t.Route.CompanyID == companyId
-            );
+            return _ownershipService.IsTripOwnedByCompanyAsync(companyId, tripId);
         }
 
         private Task<bool> IsBusTypeOwnedByCompanyAsync(Guid companyId, Guid busTypeId)
         {
-            return _context.Buses.AnyAsync(b =>
-                b.CompanyID == companyId && b.BusTypeID == busTypeId
-            );
+            return _ownershipService.IsBusTypeOwnedByCompanyAsync(companyId, busTypeId);
         }
 
         private Task<bool> IsBusTypeExistsAsync(Guid busTypeId)
         {
-            return _context.BusTypes.AnyAsync(bt => bt.BusTypeID == busTypeId);
+            return _ownershipService.IsBusTypeExistsAsync(busTypeId);
         }
 
         private static bool IsValidPageSize(int pageSize)
