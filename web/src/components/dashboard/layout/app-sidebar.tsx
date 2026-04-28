@@ -15,6 +15,7 @@ export function AppSidebar({ role = 0 }: { role: 0 | 1 }) {
             <SidebarHeader>
                 {role === 1 ? (
                     <TeamSwitcher
+                        // TODO: a member should be only in one team (company) in this system
                         teams={[
                             {
                                 name: "Bus Admin",
