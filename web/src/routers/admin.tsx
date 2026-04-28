@@ -11,7 +11,7 @@ const RouterAdmin = observer(() => {
     const { user } = useStore();
     if (user.isLoading) return <ScreenLoading />;
     return (
-        <ScreenDashboard>
+        <ScreenDashboard role={0}>
             <Routes>
                 <Route index element={<PageAdminIndex />} />
                 <Route path="users">

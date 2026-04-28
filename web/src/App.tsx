@@ -4,6 +4,7 @@ import { Suspense, lazy, useEffect } from "react";
 import { useStore } from "./stores";
 import { observer } from "mobx-react-lite";
 import ScreenLoading from "./screens/Loading";
+import RouterBusAdmin from "./routers/busadmin";
 
 // eslint-disable-next-line react-refresh/only-export-components
 const RouterAdmin = lazy(() => import("./routers/admin"));
@@ -31,6 +32,18 @@ const App = () => {
                         }
                     />
                 )}
+                {store.user.isAuthenticated &&
+                    (store.user.user?.role.roleName === "BusAdmin" ||
+                        store.user.user?.role.roleName === "SysAdmin") && (
+                        <Route
+                            path="/busadmin/*"
+                            element={
+                                <Suspense fallback={<ScreenLoading />}>
+                                    <RouterBusAdmin />
+                                </Suspense>
+                            }
+                        />
+                    )}
             </Routes>
         </>
     );

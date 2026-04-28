@@ -11,6 +11,7 @@ import {
 import { type SidebarData } from "../types";
 
 const adminBasePath = "/admin";
+const busAdminBasePath = "/busadmin";
 
 export const adminSidebarData: SidebarData = {
     teams: [
@@ -69,6 +70,38 @@ export const adminSidebarData: SidebarData = {
                     title: "Công ty",
                     icon: Building2Icon,
                     url: `${adminBasePath}/affiliates/companies`,
+                },
+            ],
+        },
+    ],
+};
+
+export const busAdminSidebarData: SidebarData = {
+    teams: [
+        {
+            name: "Shadcn Admin",
+            logo: Command,
+            plan: "Vite + ShadcnUI",
+        },
+        {
+            name: "Acme Inc",
+            logo: GalleryVerticalEnd,
+            plan: "Enterprise",
+        },
+        {
+            name: "Acme Corp.",
+            logo: AudioWaveform,
+            plan: "Startup",
+        },
+    ],
+    navGroups: [
+        {
+            title: "Hệ thống",
+            items: [
+                {
+                    title: "Tổng quan",
+                    url: busAdminBasePath,
+                    icon: LayoutDashboard,
                 },
             ],
         },

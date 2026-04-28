@@ -16,13 +16,13 @@ import { cn } from "@/lib/utils";
 // import { Overview } from "./components/overview";
 // import { RecentSales } from "./components/recent-sales";
 
-export function ScreenDashboard({ children }: { children: React.ReactNode }) {
+export function ScreenDashboard({ children, role = 0 }: { children: React.ReactNode; role: 0 | 1 }) {
     return (
         <>
             <LayoutProvider>
                 <SidebarProvider>
                     <DirectionProvider>
-                        <AppSidebar />
+                        <AppSidebar role={role} />
                         <SidebarInset
                             className={cn(
                                 "@container/content",
