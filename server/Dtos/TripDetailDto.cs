@@ -35,7 +35,7 @@ namespace Pbl3.Dtos
 
         public string BusTypeName { get; set; } = default!;
 
-        public string BusTypeDescription { get; set; } = default!;
+        public string? BusTypeDescription { get; set; }
 
         public string RouteName { get; set; } = default!;
 

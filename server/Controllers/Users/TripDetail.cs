@@ -45,28 +45,29 @@ namespace Pbl3.Controllers
                     BusCompanyName = t.Route.BusCompany!.Name,
                     BusTypeName = t.BusType!.Name,
                     BusTypeDescription = t.BusType.Description,
-                    BusTypeAmenityIds = t.BusType.BusTypeAmenities.Select(bta => bta.AmenityID).ToList(),
+                    BusTypeAmenityIds = t
+                        .BusType.BusTypeAmenities.Select(bta => bta.AmenityID)
+                        .ToList(),
                     RouteName = t.Route.RouteName,
                     TotalSeats = t.BusType.TotalSeats,
                     SoldSeats = t.Tickets.Count(ticket => ticket.Status != TicketStatus.Cancelled),
                     HeldSeats = t.SeatHolds.Count(hold =>
                         hold.Status == SeatHoldStatus.Held && hold.ExpiresAt > utcNow
                     ),
-                    LowestPrice =
-                        t.Tickets.Where(ticket => ticket.Status != TicketStatus.Cancelled)
-                            .Select(ticket => (decimal?)ticket.FinalPrice)
-                            .Min() ?? 0,
-                    Rating =
-                        t.Reviews.Select(review => (double?)review.RatingScore).Average() ?? 0,
+                    LowestPrice = t.Tickets.Where(ticket => ticket.Status != TicketStatus.Cancelled)
+                        .Select(ticket => (decimal?)ticket.FinalPrice)
+                        .Min()
+                        ?? 0,
+                    Rating = t.Reviews.Select(review => (double?)review.RatingScore).Average() ?? 0,
                     ReviewCount = t.Reviews.Count(),
-                    Images =
-                        t.Bus != null
-                            ? t.Bus.BusImages.OrderBy(img => img.ImageID)
-                                .Select(img => img.ImageURL)
-                                .ToList()
-                            : new List<string>(),
-                    RouteStops = t.Route.BusRouteStops
-                        .Select(stop => new
+                    Images = t.Bus != null
+                        ? t
+                            .Bus.BusImages.OrderBy(img => img.ImageID)
+                            .Select(img => img.ImageURL)
+                            .ToList()
+                        : new List<string>(),
+                    RouteStops = t
+                        .Route.BusRouteStops.Select(stop => new
                         {
                             stop.StationID,
                             StationName = stop.Station!.Name,
@@ -93,8 +94,8 @@ namespace Pbl3.Controllers
                 return NotFound(new { message = "Trip is not available" });
             }
 
-            var amenities = await _context.Amenities
-                .AsNoTracking()
+            var amenities = await _context
+                .Amenities.AsNoTracking()
                 .Where(a => trip.BusTypeAmenityIds.Contains(a.AmenityID) && a.IsActive)
                 .OrderBy(a => a.DisplayOrder)
                 .Select(a => new AmenityDto
@@ -107,8 +108,8 @@ namespace Pbl3.Controllers
                 })
                 .ToListAsync();
 
-            var pickupStops = trip.RouteStops
-                .Where(stop => stop.IsPickUp)
+            var pickupStops = trip
+                .RouteStops.Where(stop => stop.IsPickUp)
                 .OrderBy(stop => stop.StopOrder)
                 .Select(stop => new TripDetailRouteStopDto
                 {
@@ -125,8 +126,8 @@ namespace Pbl3.Controllers
                 })
                 .ToList();
 
-            var dropoffStops = trip.RouteStops
-                .Where(stop => stop.IsDropOff)
+            var dropoffStops = trip
+                .RouteStops.Where(stop => stop.IsDropOff)
                 .OrderBy(stop => stop.StopOrder)
                 .Select(stop => new TripDetailRouteStopDto
                 {
