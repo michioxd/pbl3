@@ -27,16 +27,15 @@ import {
 } from "@tanstack/react-table";
 import {
     ArrowDownUp,
-    Banknote,
-    CheckCircle,
     Clock,
     DollarSign,
+    Eye,
     RefreshCw,
     TrendingDown,
-    XCircle,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { TransactionDetailDialog } from "./TransactionDetailDialog";
 
 // Local type definitions until OpenAPI regeneration
 type TransactionListItemDto = {
@@ -124,6 +123,8 @@ export function PageAdminTransactions() {
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 25 });
     const hasLoadedOnceRef = useRef(false);
+    const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+    const [selectedIntentId, setSelectedIntentId] = useState<string | null>(null);
 
     const providerFilterValues = useMemo(() => {
         const value = columnFilters.find((filter) => filter.id === "nhaCungCap")?.value;
@@ -234,6 +235,11 @@ export function PageAdminTransactions() {
         void fetchTransactions();
     }, [fetchTransactions]);
 
+    const openDetailDialog = (intentId: string) => {
+        setSelectedIntentId(intentId);
+        setDetailDialogOpen(true);
+    };
+
     const columns = useMemo<ColumnDef<TransactionListItemDto>[]>(
         () => [
             {
@@ -296,6 +302,20 @@ export function PageAdminTransactions() {
                 accessorFn: (row) => new Date(row.createdAt).getTime(),
                 header: ({ column }) => <DataTableColumnHeader column={column} title="Ngày tạo" />,
                 cell: ({ row }) => <div className="text-muted-foreground">{formatDateTime(row.original.createdAt)}</div>,
+            },
+            {
+                id: "thaoTac",
+                header: () => <div className="text-right">Thao tác</div>,
+                cell: ({ row }) => (
+                    <div className="flex justify-end">
+                        <Button variant="outline" size="sm" onClick={() => openDetailDialog(row.original.intentID)}>
+                            <Eye className="mr-1 h-3.5 w-3.5" />
+                            Chi tiết
+                        </Button>
+                    </div>
+                ),
+                enableSorting: false,
+                enableHiding: false,
             },
         ],
         [],
@@ -462,6 +482,12 @@ export function PageAdminTransactions() {
                     <DataTablePagination table={table} className="mt-auto" />
                 </CardContent>
             </Card>
+
+            <TransactionDetailDialog
+                intentId={selectedIntentId}
+                open={detailDialogOpen}
+                onOpenChange={setDetailDialogOpen}
+            />
         </>
     );
 }

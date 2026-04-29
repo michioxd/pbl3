@@ -1,5 +1,6 @@
 import PageAdminIndex from "@/pages/admin/index";
 import { PageAdminNotFoundError } from "@/pages/admin/index/404";
+import { PageAdminRevenue } from "@/pages/admin/revenue";
 import { PageAdminTransactions } from "@/pages/admin/transactions";
 import { PageAdminUpgradeRequests } from "@/pages/admin/upgrade-requests";
 import { PageAdminUsers } from "@/pages/admin/users";
@@ -24,6 +25,9 @@ const RouterAdmin = observer(() => {
                 </Route>
                 <Route path="transactions">
                     <Route index element={<PageAdminTransactions />} />
+                </Route>
+                <Route path="revenue">
+                    <Route index element={<PageAdminRevenue />} />
                 </Route>
                 <Route path="*" element={<PageAdminNotFoundError />} />
             </Routes>

@@ -87,7 +87,7 @@ namespace Pbl3.Dtos
         public decimal TotalAmount { get; set; }
         public BookingStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
-        public DateTime ExpiresAt { get; set; }
+        public DateTime? ExpiresAt { get; set; }
 
         // User info (if authenticated booking)
         public Guid? UserID { get; set; }
@@ -112,7 +112,7 @@ namespace Pbl3.Dtos
 
         // Trip info
         public string? TripRouteName { get; set; }
-        public DateTime? TripDepartureTime { get; set; }
+        public DateTime TripDepartureTime { get; set; }
         public string? TripDepartureLocation { get; set; }
         public string? TripArrivalLocation { get; set; }
 

@@ -1402,6 +1402,41 @@ export type GetApiAdminSystemTransactionsResponses = {
     200: unknown;
 };
 
+export type GetApiAdminSystemTransactionsByIntentIdData = {
+    body?: never;
+    path: {
+        intentId: string;
+    };
+    query?: never;
+    url: '/api/admin/system/transactions/{intentId}';
+};
+
+export type GetApiAdminSystemTransactionsByIntentIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiAdminSystemRevenueAnalyticsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        startDate?: string;
+        endDate?: string;
+        topRoutesLimit?: number;
+        topCompaniesLimit?: number;
+    };
+    url: '/api/admin/system/revenue/analytics';
+};
+
+export type GetApiAdminSystemRevenueAnalyticsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type GetApiTripsByTripIdData = {
     body?: never;
     path: {

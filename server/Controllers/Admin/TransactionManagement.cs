@@ -151,6 +151,90 @@ namespace Pbl3.Controllers.Admin
             );
         }
 
+        [HttpGet("{intentId:guid}")]
+        public async Task<IActionResult> GetTransactionDetail(Guid intentId)
+        {
+            var paymentIntent = await _context
+                .PaymentIntents.AsNoTracking()
+                .Include(p => p.Booking)
+                .ThenInclude(b => b!.User)
+                .Include(p => p.Booking)
+                .ThenInclude(b => b!.Tickets)
+                .ThenInclude(t => t.Passenger)
+                .Include(p => p.Booking)
+                .ThenInclude(b => b!.Tickets)
+                .ThenInclude(t => t.Trip)
+                .ThenInclude(tr => tr!.Route)
+                .Include(p => p.Booking)
+                .ThenInclude(b => b!.Tickets)
+                .ThenInclude(t => t.SeatLayout)
+                .Include(p => p.Refunds)
+                .FirstOrDefaultAsync(p => p.IntentID == intentId);
+
+            if (paymentIntent == null)
+            {
+                return NotFound(new { message = "Không tìm thấy giao dịch." });
+            }
+
+            var detail = new TransactionDetailDto
+            {
+                IntentID = paymentIntent.IntentID,
+                BookingID = paymentIntent.BookingID,
+                Provider = paymentIntent.Provider,
+                Amount = paymentIntent.Amount,
+                Currency = paymentIntent.Currency,
+                Status = paymentIntent.Status,
+                CreatedAt = paymentIntent.CreatedAt,
+                Booking =
+                    paymentIntent.Booking == null
+                        ? null
+                        : new BookingDetailDto
+                        {
+                            BookingID = paymentIntent.Booking.BookingID,
+                            ContactName = paymentIntent.Booking.ContactName,
+                            ContactEmail = paymentIntent.Booking.ContactEmail,
+                            ContactPhone = paymentIntent.Booking.ContactPhone,
+                            TotalAmount = paymentIntent.Booking.TotalAmount,
+                            Status = paymentIntent.Booking.Status,
+                            CreatedAt = paymentIntent.Booking.CreatedAt,
+                            ExpiresAt = paymentIntent.Booking.ExpiresAt,
+                            UserID = paymentIntent.Booking.UserID,
+                            UserEmail = paymentIntent.Booking.User?.Email,
+                            UserFullName = paymentIntent.Booking.User?.FullName,
+                            Tickets = paymentIntent.Booking.Tickets
+                                .Select(t => new TicketDetailDto
+                                {
+                                    TicketID = t.TicketID,
+                                    TicketCode = t.TicketCode,
+                                    FinalPrice = t.FinalPrice,
+                                    Status = t.Status,
+                                    PassengerFullName = t.Passenger?.FullName,
+                                    PassengerPhone = t.Passenger?.PhoneNumber,
+                                    PassengerIdentityCard = t.Passenger?.IdentityCard,
+                                    TripRouteName = t.Trip?.Route?.RouteName,
+                                    TripDepartureTime = t.Trip?.DepartureTime ?? default,
+                                    TripDepartureLocation = null, // RouteStops not included for performance
+                                    TripArrivalLocation = null,   // RouteStops not included for performance
+                                    SeatName = t.SeatLayout?.SeatLabel,
+                                })
+                                .ToList(),
+                        },
+                Refunds = paymentIntent.Refunds
+                    .Select(r => new RefundDetailDto
+                    {
+                        RefundID = r.RefundID,
+                        Amount = r.Amount,
+                        Reason = r.Reason,
+                        Status = r.Status,
+                        CreatedAt = r.CreatedAt,
+                    })
+                    .OrderByDescending(r => r.CreatedAt)
+                    .ToList(),
+            };
+
+            return Ok(detail);
+        }
+
         private Guid GetCurrentUserId()
         {
             var userIdString =

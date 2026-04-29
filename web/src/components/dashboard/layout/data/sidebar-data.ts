@@ -7,6 +7,7 @@ import {
     GalleryVerticalEnd,
     ClockIcon,
     Building2Icon,
+    TrendingUp,
 } from "lucide-react";
 import { type SidebarData } from "../types";
 
@@ -60,6 +61,11 @@ export const getAdminSidebarData = (pendingCount?: number): SidebarData => ({
                     title: "Lịch sử giao dịch",
                     url: `${adminBasePath}/transactions`,
                     icon: ClockIcon,
+                },
+                {
+                    title: "Phân tích doanh thu",
+                    url: `${adminBasePath}/revenue`,
+                    icon: TrendingUp,
                 },
             ],
         },
