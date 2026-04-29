@@ -104,6 +104,14 @@ namespace Pbl3.Enums
         Failed,      // Provider failed to process
     }
 
+    public enum ReviewStatus
+    {
+        Pending = 0,   // Awaiting SysAdmin moderation
+        Approved = 1,  // Published and visible to public
+        Rejected = 2,  // Declined by admin
+        Flagged = 3,   // Flagged for policy violations
+    }
+
     public enum NotificationType
     {
         Email,

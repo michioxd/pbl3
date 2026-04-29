@@ -195,6 +195,10 @@ export type MeUserRoleDto = {
     roleName?: string | null;
 };
 
+export type ModerateReviewDto = {
+    moderationReason: string | null;
+};
+
 export type OAuthGoogleRequestDto = {
     idToken: string;
 };
@@ -928,6 +932,112 @@ export type PostApiAdminSystemRefundsByRefundRequestIdRejectData = {
 };
 
 export type PostApiAdminSystemRefundsByRefundRequestIdRejectResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiAdminSystemReviewsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        q?: string;
+        statuses?: Array<string>;
+        minRating?: number;
+        maxRating?: number;
+        flaggedOnly?: boolean;
+        startDate?: string;
+        endDate?: string;
+        sortBy?: string;
+        sortDirection?: string;
+        page?: number;
+        pageSize?: number;
+    };
+    url: '/api/admin/system/reviews';
+};
+
+export type GetApiAdminSystemReviewsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiAdminSystemReviewsByReviewIdData = {
+    body?: never;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/api/admin/system/reviews/{reviewId}';
+};
+
+export type GetApiAdminSystemReviewsByReviewIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiAdminSystemReviewsByReviewIdApproveData = {
+    body?: never;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/api/admin/system/reviews/{reviewId}/approve';
+};
+
+export type PostApiAdminSystemReviewsByReviewIdApproveResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiAdminSystemReviewsByReviewIdRejectData = {
+    body?: ModerateReviewDto;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/api/admin/system/reviews/{reviewId}/reject';
+};
+
+export type PostApiAdminSystemReviewsByReviewIdRejectResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiAdminSystemReviewsByReviewIdFlagData = {
+    body?: ModerateReviewDto;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/api/admin/system/reviews/{reviewId}/flag';
+};
+
+export type PostApiAdminSystemReviewsByReviewIdFlagResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiAdminSystemReviewsByReviewIdUnflagData = {
+    body?: never;
+    path: {
+        reviewId: string;
+    };
+    query?: never;
+    url: '/api/admin/system/reviews/{reviewId}/unflag';
+};
+
+export type PostApiAdminSystemReviewsByReviewIdUnflagResponses = {
     /**
      * OK
      */

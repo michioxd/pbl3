@@ -215,6 +215,27 @@ namespace Pbl3.Data
                 .WithMany(t => t.Reviews)
                 .HasForeignKey(r => r.TripID)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Review moderation relationships
+            modelBuilder
+                .Entity<Review>()
+                .HasOne(r => r.ModeratedByUser)
+                .WithMany()
+                .HasForeignKey(r => r.ModeratedByUserID)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder
+                .Entity<Review>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserID)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Index for filtering by status
+            modelBuilder
+                .Entity<Review>()
+                .HasIndex(r => r.Status);
+
             modelBuilder
                 .Entity<BusRoute>()
                 .HasOne(r => r.BusCompany)

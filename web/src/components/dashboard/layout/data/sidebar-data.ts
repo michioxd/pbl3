@@ -10,6 +10,7 @@ import {
     TrendingUp,
     TruckIcon,
     BarChart3Icon,
+    MessageSquareIcon,
 } from "lucide-react";
 import { type SidebarData } from "../types";
 
@@ -53,6 +54,11 @@ export const getAdminSidebarData = (pendingCount?: number): SidebarData => ({
                     url: `${adminBasePath}/upgrade-requests`,
                     badge: pendingCount && pendingCount > 0 ? pendingCount.toString() : undefined,
                     icon: Package,
+                },
+                {
+                    title: "Kiểm duyệt đánh giá",
+                    url: `${adminBasePath}/reviews`,
+                    icon: MessageSquareIcon,
                 },
             ],
         },

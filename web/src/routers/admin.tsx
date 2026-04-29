@@ -9,6 +9,7 @@ import { PageAdminUpgradeRequests } from "@/pages/admin/upgrade-requests";
 import { PageAdminUsers } from "@/pages/admin/users";
 import { PageAdminTrips } from "@/pages/admin/trips";
 import { PageAdminRoutePerformance } from "@/pages/admin/routes/performance";
+import { PageAdminReviews } from "@/pages/admin/reviews";
 import { ScreenDashboard } from "@/screens/dashboard";
 import ScreenLoading from "@/screens/Loading";
 import { useStore } from "@/stores";
@@ -27,6 +28,9 @@ const RouterAdmin = observer(() => {
                 </Route>
                 <Route path="upgrade-requests">
                     <Route index element={<PageAdminUpgradeRequests />} />
+                </Route>
+                <Route path="reviews">
+                    <Route index element={<PageAdminReviews />} />
                 </Route>
                 <Route path="companies">
                     <Route index element={<PageAdminCompanies />} />
