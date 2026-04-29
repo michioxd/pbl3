@@ -110,7 +110,8 @@ namespace Pbl3.Services
                         .Select(stop => stop.Station!.Name)
                         .FirstOrDefault()
                     ?? string.Empty,
-                BusTypeAmenityIds = t.BusType!.BusTypeAmenities.Select(bta => bta.AmenityID).ToList(),
+                BusTypeAmenityIds = t.BusType!.BusTypeAmenities.Select(bta => bta.AmenityID)
+                    .ToList(),
                 ImageUrl =
                     t.Bus != null
                         ? t
@@ -158,7 +159,9 @@ namespace Pbl3.Services
             {
                 projectedTripList = projectedTripList
                     .Where(trip =>
-                        request.AmenityIds.All(amenityId => trip.BusTypeAmenityIds.Contains(amenityId))
+                        request.AmenityIds.All(amenityId =>
+                            trip.BusTypeAmenityIds.Contains(amenityId)
+                        )
                     )
                     .ToList();
             }
@@ -168,18 +171,15 @@ namespace Pbl3.Services
             var summary = await BuildSummaryAsync(request);
 
             var orderedTrips = ApplySorting(projectedTripList, request.SortBy);
-            var pagedTrips = orderedTrips
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+            var pagedTrips = orderedTrips.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
             var allAmenityIds = pagedTrips
                 .SelectMany(trip => trip.BusTypeAmenityIds)
                 .Distinct()
                 .ToList();
 
-            var amenities = await _context.Amenities
-                .AsNoTracking()
+            var amenities = await _context
+                .Amenities.AsNoTracking()
                 .Where(a => allAmenityIds.Contains(a.AmenityID) && a.IsActive)
                 .ToDictionaryAsync(a => a.AmenityID);
 
@@ -202,14 +202,11 @@ namespace Pbl3.Services
                     ),
                     BasePrice = trip.BasePrice,
                     LowestPrice = trip.LowestPrice,
-                    AvailableSeats = Math.Max(
-                        0,
-                        trip.TotalSeats - trip.SoldSeats - trip.HeldSeats
-                    ),
+                    AvailableSeats = Math.Max(0, trip.TotalSeats - trip.SoldSeats - trip.HeldSeats),
                     Rating = trip.Rating,
                     ReviewCount = trip.ReviewCount,
-                    Amenities = trip.BusTypeAmenityIds
-                        .Where(id => amenities.ContainsKey(id))
+                    Amenities = trip
+                        .BusTypeAmenityIds.Where(id => amenities.ContainsKey(id))
                         .Select(id => amenities[id])
                         .OrderBy(a => a.DisplayOrder)
                         .Select(a => new AmenityDto
@@ -293,8 +290,8 @@ namespace Pbl3.Services
                 .Distinct()
                 .ToList();
 
-            var amenities = await _context.Amenities
-                .AsNoTracking()
+            var amenities = await _context
+                .Amenities.AsNoTracking()
                 .Where(a => allAmenityIds.Contains(a.AmenityID) && a.IsActive)
                 .ToDictionaryAsync(a => a.AmenityID);
 

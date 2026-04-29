@@ -15,15 +15,14 @@ namespace pbl3_server.Migrations
                 table: "Trips",
                 type: "numeric",
                 nullable: false,
-                defaultValue: 0m);
+                defaultValue: 0m
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "BasePrice",
-                table: "Trips");
+            migrationBuilder.DropColumn(name: "BasePrice", table: "Trips");
         }
     }
 }

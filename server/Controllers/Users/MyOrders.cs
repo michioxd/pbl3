@@ -45,8 +45,8 @@ namespace Pbl3.Controllers.Users
         {
             var userId = GetCurrentUserId();
 
-            var passengerId = await _context.Passengers
-                .AsNoTracking()
+            var passengerId = await _context
+                .Passengers.AsNoTracking()
                 .Where(p => p.UserID == userId)
                 .Select(p => p.PassengerID)
                 .FirstOrDefaultAsync();
@@ -58,8 +58,8 @@ namespace Pbl3.Controllers.Users
 
             var now = DateTime.UtcNow;
 
-            var tickets = await _context.Tickets
-                .AsNoTracking()
+            var tickets = await _context
+                .Tickets.AsNoTracking()
                 .Where(t => t.PassengerID == passengerId)
                 .Select(t => new OrderTicketDto
                 {
@@ -68,7 +68,8 @@ namespace Pbl3.Controllers.Users
                     Status = t.Status.ToString(),
                     FinalPrice = t.FinalPrice,
                     SeatLabel = t.SeatLayout != null ? t.SeatLayout.SeatLabel : null,
-                    RouteName = t.Trip != null && t.Trip.Route != null ? t.Trip.Route.RouteName : null,
+                    RouteName =
+                        t.Trip != null && t.Trip.Route != null ? t.Trip.Route.RouteName : null,
                     DepartureTime = t.Trip != null ? t.Trip.DepartureTime : default,
                 })
                 .ToListAsync();
@@ -80,7 +81,9 @@ namespace Pbl3.Controllers.Users
                     .OrderByDescending(t => t.DepartureTime)
                     .ToList(),
                 Completed = tickets
-                    .Where(t => t.Status == "CheckedIn" || (t.Status == "Issued" && t.DepartureTime <= now))
+                    .Where(t =>
+                        t.Status == "CheckedIn" || (t.Status == "Issued" && t.DepartureTime <= now)
+                    )
                     .OrderByDescending(t => t.DepartureTime)
                     .ToList(),
                 Cancelled = tickets

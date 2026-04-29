@@ -7,13 +7,17 @@ import {
     GalleryVerticalEnd,
     ClockIcon,
     Building2Icon,
+    TrendingUp,
+    TruckIcon,
+    BarChart3Icon,
+    MessageSquareIcon,
 } from "lucide-react";
 import { type SidebarData } from "../types";
 
 const adminBasePath = "/admin";
 const busAdminBasePath = "/busadmin";
 
-export const adminSidebarData: SidebarData = {
+export const getAdminSidebarData = (pendingCount?: number): SidebarData => ({
     teams: [
         {
             name: "Shadcn Admin",
@@ -48,8 +52,13 @@ export const adminSidebarData: SidebarData = {
                 {
                     title: "Yêu cầu nâng cấp",
                     url: `${adminBasePath}/upgrade-requests`,
-                    badge: "5",
+                    badge: pendingCount && pendingCount > 0 ? pendingCount.toString() : undefined,
                     icon: Package,
+                },
+                {
+                    title: "Kiểm duyệt đánh giá",
+                    url: `${adminBasePath}/reviews`,
+                    icon: MessageSquareIcon,
                 },
             ],
         },
@@ -57,9 +66,19 @@ export const adminSidebarData: SidebarData = {
             title: "Tài chính",
             items: [
                 {
+                    title: "Yêu cầu hoàn tiền",
+                    url: `${adminBasePath}/refunds`,
+                    icon: Package,
+                },
+                {
                     title: "Lịch sử giao dịch",
-                    url: `${adminBasePath}/finance/transactions`,
+                    url: `${adminBasePath}/transactions`,
                     icon: ClockIcon,
+                },
+                {
+                    title: "Phân tích doanh thu",
+                    url: `${adminBasePath}/revenue`,
+                    icon: TrendingUp,
                 },
             ],
         },
@@ -67,14 +86,32 @@ export const adminSidebarData: SidebarData = {
             title: "Đối tác",
             items: [
                 {
-                    title: "Công ty",
+                    title: "Nhà xe",
                     icon: Building2Icon,
-                    url: `${adminBasePath}/affiliates/companies`,
+                    url: `${adminBasePath}/companies`,
+                },
+            ],
+        },
+        {
+            title: "Giám sát",
+            items: [
+                {
+                    title: "Chuyến xe",
+                    url: `${adminBasePath}/trips`,
+                    icon: TruckIcon,
+                },
+                {
+                    title: "Hiệu suất tuyến",
+                    url: `${adminBasePath}/routes/performance`,
+                    icon: BarChart3Icon,
                 },
             ],
         },
     ],
-};
+});
+
+// Legacy export for backward compatibility
+export const adminSidebarData: SidebarData = getAdminSidebarData();
 
 export const busAdminSidebarData: SidebarData = {
     teams: [

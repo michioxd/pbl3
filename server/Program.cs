@@ -50,6 +50,7 @@ namespace Pbl3
 
             var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
             dataSourceBuilder.MapEnum<UserRole>();
+            dataSourceBuilder.MapEnum<CompanyStatus>();
             dataSourceBuilder.MapEnum<TripStatus>();
             dataSourceBuilder.MapEnum<SeatType>();
             dataSourceBuilder.MapEnum<StationType>();

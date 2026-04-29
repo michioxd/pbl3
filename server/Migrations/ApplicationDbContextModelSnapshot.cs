@@ -26,7 +26,7 @@ namespace pbl3_server.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "notification_type", new[] { "email", "sms", "push" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "payment_intent_status", new[] { "created", "succeeded", "failed" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "payment_provider", new[] { "momo", "stripe", "cash" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "refund_status", new[] { "pending", "processed" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "refund_status", new[] { "pending", "processed", "approved", "processing", "completed", "rejected", "failed" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "seat_hold_status", new[] { "held", "confirmed", "expired" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "seat_type", new[] { "window", "aisle", "middle", "driver", "upper_deck", "lower_deck" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "station_type", new[] { "bus_station", "office", "pick_up_point" });
@@ -280,6 +280,9 @@ namespace pbl3_server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Hotline")
                         .HasColumnType("text");
 
@@ -292,6 +295,9 @@ namespace pbl3_server.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.HasKey("CompanyID");
 
@@ -693,6 +699,62 @@ namespace pbl3_server.Migrations
                     b.ToTable("Refunds");
                 });
 
+            modelBuilder.Entity("Pbl3.Models.RefundRequest", b =>
+                {
+                    b.Property<Guid>("RefundRequestID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AdminNotes")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("BookingID")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PaymentIntentID")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ProcessedByUserID")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("RefundID")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("RequestedAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("UserID")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("RefundRequestID");
+
+                    b.HasIndex("BookingID");
+
+                    b.HasIndex("PaymentIntentID");
+
+                    b.HasIndex("ProcessedByUserID");
+
+                    b.HasIndex("RefundID")
+                        .IsUnique();
+
+                    b.HasIndex("UserID");
+
+                    b.ToTable("RefundRequests");
+                });
+
             modelBuilder.Entity("Pbl3.Models.Review", b =>
                 {
                     b.Property<Guid>("ReviewID")
@@ -705,17 +767,44 @@ namespace pbl3_server.Migrations
                     b.Property<string>("Comment")
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsFlagged")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ModeratedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModeratedByUserID")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ModerationReason")
+                        .HasColumnType("text");
+
                     b.Property<int>("RatingScore")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("TripID")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("UserID")
                         .HasColumnType("uuid");
 
                     b.HasKey("ReviewID");
 
                     b.HasIndex("BookingID");
 
+                    b.HasIndex("ModeratedByUserID");
+
+                    b.HasIndex("Status");
+
                     b.HasIndex("TripID");
+
+                    b.HasIndex("UserID");
 
                     b.ToTable("Reviews");
                 });
@@ -1236,6 +1325,46 @@ namespace pbl3_server.Migrations
                     b.Navigation("PaymentIntent");
                 });
 
+            modelBuilder.Entity("Pbl3.Models.RefundRequest", b =>
+                {
+                    b.HasOne("Pbl3.Models.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Pbl3.Models.PaymentIntent", "PaymentIntent")
+                        .WithMany()
+                        .HasForeignKey("PaymentIntentID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Pbl3.Models.User", "ProcessedByUser")
+                        .WithMany()
+                        .HasForeignKey("ProcessedByUserID")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Pbl3.Models.Refund", "Refund")
+                        .WithOne()
+                        .HasForeignKey("Pbl3.Models.RefundRequest", "RefundID")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Pbl3.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("PaymentIntent");
+
+                    b.Navigation("ProcessedByUser");
+
+                    b.Navigation("Refund");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Pbl3.Models.Review", b =>
                 {
                     b.HasOne("Pbl3.Models.Booking", "Booking")
@@ -1244,15 +1373,29 @@ namespace pbl3_server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Pbl3.Models.User", "ModeratedByUser")
+                        .WithMany()
+                        .HasForeignKey("ModeratedByUserID")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Pbl3.Models.Trip", "Trip")
                         .WithMany("Reviews")
                         .HasForeignKey("TripID")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Pbl3.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Booking");
 
+                    b.Navigation("ModeratedByUser");
+
                     b.Navigation("Trip");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Pbl3.Models.SeatHold", b =>
