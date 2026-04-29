@@ -8,7 +8,7 @@ using Pbl3.Data;
 namespace Pbl3.Controllers.Admin
 {
     [ApiController]
-    [Route("api/admin/bus-admin-upgrade-requests")]
+    [Route("api/admin/system/upgrade-requests")]
     [Authorize(Policy = "AdminOnly")]
     [Tags("SystemAdmin")]
     public partial class BusAdminUpgradeResponse : ControllerBase

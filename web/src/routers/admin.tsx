@@ -1,5 +1,6 @@
 import PageAdminIndex from "@/pages/admin/index";
 import { PageAdminNotFoundError } from "@/pages/admin/index/404";
+import { PageAdminUpgradeRequests } from "@/pages/admin/upgrade-requests";
 import { PageAdminUsers } from "@/pages/admin/users";
 import { ScreenDashboard } from "@/screens/dashboard";
 import ScreenLoading from "@/screens/Loading";
@@ -16,6 +17,9 @@ const RouterAdmin = observer(() => {
                 <Route index element={<PageAdminIndex />} />
                 <Route path="users">
                     <Route index element={<PageAdminUsers />} />
+                </Route>
+                <Route path="upgrade-requests">
+                    <Route index element={<PageAdminUpgradeRequests />} />
                 </Route>
                 <Route path="*" element={<PageAdminNotFoundError />} />
             </Routes>

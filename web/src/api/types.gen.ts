@@ -894,7 +894,7 @@ export type GetApiTripsSearchResponses = {
 
 export type GetApiTripsSearchResponse = GetApiTripsSearchResponses[keyof GetApiTripsSearchResponses];
 
-export type GetApiAdminBusAdminUpgradeRequestsData = {
+export type GetApiAdminSystemUpgradeRequestsData = {
     body?: never;
     path?: never;
     query?: {
@@ -902,26 +902,40 @@ export type GetApiAdminBusAdminUpgradeRequestsData = {
         page?: number;
         pageSize?: number;
     };
-    url: '/api/admin/bus-admin-upgrade-requests';
+    url: '/api/admin/system/upgrade-requests';
 };
 
-export type GetApiAdminBusAdminUpgradeRequestsResponses = {
+export type GetApiAdminSystemUpgradeRequestsResponses = {
     /**
      * OK
      */
     200: unknown;
 };
 
-export type PatchApiAdminBusAdminUpgradeRequestsByRequestIdReviewData = {
+export type GetApiAdminSystemUpgradeRequestsStatsPendingCountData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/system/upgrade-requests/stats/pending-count';
+};
+
+export type GetApiAdminSystemUpgradeRequestsStatsPendingCountResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PatchApiAdminSystemUpgradeRequestsByRequestIdReviewData = {
     body?: ReviewBusAdminUpgradeRequestDto;
     path: {
         requestId: string;
     };
     query?: never;
-    url: '/api/admin/bus-admin-upgrade-requests/{requestId}/review';
+    url: '/api/admin/system/upgrade-requests/{requestId}/review';
 };
 
-export type PatchApiAdminBusAdminUpgradeRequestsByRequestIdReviewResponses = {
+export type PatchApiAdminSystemUpgradeRequestsByRequestIdReviewResponses = {
     /**
      * OK
      */

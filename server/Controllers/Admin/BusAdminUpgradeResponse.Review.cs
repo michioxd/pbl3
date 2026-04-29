@@ -44,52 +44,63 @@ namespace Pbl3.Controllers.Admin
                 .OrderByDescending(r => r.RequestedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(r => new
+                .Select(r => new BusAdminUpgradeRequestListItemDto
                 {
-                    r.RequestID,
-                    r.RequesterUserID,
+                    RequestID = r.RequestID,
+                    RequesterUserID = r.RequesterUserID,
                     RequesterEmail = r.RequesterUser != null ? r.RequesterUser.Email : null,
                     RequesterName = r.RequesterUser != null ? r.RequesterUser.FullName : null,
-                    r.CompanyName,
-                    r.LicenseNumber,
-                    r.Hotline,
-                    r.Reason,
-                    r.Status,
-                    r.RequestedAt,
-                    r.ReviewedAt,
-                    r.ReviewNote,
-                    r.CompanyID,
+                    CompanyName = r.CompanyName,
+                    LicenseNumber = r.LicenseNumber,
+                    Hotline = r.Hotline,
+                    Reason = r.Reason,
+                    Status = r.Status,
+                    RequestedAt = r.RequestedAt,
+                    ReviewedAt = r.ReviewedAt,
+                    ReviewNote = r.ReviewNote,
+                    CompanyID = r.CompanyID,
                     BusCompany = r.BusCompany == null
                         ? null
-                        : new
+                        : new BusCompanyBasicDto
                         {
-                            r.BusCompany.CompanyID,
-                            r.BusCompany.Name,
-                            r.BusCompany.LicenseNumber,
-                            r.BusCompany.Hotline,
-                            r.BusCompany.IsApproved,
+                            CompanyID = r.BusCompany.CompanyID,
+                            Name = r.BusCompany.Name,
+                            LicenseNumber = r.BusCompany.LicenseNumber,
+                            Hotline = r.BusCompany.Hotline,
+                            IsApproved = r.BusCompany.IsApproved,
                         },
                     ReviewedBy = r.ReviewedByUser == null
                         ? null
-                        : new
+                        : new UserBasicDto
                         {
-                            r.ReviewedByUser.UserID,
-                            r.ReviewedByUser.Email,
-                            r.ReviewedByUser.FullName,
+                            UserID = r.ReviewedByUser.UserID,
+                            Email = r.ReviewedByUser.Email,
+                            FullName = r.ReviewedByUser.FullName,
                         },
                 })
                 .ToListAsync();
 
             return Ok(
-                new
+                new BusAdminUpgradeRequestListResponseDto
                 {
-                    page,
-                    pageSize,
-                    totalRecords,
-                    totalPages,
-                    records = requests,
+                    Records = requests,
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalRecords = totalRecords,
+                    TotalPages = totalPages,
                 }
             );
+        }
+
+        [HttpGet("stats/pending-count")]
+        public async Task<IActionResult> GetPendingCount()
+        {
+            var count = await _context
+                .BusAdminUpgradeRequests.CountAsync(r =>
+                    r.Status == BusAdminUpgradeRequestStatus.Pending
+                );
+
+            return Ok(new { pendingCount = count });
         }
 
         [HttpPatch("{requestId:guid}/review")]

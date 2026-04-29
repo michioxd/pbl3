@@ -13,7 +13,7 @@ import { type SidebarData } from "../types";
 const adminBasePath = "/admin";
 const busAdminBasePath = "/busadmin";
 
-export const adminSidebarData: SidebarData = {
+export const getAdminSidebarData = (pendingCount?: number): SidebarData => ({
     teams: [
         {
             name: "Shadcn Admin",
@@ -48,7 +48,7 @@ export const adminSidebarData: SidebarData = {
                 {
                     title: "Yêu cầu nâng cấp",
                     url: `${adminBasePath}/upgrade-requests`,
-                    badge: "5",
+                    badge: pendingCount && pendingCount > 0 ? pendingCount.toString() : undefined,
                     icon: Package,
                 },
             ],
@@ -74,7 +74,10 @@ export const adminSidebarData: SidebarData = {
             ],
         },
     ],
-};
+});
+
+// Legacy export for backward compatibility
+export const adminSidebarData: SidebarData = getAdminSidebarData();
 
 export const busAdminSidebarData: SidebarData = {
     teams: [
