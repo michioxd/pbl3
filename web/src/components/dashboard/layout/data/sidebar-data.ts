@@ -8,6 +8,8 @@ import {
     ClockIcon,
     Building2Icon,
     TrendingUp,
+    TruckIcon,
+    BarChart3Icon,
 } from "lucide-react";
 import { type SidebarData } from "../types";
 
@@ -58,6 +60,11 @@ export const getAdminSidebarData = (pendingCount?: number): SidebarData => ({
             title: "Tài chính",
             items: [
                 {
+                    title: "Yêu cầu hoàn tiền",
+                    url: `${adminBasePath}/refunds`,
+                    icon: Package,
+                },
+                {
                     title: "Lịch sử giao dịch",
                     url: `${adminBasePath}/transactions`,
                     icon: ClockIcon,
@@ -76,6 +83,21 @@ export const getAdminSidebarData = (pendingCount?: number): SidebarData => ({
                     title: "Nhà xe",
                     icon: Building2Icon,
                     url: `${adminBasePath}/companies`,
+                },
+            ],
+        },
+        {
+            title: "Giám sát",
+            items: [
+                {
+                    title: "Chuyến xe",
+                    url: `${adminBasePath}/trips`,
+                    icon: TruckIcon,
+                },
+                {
+                    title: "Hiệu suất tuyến",
+                    url: `${adminBasePath}/routes/performance`,
+                    icon: BarChart3Icon,
                 },
             ],
         },

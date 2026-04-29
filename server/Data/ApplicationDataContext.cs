@@ -28,6 +28,7 @@ namespace Pbl3.Data
         public DbSet<SeatHold> SeatHolds { get; set; }
         public DbSet<PaymentIntent> PaymentIntents { get; set; }
         public DbSet<Refund> Refunds { get; set; }
+        public DbSet<RefundRequest> RefundRequests { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<AdministrativeRegion> AdministrativeRegions { get; set; }
@@ -287,6 +288,42 @@ namespace Pbl3.Data
                 .WithMany(w => w.Stations)
                 .HasForeignKey(s => s.WardCode)
                 .HasPrincipalKey(w => w.Code)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // RefundRequest relationships
+            modelBuilder
+                .Entity<RefundRequest>()
+                .HasOne(rr => rr.Booking)
+                .WithMany()
+                .HasForeignKey(rr => rr.BookingID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder
+                .Entity<RefundRequest>()
+                .HasOne(rr => rr.PaymentIntent)
+                .WithMany()
+                .HasForeignKey(rr => rr.PaymentIntentID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder
+                .Entity<RefundRequest>()
+                .HasOne(rr => rr.User)
+                .WithMany()
+                .HasForeignKey(rr => rr.UserID)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder
+                .Entity<RefundRequest>()
+                .HasOne(rr => rr.ProcessedByUser)
+                .WithMany()
+                .HasForeignKey(rr => rr.ProcessedByUserID)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder
+                .Entity<RefundRequest>()
+                .HasOne(rr => rr.Refund)
+                .WithOne()
+                .HasForeignKey<RefundRequest>(rr => rr.RefundID)
                 .OnDelete(DeleteBehavior.SetNull);
         }
     }

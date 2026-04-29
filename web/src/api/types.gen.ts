@@ -126,6 +126,12 @@ export type CreateBusDto = {
     isActive?: boolean;
 };
 
+export type CreateRefundRequestDto = {
+    bookingID: string;
+    amount: number;
+    reason: string;
+};
+
 export type CreateSeatLayoutDto = {
     seatLabel?: string | null;
     floor?: number;
@@ -204,6 +210,10 @@ export type ProblemDetails = {
     detail?: string | null;
     instance?: string | null;
     [key: string]: unknown;
+};
+
+export type ProcessRefundRequestDto = {
+    adminNotes: string;
 };
 
 export type ProvinceResponse = {
@@ -839,6 +849,108 @@ export type GetApiPingResponses = {
     200: unknown;
 };
 
+export type GetApiAdminSystemRefundsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        q?: string;
+        statuses?: Array<string>;
+        startDate?: string;
+        endDate?: string;
+        sortBy?: string;
+        sortDirection?: string;
+        page?: number;
+        pageSize?: number;
+    };
+    url: '/api/admin/system/refunds';
+};
+
+export type GetApiAdminSystemRefundsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiAdminSystemRefundsData = {
+    body?: CreateRefundRequestDto;
+    path?: never;
+    query?: never;
+    url: '/api/admin/system/refunds';
+};
+
+export type PostApiAdminSystemRefundsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiAdminSystemRefundsByRefundRequestIdData = {
+    body?: never;
+    path: {
+        refundRequestId: string;
+    };
+    query?: never;
+    url: '/api/admin/system/refunds/{refundRequestId}';
+};
+
+export type GetApiAdminSystemRefundsByRefundRequestIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiAdminSystemRefundsByRefundRequestIdApproveData = {
+    body?: ProcessRefundRequestDto;
+    path: {
+        refundRequestId: string;
+    };
+    query?: never;
+    url: '/api/admin/system/refunds/{refundRequestId}/approve';
+};
+
+export type PostApiAdminSystemRefundsByRefundRequestIdApproveResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiAdminSystemRefundsByRefundRequestIdRejectData = {
+    body?: ProcessRefundRequestDto;
+    path: {
+        refundRequestId: string;
+    };
+    query?: never;
+    url: '/api/admin/system/refunds/{refundRequestId}/reject';
+};
+
+export type PostApiAdminSystemRefundsByRefundRequestIdRejectResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiAdminSystemRoutesPerformanceData = {
+    body?: never;
+    path?: never;
+    query?: {
+        startDate?: string;
+        endDate?: string;
+    };
+    url: '/api/admin/system/routes/performance';
+};
+
+export type GetApiAdminSystemRoutesPerformanceResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type GetApiLandingProvincesSearchData = {
     body?: never;
     path?: never;
@@ -1296,6 +1408,41 @@ export type PutApiAdminSystemCompaniesByCompanyIdProfileResponses = {
     200: unknown;
 };
 
+export type GetApiAdminSystemCompaniesByCompanyIdRoutesData = {
+    body?: never;
+    path: {
+        companyId: string;
+    };
+    query?: never;
+    url: '/api/admin/system/companies/{companyId}/routes';
+};
+
+export type GetApiAdminSystemCompaniesByCompanyIdRoutesResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiAdminSystemCompaniesByCompanyIdAnalyticsData = {
+    body?: never;
+    path: {
+        companyId: string;
+    };
+    query?: {
+        year?: number;
+        month?: number;
+    };
+    url: '/api/admin/system/companies/{companyId}/analytics';
+};
+
+export type GetApiAdminSystemCompaniesByCompanyIdAnalyticsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type GetApiAdminSystemCompaniesByCompanyIdTicketsData = {
     body?: never;
     path: {
@@ -1483,41 +1630,6 @@ export type PostApiAdminSystemUsersResponses = {
     200: unknown;
 };
 
-export type GetApiAdminSystemCompaniesByCompanyIdRoutesData = {
-    body?: never;
-    path: {
-        companyId: string;
-    };
-    query?: never;
-    url: '/api/admin/system/companies/{companyId}/routes';
-};
-
-export type GetApiAdminSystemCompaniesByCompanyIdRoutesResponses = {
-    /**
-     * OK
-     */
-    200: unknown;
-};
-
-export type GetApiAdminSystemCompaniesByCompanyIdAnalyticsData = {
-    body?: never;
-    path: {
-        companyId: string;
-    };
-    query?: {
-        year?: number;
-        month?: number;
-    };
-    url: '/api/admin/system/companies/{companyId}/analytics';
-};
-
-export type GetApiAdminSystemCompaniesByCompanyIdAnalyticsResponses = {
-    /**
-     * OK
-     */
-    200: unknown;
-};
-
 export type GetApiAdminSystemTransactionsData = {
     body?: never;
     path?: never;
@@ -1550,6 +1662,44 @@ export type GetApiAdminSystemTransactionsByIntentIdData = {
 };
 
 export type GetApiAdminSystemTransactionsByIntentIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiAdminSystemTripsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        q?: string;
+        statuses?: Array<string>;
+        companyId?: string;
+        startDate?: string;
+        endDate?: string;
+        sortBy?: string;
+        sortDirection?: string;
+        page?: number;
+        pageSize?: number;
+    };
+    url: '/api/admin/system/trips';
+};
+
+export type GetApiAdminSystemTripsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiAdminSystemTripsActiveData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/system/trips/active';
+};
+
+export type GetApiAdminSystemTripsActiveResponses = {
     /**
      * OK
      */

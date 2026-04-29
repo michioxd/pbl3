@@ -95,8 +95,13 @@ namespace Pbl3.Enums
 
     public enum RefundStatus
     {
-        Pending,
-        Processed,
+        Pending,     // Initial request
+        Processed,   // Old: kept for compatibility
+        Approved,    // SysAdmin approved
+        Processing,  // Being processed by payment provider
+        Completed,   // Successfully refunded
+        Rejected,    // SysAdmin rejected
+        Failed,      // Provider failed to process
     }
 
     public enum NotificationType
