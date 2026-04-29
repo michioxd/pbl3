@@ -73,9 +73,9 @@ export const getAdminSidebarData = (pendingCount?: number): SidebarData => ({
             title: "Đối tác",
             items: [
                 {
-                    title: "Công ty",
+                    title: "Nhà xe",
                     icon: Building2Icon,
-                    url: `${adminBasePath}/affiliates/companies`,
+                    url: `${adminBasePath}/companies`,
                 },
             ],
         },

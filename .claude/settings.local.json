@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(dotnet ef *)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(dotnet build *)"
     ]
   }
 }

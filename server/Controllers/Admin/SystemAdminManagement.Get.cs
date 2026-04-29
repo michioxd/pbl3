@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Pbl3.Dtos;
 using Pbl3.Enums;
 
 namespace Pbl3.Controllers.Admin
@@ -9,58 +10,151 @@ namespace Pbl3.Controllers.Admin
         [HttpGet("companies")]
         public async Task<IActionResult> GetCompanies(
             [FromQuery] string? q,
+            [FromQuery] List<string>? statuses,
+            [FromQuery] string? sortBy,
+            [FromQuery] string? sortDirection,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 25
         )
         {
             if (page < 1)
-            {
                 return BadRequest(new { message = "page phải lớn hơn hoặc bằng 1." });
-            }
 
             if (pageSize != 25 && pageSize != 50 && pageSize != 100 && pageSize != 200)
-            {
                 return BadRequest(new { message = "pageSize chỉ chấp nhận: 25, 50, 100, 200." });
+
+            // Parse status filters
+            var normalizedStatuses = new HashSet<CompanyStatus>();
+            if (statuses != null && statuses.Count > 0)
+            {
+                foreach (var rawStatus in statuses.SelectMany(s =>
+                    s.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)))
+                {
+                    if (Enum.TryParse<CompanyStatus>(rawStatus, true, out var status))
+                        normalizedStatuses.Add(status);
+                    else
+                        return BadRequest(new { message = "Trạng thái không hợp lệ." });
+                }
             }
 
-            var query = _context.BusCompanies.AsNoTracking().AsQueryable();
+            var baseQuery = _context.BusCompanies.AsNoTracking();
+            var totalCount = await baseQuery.CountAsync();
 
+            // Search filter
             if (!string.IsNullOrWhiteSpace(q))
             {
-                var keyword = q.Trim().ToLowerInvariant();
-                query = query.Where(c =>
-                    c.Name.ToLower().Contains(keyword)
-                    || (c.LicenseNumber != null && c.LicenseNumber.ToLower().Contains(keyword))
+                var keyword = $"%{q.Trim()}%";
+                baseQuery = baseQuery.Where(c =>
+                    EF.Functions.ILike(c.Name, keyword) ||
+                    (c.LicenseNumber != null && EF.Functions.ILike(c.LicenseNumber, keyword))
                 );
             }
 
-            var totalRecords = await query.CountAsync();
-            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+            // Status filter
+            if (normalizedStatuses.Count > 0)
+                baseQuery = baseQuery.Where(c => normalizedStatuses.Contains(c.Status));
 
-            var companies = await query
-                .OrderBy(c => c.Name)
+            var filteredCount = await baseQuery.CountAsync();
+            var totalPages = filteredCount == 0 ? 1 : (int)Math.Ceiling(filteredCount / (double)pageSize);
+
+            // Sorting
+            var isDescending = !string.Equals(sortDirection, "asc", StringComparison.OrdinalIgnoreCase);
+            baseQuery = (sortBy ?? string.Empty).ToLowerInvariant() switch
+            {
+                "name" => isDescending ? baseQuery.OrderByDescending(c => c.Name) : baseQuery.OrderBy(c => c.Name),
+                "status" => isDescending ? baseQuery.OrderByDescending(c => c.Status) : baseQuery.OrderBy(c => c.Status),
+                _ => isDescending ? baseQuery.OrderByDescending(c => c.CreatedAt) : baseQuery.OrderBy(c => c.CreatedAt),
+            };
+
+            // Paginate
+            var companies = await baseQuery
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(c => new
-                {
-                    c.CompanyID,
-                    c.Name,
-                    c.LicenseNumber,
-                    c.Hotline,
-                    c.IsApproved,
-                })
+                .Select(c => new { c.CompanyID, c.Name, c.LicenseNumber, c.Hotline, c.Status, c.IsApproved, c.CreatedAt })
                 .ToListAsync();
 
-            return Ok(
-                new
-                {
-                    page,
-                    pageSize,
-                    totalRecords,
-                    totalPages,
-                    records = companies,
-                }
-            );
+            var companyIds = companies.Select(c => c.CompanyID).ToList();
+
+            // Aggregate related counts
+            var adminsCounts = await _context.BusCompanyAdmins
+                .Where(bca => companyIds.Contains(bca.CompanyID))
+                .GroupBy(bca => bca.CompanyID)
+                .Select(g => new { CompanyID = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.CompanyID, x => x.Count);
+
+            var routesCounts = await _context.BusRoutes
+                .Where(r => companyIds.Contains(r.CompanyID))
+                .GroupBy(r => r.CompanyID)
+                .Select(g => new { CompanyID = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.CompanyID, x => x.Count);
+
+            var busesCounts = await _context.Buses
+                .Where(b => companyIds.Contains(b.CompanyID))
+                .GroupBy(b => b.CompanyID)
+                .Select(g => new { CompanyID = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.CompanyID, x => x.Count);
+
+            var blockedDeleteIds = new HashSet<Guid>(routesCounts.Keys);
+            blockedDeleteIds.UnionWith(busesCounts.Keys);
+
+            // Map to DTOs
+            var items = companies.Select(c => new AdminCompanyListItemDto
+            {
+                CompanyID = c.CompanyID,
+                Name = c.Name,
+                LicenseNumber = c.LicenseNumber,
+                Hotline = c.Hotline,
+                Status = (int)c.Status,
+                IsApproved = c.IsApproved,
+                CreatedAt = c.CreatedAt,
+                AdminsCount = adminsCounts.GetValueOrDefault(c.CompanyID),
+                RoutesCount = routesCounts.GetValueOrDefault(c.CompanyID),
+                BusesCount = busesCounts.GetValueOrDefault(c.CompanyID),
+                ActiveTripsCount = 0,
+                CanBeDeleted = !blockedDeleteIds.Contains(c.CompanyID),
+            }).ToList();
+
+            // Summary
+            var allStatuses = await _context.BusCompanies.AsNoTracking()
+                .Select(c => c.Status)
+                .ToListAsync();
+
+            var summary = new AdminCompanySummaryDto
+            {
+                TotalCompanies = allStatuses.Count,
+                PendingCompanies = allStatuses.Count(s => s == CompanyStatus.Pending),
+                ApprovedCompanies = allStatuses.Count(s => s == CompanyStatus.Approved),
+                SuspendedCompanies = allStatuses.Count(s => s == CompanyStatus.Suspended),
+                RejectedCompanies = allStatuses.Count(s => s == CompanyStatus.Rejected),
+            };
+
+            return Ok(new AdminCompaniesListResponseDto
+            {
+                Items = items,
+                TotalCount = totalCount,
+                FilteredCount = filteredCount,
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                Summary = summary,
+            });
+        }
+
+        [HttpGet("companies/stats")]
+        public async Task<IActionResult> GetCompanyStats()
+        {
+            var allStatuses = await _context.BusCompanies.AsNoTracking()
+                .Select(c => c.Status)
+                .ToListAsync();
+
+            return Ok(new AdminCompanySummaryDto
+            {
+                TotalCompanies = allStatuses.Count,
+                PendingCompanies = allStatuses.Count(s => s == CompanyStatus.Pending),
+                ApprovedCompanies = allStatuses.Count(s => s == CompanyStatus.Approved),
+                SuspendedCompanies = allStatuses.Count(s => s == CompanyStatus.Suspended),
+                RejectedCompanies = allStatuses.Count(s => s == CompanyStatus.Rejected),
+            });
         }
 
         [HttpGet("companies/{companyId:guid}/profile")]
@@ -115,6 +209,101 @@ namespace Pbl3.Controllers.Admin
                 .ToListAsync();
 
             return Ok(buses);
+        }
+
+        [HttpGet("companies/{companyId:guid}/routes")]
+        public async Task<IActionResult> GetCompanyRoutes(Guid companyId)
+        {
+            var companyExists = await _context.BusCompanies.AnyAsync(c => c.CompanyID == companyId);
+            if (!companyExists)
+                return NotFound(new { message = "Không tìm thấy nhà xe." });
+
+            var routes = await _context
+                .BusRoutes.AsNoTracking()
+                .Where(r => r.CompanyID == companyId)
+                .Select(r => new
+                {
+                    r.RouteID,
+                    r.RouteName,
+                    r.DepartureProvinceCode,
+                    r.ArrivalProvinceCode,
+                    Distance = r.DistanceEstimate,
+                    Duration = r.DurationEstimate,
+                    r.IsActive,
+                    TripsCount = _context.Trips.Count(t => t.RouteID == r.RouteID),
+                })
+                .OrderBy(r => r.RouteName)
+                .ToListAsync();
+
+            return Ok(routes);
+        }
+
+        [HttpGet("companies/{companyId:guid}/analytics")]
+        public async Task<IActionResult> GetCompanyAnalytics(
+            Guid companyId,
+            [FromQuery] int? year,
+            [FromQuery] int? month
+        )
+        {
+            var companyExists = await _context.BusCompanies.AnyAsync(c => c.CompanyID == companyId);
+            if (!companyExists)
+                return NotFound(new { message = "Không tìm thấy nhà xe." });
+
+            var currentYear = year ?? DateTime.UtcNow.Year;
+            var currentMonth = month;
+
+            var tripsQuery = _context
+                .Trips.AsNoTracking()
+                .Include(t => t.Route)
+                .Where(t => t.Route!.CompanyID == companyId);
+
+            if (currentMonth.HasValue)
+            {
+                tripsQuery = tripsQuery.Where(
+                    t =>
+                        t.DepartureTime.Year == currentYear
+                        && t.DepartureTime.Month == currentMonth.Value
+                );
+            }
+            else
+            {
+                tripsQuery = tripsQuery.Where(t => t.DepartureTime.Year == currentYear);
+            }
+
+            var trips = await tripsQuery.ToListAsync();
+
+            var tripIds = trips.Select(t => t.TripID).ToHashSet();
+            var tickets = await _context
+                .Tickets.AsNoTracking()
+                .Include(tk => tk.Booking)
+                .Where(tk => tripIds.Contains(tk.TripID))
+                .Where(tk => tk.Status == TicketStatus.Issued || tk.Status == TicketStatus.CheckedIn)
+                .ToListAsync();
+
+            var totalRevenue = tickets.Sum(tk => tk.FinalPrice);
+            var totalTicketsSold = tickets.Count;
+            var totalTrips = trips.Count;
+            var completedTrips = trips.Count(t => t.DepartureTime < DateTime.UtcNow);
+
+            var monthlyRevenue = tickets
+                .Where(tk => tk.Booking != null)
+                .GroupBy(tk => tk.Booking!.CreatedAt.Month)
+                .Select(g => new { Month = g.Key, Revenue = g.Sum(tk => tk.FinalPrice) })
+                .OrderBy(x => x.Month)
+                .ToList();
+
+            return Ok(
+                new
+                {
+                    totalRevenue,
+                    totalTicketsSold,
+                    totalTrips,
+                    completedTrips,
+                    year = currentYear,
+                    month = currentMonth,
+                    monthlyRevenue,
+                }
+            );
         }
 
         [HttpGet("companies/{companyId:guid}/tickets")]

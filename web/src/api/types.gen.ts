@@ -107,6 +107,10 @@ export type AuthResponseDto = {
     user: UserDto;
 };
 
+export type BulkCompanyActionDto = {
+    companyIds: Array<string>;
+};
+
 export type BusAdminUpgradeRequestStatus = 0 | 1 | 2;
 
 export type CreateBusAdminUpgradeRequestDto = {
@@ -367,6 +371,11 @@ export type UpdateCompanyProfileDto = {
     name?: string | null;
     licenseNumber?: string | null;
     hotline?: string | null;
+};
+
+export type UpdateCompanyStatusDto = {
+    status: number;
+    notes?: string | null;
 };
 
 export type UpdatePassengerDto = {
@@ -946,6 +955,83 @@ export type PatchApiAdminSystemUpgradeRequestsByRequestIdReviewResponses = {
     200: unknown;
 };
 
+export type GetApiAdminSystemRevenueAnalyticsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        startDate?: string;
+        endDate?: string;
+        topRoutesLimit?: number;
+        topCompaniesLimit?: number;
+    };
+    url: '/api/admin/system/revenue/analytics';
+};
+
+export type GetApiAdminSystemRevenueAnalyticsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PatchApiAdminSystemCompaniesBulkApproveData = {
+    body?: BulkCompanyActionDto;
+    path?: never;
+    query?: never;
+    url: '/api/admin/system/companies/bulk/approve';
+};
+
+export type PatchApiAdminSystemCompaniesBulkApproveResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PatchApiAdminSystemCompaniesBulkSuspendData = {
+    body?: BulkCompanyActionDto;
+    path?: never;
+    query?: never;
+    url: '/api/admin/system/companies/bulk/suspend';
+};
+
+export type PatchApiAdminSystemCompaniesBulkSuspendResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type DeleteApiAdminSystemCompaniesBulkData = {
+    body?: BulkCompanyActionDto;
+    path?: never;
+    query?: never;
+    url: '/api/admin/system/companies/bulk';
+};
+
+export type DeleteApiAdminSystemCompaniesBulkResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PatchApiAdminSystemCompaniesByCompanyIdStatusData = {
+    body?: UpdateCompanyStatusDto;
+    path: {
+        companyId: string;
+    };
+    query?: never;
+    url: '/api/admin/system/companies/{companyId}/status';
+};
+
+export type PatchApiAdminSystemCompaniesByCompanyIdStatusResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type GetApiAdminSystemCompaniesByCompanyIdBusesData = {
     body?: never;
     path: {
@@ -1148,6 +1234,9 @@ export type GetApiAdminSystemCompaniesData = {
     path?: never;
     query?: {
         q?: string;
+        statuses?: Array<string>;
+        sortBy?: string;
+        sortDirection?: string;
         page?: number;
         pageSize?: number;
     };
@@ -1155,6 +1244,20 @@ export type GetApiAdminSystemCompaniesData = {
 };
 
 export type GetApiAdminSystemCompaniesResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiAdminSystemCompaniesStatsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/system/companies/stats';
+};
+
+export type GetApiAdminSystemCompaniesStatsResponses = {
     /**
      * OK
      */
@@ -1380,6 +1483,41 @@ export type PostApiAdminSystemUsersResponses = {
     200: unknown;
 };
 
+export type GetApiAdminSystemCompaniesByCompanyIdRoutesData = {
+    body?: never;
+    path: {
+        companyId: string;
+    };
+    query?: never;
+    url: '/api/admin/system/companies/{companyId}/routes';
+};
+
+export type GetApiAdminSystemCompaniesByCompanyIdRoutesResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiAdminSystemCompaniesByCompanyIdAnalyticsData = {
+    body?: never;
+    path: {
+        companyId: string;
+    };
+    query?: {
+        year?: number;
+        month?: number;
+    };
+    url: '/api/admin/system/companies/{companyId}/analytics';
+};
+
+export type GetApiAdminSystemCompaniesByCompanyIdAnalyticsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type GetApiAdminSystemTransactionsData = {
     body?: never;
     path?: never;
@@ -1412,25 +1550,6 @@ export type GetApiAdminSystemTransactionsByIntentIdData = {
 };
 
 export type GetApiAdminSystemTransactionsByIntentIdResponses = {
-    /**
-     * OK
-     */
-    200: unknown;
-};
-
-export type GetApiAdminSystemRevenueAnalyticsData = {
-    body?: never;
-    path?: never;
-    query?: {
-        startDate?: string;
-        endDate?: string;
-        topRoutesLimit?: number;
-        topCompaniesLimit?: number;
-    };
-    url: '/api/admin/system/revenue/analytics';
-};
-
-export type GetApiAdminSystemRevenueAnalyticsResponses = {
     /**
      * OK
      */
