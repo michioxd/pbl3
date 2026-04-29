@@ -14,25 +14,23 @@ namespace pbl3_server.Migrations
                 name: "CancellationPolicy",
                 table: "Trips",
                 type: "text",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<string>(
                 name: "Notes",
                 table: "Trips",
                 type: "text",
-                nullable: true);
+                nullable: true
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "CancellationPolicy",
-                table: "Trips");
+            migrationBuilder.DropColumn(name: "CancellationPolicy", table: "Trips");
 
-            migrationBuilder.DropColumn(
-                name: "Notes",
-                table: "Trips");
+            migrationBuilder.DropColumn(name: "Notes", table: "Trips");
         }
     }
 }

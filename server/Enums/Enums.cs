@@ -26,10 +26,10 @@ namespace Pbl3.Enums
 
     public enum CompanyStatus
     {
-        Pending,    // 0 - Chờ duyệt
-        Approved,   // 1 - Đã duyệt
-        Suspended,  // 2 - Tạm ngưng
-        Rejected,   // 3 - Đã từ chối
+        Pending, // 0 - Chờ duyệt
+        Approved, // 1 - Đã duyệt
+        Suspended, // 2 - Tạm ngưng
+        Rejected, // 3 - Đã từ chối
     }
 
     public enum TripStatus
@@ -95,21 +95,21 @@ namespace Pbl3.Enums
 
     public enum RefundStatus
     {
-        Pending,     // Initial request
-        Processed,   // Old: kept for compatibility
-        Approved,    // SysAdmin approved
-        Processing,  // Being processed by payment provider
-        Completed,   // Successfully refunded
-        Rejected,    // SysAdmin rejected
-        Failed,      // Provider failed to process
+        Pending, // Initial request
+        Processed, // Old: kept for compatibility
+        Approved, // SysAdmin approved
+        Processing, // Being processed by payment provider
+        Completed, // Successfully refunded
+        Rejected, // SysAdmin rejected
+        Failed, // Provider failed to process
     }
 
     public enum ReviewStatus
     {
-        Pending = 0,   // Awaiting SysAdmin moderation
-        Approved = 1,  // Published and visible to public
-        Rejected = 2,  // Declined by admin
-        Flagged = 3,   // Flagged for policy violations
+        Pending = 0, // Awaiting SysAdmin moderation
+        Approved = 1, // Published and visible to public
+        Rejected = 2, // Declined by admin
+        Flagged = 3, // Flagged for policy violations
     }
 
     public enum NotificationType

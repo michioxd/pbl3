@@ -232,9 +232,7 @@ namespace Pbl3.Data
                 .OnDelete(DeleteBehavior.SetNull);
 
             // Index for filtering by status
-            modelBuilder
-                .Entity<Review>()
-                .HasIndex(r => r.Status);
+            modelBuilder.Entity<Review>().HasIndex(r => r.Status);
 
             modelBuilder
                 .Entity<BusRoute>()

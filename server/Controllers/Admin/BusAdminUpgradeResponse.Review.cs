@@ -38,7 +38,8 @@ namespace Pbl3.Controllers.Admin
             }
 
             var totalRecords = await query.CountAsync();
-            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+            var totalPages =
+                totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
 
             var requests = await query
                 .OrderByDescending(r => r.RequestedAt)
@@ -59,24 +60,26 @@ namespace Pbl3.Controllers.Admin
                     ReviewedAt = r.ReviewedAt,
                     ReviewNote = r.ReviewNote,
                     CompanyID = r.CompanyID,
-                    BusCompany = r.BusCompany == null
-                        ? null
-                        : new BusCompanyBasicDto
-                        {
-                            CompanyID = r.BusCompany.CompanyID,
-                            Name = r.BusCompany.Name,
-                            LicenseNumber = r.BusCompany.LicenseNumber,
-                            Hotline = r.BusCompany.Hotline,
-                            IsApproved = r.BusCompany.IsApproved,
-                        },
-                    ReviewedBy = r.ReviewedByUser == null
-                        ? null
-                        : new UserBasicDto
-                        {
-                            UserID = r.ReviewedByUser.UserID,
-                            Email = r.ReviewedByUser.Email,
-                            FullName = r.ReviewedByUser.FullName,
-                        },
+                    BusCompany =
+                        r.BusCompany == null
+                            ? null
+                            : new BusCompanyBasicDto
+                            {
+                                CompanyID = r.BusCompany.CompanyID,
+                                Name = r.BusCompany.Name,
+                                LicenseNumber = r.BusCompany.LicenseNumber,
+                                Hotline = r.BusCompany.Hotline,
+                                IsApproved = r.BusCompany.IsApproved,
+                            },
+                    ReviewedBy =
+                        r.ReviewedByUser == null
+                            ? null
+                            : new UserBasicDto
+                            {
+                                UserID = r.ReviewedByUser.UserID,
+                                Email = r.ReviewedByUser.Email,
+                                FullName = r.ReviewedByUser.FullName,
+                            },
                 })
                 .ToListAsync();
 
@@ -95,10 +98,9 @@ namespace Pbl3.Controllers.Admin
         [HttpGet("stats/pending-count")]
         public async Task<IActionResult> GetPendingCount()
         {
-            var count = await _context
-                .BusAdminUpgradeRequests.CountAsync(r =>
-                    r.Status == BusAdminUpgradeRequestStatus.Pending
-                );
+            var count = await _context.BusAdminUpgradeRequests.CountAsync(r =>
+                r.Status == BusAdminUpgradeRequestStatus.Pending
+            );
 
             return Ok(new { pendingCount = count });
         }

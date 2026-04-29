@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -5,7 +6,6 @@ using Pbl3.Data;
 using Pbl3.Dtos;
 using Pbl3.Enums;
 using Pbl3.Models;
-using System.Security.Claims;
 
 namespace Pbl3.Controllers.Admin
 {
@@ -41,21 +41,20 @@ namespace Pbl3.Controllers.Admin
             var query = _context
                 .RefundRequests.AsNoTracking()
                 .Include(rr => rr.Booking)
-                .ThenInclude(b => b!.Tickets)
-                .ThenInclude(t => t.Trip)
-                .ThenInclude(tr => tr!.Route)
-                .ThenInclude(r => r!.BusCompany)
+                    .ThenInclude(b => b!.Tickets)
+                        .ThenInclude(t => t.Trip)
+                            .ThenInclude(tr => tr!.Route)
+                                .ThenInclude(r => r!.BusCompany)
                 .AsQueryable();
 
             // Search filter
             if (!string.IsNullOrWhiteSpace(q))
             {
                 var keyword = $"%{q.Trim()}%";
-                query = query.Where(
-                    rr =>
-                        EF.Functions.ILike(rr.Booking!.ContactName, keyword)
-                        || EF.Functions.ILike(rr.Booking!.ContactEmail, keyword)
-                        || EF.Functions.ILike(rr.Reason, keyword)
+                query = query.Where(rr =>
+                    EF.Functions.ILike(rr.Booking!.ContactName, keyword)
+                    || EF.Functions.ILike(rr.Booking!.ContactEmail, keyword)
+                    || EF.Functions.ILike(rr.Reason, keyword)
                 );
             }
 
@@ -78,14 +77,12 @@ namespace Pbl3.Controllers.Admin
             // Sorting
             query = (sortBy ?? "").ToLowerInvariant() switch
             {
-                "amount"
-                    => sortDirection == "asc"
-                        ? query.OrderBy(rr => rr.RequestedAmount)
-                        : query.OrderByDescending(rr => rr.RequestedAmount),
-                "status"
-                    => sortDirection == "asc"
-                        ? query.OrderBy(rr => rr.Status)
-                        : query.OrderByDescending(rr => rr.Status),
+                "amount" => sortDirection == "asc"
+                    ? query.OrderBy(rr => rr.RequestedAmount)
+                    : query.OrderByDescending(rr => rr.RequestedAmount),
+                "status" => sortDirection == "asc"
+                    ? query.OrderBy(rr => rr.Status)
+                    : query.OrderByDescending(rr => rr.Status),
                 _ => query.OrderByDescending(rr => rr.RequestedAt),
             };
 
@@ -95,25 +92,22 @@ namespace Pbl3.Controllers.Admin
             var items = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(
-                    rr =>
-                        new RefundRequestListItemDto
-                        {
-                            RefundRequestID = rr.RefundRequestID,
-                            BookingID = rr.BookingID,
-                            RequestedAmount = rr.RequestedAmount,
-                            Reason = rr.Reason,
-                            Status = (int)rr.Status,
-                            RequestedAt = rr.RequestedAt,
-                            ContactName = rr.Booking!.ContactName,
-                            ContactEmail = rr.Booking.ContactEmail,
-                            ContactPhone = rr.Booking.ContactPhone,
-                            TripRoute = rr.Booking.Tickets.FirstOrDefault()!.Trip!.Route!.RouteName,
-                            CompanyName = rr
-                                .Booking.Tickets.FirstOrDefault()!
-                                .Trip!.Route!.BusCompany!.Name,
-                        }
-                )
+                .Select(rr => new RefundRequestListItemDto
+                {
+                    RefundRequestID = rr.RefundRequestID,
+                    BookingID = rr.BookingID,
+                    RequestedAmount = rr.RequestedAmount,
+                    Reason = rr.Reason,
+                    Status = (int)rr.Status,
+                    RequestedAt = rr.RequestedAt,
+                    ContactName = rr.Booking!.ContactName,
+                    ContactEmail = rr.Booking.ContactEmail,
+                    ContactPhone = rr.Booking.ContactPhone,
+                    TripRoute = rr.Booking.Tickets.FirstOrDefault()!.Trip!.Route!.RouteName,
+                    CompanyName = rr
+                        .Booking.Tickets.FirstOrDefault()!
+                        .Trip!.Route!.BusCompany!.Name,
+                })
                 .ToListAsync();
 
             // Summary
@@ -122,16 +116,16 @@ namespace Pbl3.Controllers.Admin
             {
                 TotalRequests = allRequests.Count,
                 PendingCount = allRequests.Count(r => r.Status == RefundStatus.Pending),
-                ApprovedCount = allRequests.Count(
-                    r => r.Status == RefundStatus.Approved || r.Status == RefundStatus.Completed
+                ApprovedCount = allRequests.Count(r =>
+                    r.Status == RefundStatus.Approved || r.Status == RefundStatus.Completed
                 ),
                 RejectedCount = allRequests.Count(r => r.Status == RefundStatus.Rejected),
                 PendingAmount = allRequests
                     .Where(r => r.Status == RefundStatus.Pending)
                     .Sum(r => r.RequestedAmount),
                 ApprovedAmount = allRequests
-                    .Where(
-                        r => r.Status == RefundStatus.Approved || r.Status == RefundStatus.Completed
+                    .Where(r =>
+                        r.Status == RefundStatus.Approved || r.Status == RefundStatus.Completed
                     )
                     .Sum(r => r.RequestedAmount),
             };
@@ -156,7 +150,7 @@ namespace Pbl3.Controllers.Admin
             var request = await _context
                 .RefundRequests.AsNoTracking()
                 .Include(rr => rr.Booking)
-                .ThenInclude(b => b!.Tickets)
+                    .ThenInclude(b => b!.Tickets)
                 .Include(rr => rr.PaymentIntent)
                 .Include(rr => rr.ProcessedByUser)
                 .FirstOrDefaultAsync(rr => rr.RefundRequestID == refundRequestId);
@@ -232,8 +226,9 @@ namespace Pbl3.Controllers.Admin
             [FromBody] ProcessRefundRequestDto dto
         )
         {
-            var request = await _context
-                .RefundRequests.FirstOrDefaultAsync(rr => rr.RefundRequestID == refundRequestId);
+            var request = await _context.RefundRequests.FirstOrDefaultAsync(rr =>
+                rr.RefundRequestID == refundRequestId
+            );
 
             if (request == null)
                 return NotFound(new { message = "Không tìm thấy yêu cầu hoàn tiền." });
@@ -263,17 +258,15 @@ namespace Pbl3.Controllers.Admin
             if (booking == null)
                 return NotFound(new { message = "Không tìm thấy booking." });
 
-            var successfulPayment = booking.PaymentIntents.FirstOrDefault(
-                pi => pi.Status == PaymentIntentStatus.Succeeded
+            var successfulPayment = booking.PaymentIntents.FirstOrDefault(pi =>
+                pi.Status == PaymentIntentStatus.Succeeded
             );
 
             if (successfulPayment == null)
                 return BadRequest(new { message = "Booking chưa được thanh toán." });
 
             if (dto.Amount > successfulPayment.Amount)
-                return BadRequest(
-                    new { message = "Số tiền hoàn vượt quá số tiền đã thanh toán." }
-                );
+                return BadRequest(new { message = "Số tiền hoàn vượt quá số tiền đã thanh toán." });
 
             var request = new RefundRequest
             {

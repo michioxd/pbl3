@@ -16,60 +16,70 @@ namespace pbl3_server.Migrations
                 table: "Reviews",
                 type: "timestamp with time zone",
                 nullable: false,
-                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
+                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+            );
 
             migrationBuilder.AddColumn<bool>(
                 name: "IsFlagged",
                 table: "Reviews",
                 type: "boolean",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: false
+            );
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "ModeratedAt",
                 table: "Reviews",
                 type: "timestamp with time zone",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<Guid>(
                 name: "ModeratedByUserID",
                 table: "Reviews",
                 type: "uuid",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<string>(
                 name: "ModerationReason",
                 table: "Reviews",
                 type: "text",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.AddColumn<int>(
                 name: "Status",
                 table: "Reviews",
                 type: "integer",
                 nullable: false,
-                defaultValue: 0);
+                defaultValue: 0
+            );
 
             migrationBuilder.AddColumn<Guid>(
                 name: "UserID",
                 table: "Reviews",
                 type: "uuid",
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Reviews_ModeratedByUserID",
                 table: "Reviews",
-                column: "ModeratedByUserID");
+                column: "ModeratedByUserID"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Reviews_Status",
                 table: "Reviews",
-                column: "Status");
+                column: "Status"
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Reviews_UserID",
                 table: "Reviews",
-                column: "UserID");
+                column: "UserID"
+            );
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Reviews_Users_ModeratedByUserID",
@@ -77,7 +87,8 @@ namespace pbl3_server.Migrations
                 column: "ModeratedByUserID",
                 principalTable: "Users",
                 principalColumn: "UserID",
-                onDelete: ReferentialAction.SetNull);
+                onDelete: ReferentialAction.SetNull
+            );
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Reviews_Users_UserID",
@@ -85,7 +96,8 @@ namespace pbl3_server.Migrations
                 column: "UserID",
                 principalTable: "Users",
                 principalColumn: "UserID",
-                onDelete: ReferentialAction.SetNull);
+                onDelete: ReferentialAction.SetNull
+            );
         }
 
         /// <inheritdoc />
@@ -93,51 +105,30 @@ namespace pbl3_server.Migrations
         {
             migrationBuilder.DropForeignKey(
                 name: "FK_Reviews_Users_ModeratedByUserID",
-                table: "Reviews");
+                table: "Reviews"
+            );
 
-            migrationBuilder.DropForeignKey(
-                name: "FK_Reviews_Users_UserID",
-                table: "Reviews");
+            migrationBuilder.DropForeignKey(name: "FK_Reviews_Users_UserID", table: "Reviews");
 
-            migrationBuilder.DropIndex(
-                name: "IX_Reviews_ModeratedByUserID",
-                table: "Reviews");
+            migrationBuilder.DropIndex(name: "IX_Reviews_ModeratedByUserID", table: "Reviews");
 
-            migrationBuilder.DropIndex(
-                name: "IX_Reviews_Status",
-                table: "Reviews");
+            migrationBuilder.DropIndex(name: "IX_Reviews_Status", table: "Reviews");
 
-            migrationBuilder.DropIndex(
-                name: "IX_Reviews_UserID",
-                table: "Reviews");
+            migrationBuilder.DropIndex(name: "IX_Reviews_UserID", table: "Reviews");
 
-            migrationBuilder.DropColumn(
-                name: "CreatedAt",
-                table: "Reviews");
+            migrationBuilder.DropColumn(name: "CreatedAt", table: "Reviews");
 
-            migrationBuilder.DropColumn(
-                name: "IsFlagged",
-                table: "Reviews");
+            migrationBuilder.DropColumn(name: "IsFlagged", table: "Reviews");
 
-            migrationBuilder.DropColumn(
-                name: "ModeratedAt",
-                table: "Reviews");
+            migrationBuilder.DropColumn(name: "ModeratedAt", table: "Reviews");
 
-            migrationBuilder.DropColumn(
-                name: "ModeratedByUserID",
-                table: "Reviews");
+            migrationBuilder.DropColumn(name: "ModeratedByUserID", table: "Reviews");
 
-            migrationBuilder.DropColumn(
-                name: "ModerationReason",
-                table: "Reviews");
+            migrationBuilder.DropColumn(name: "ModerationReason", table: "Reviews");
 
-            migrationBuilder.DropColumn(
-                name: "Status",
-                table: "Reviews");
+            migrationBuilder.DropColumn(name: "Status", table: "Reviews");
 
-            migrationBuilder.DropColumn(
-                name: "UserID",
-                table: "Reviews");
+            migrationBuilder.DropColumn(name: "UserID", table: "Reviews");
         }
     }
 }

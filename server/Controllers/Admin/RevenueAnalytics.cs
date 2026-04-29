@@ -36,12 +36,16 @@ namespace Pbl3.Controllers.Admin
             var payments = await _context
                 .PaymentIntents.AsNoTracking()
                 .Include(p => p.Booking)
-                .ThenInclude(b => b!.Tickets)
-                .ThenInclude(t => t.Trip)
-                .ThenInclude(tr => tr!.Route)
-                .ThenInclude(r => r!.BusCompany)
+                    .ThenInclude(b => b!.Tickets)
+                        .ThenInclude(t => t.Trip)
+                            .ThenInclude(tr => tr!.Route)
+                                .ThenInclude(r => r!.BusCompany)
                 .Include(p => p.Refunds)
-                .Where(p => p.Status == PaymentIntentStatus.Succeeded && p.CreatedAt >= start && p.CreatedAt < end.AddDays(1))
+                .Where(p =>
+                    p.Status == PaymentIntentStatus.Succeeded
+                    && p.CreatedAt >= start
+                    && p.CreatedAt < end.AddDays(1)
+                )
                 .ToListAsync();
 
             // Calculate summary
@@ -49,7 +53,9 @@ namespace Pbl3.Controllers.Admin
             var totalRefunded = payments.SelectMany(p => p.Refunds).Sum(r => r.Amount);
             var netRevenue = totalRevenue - totalRefunded;
             var totalTransactions = payments.Count;
-            var ticketsSold = payments.SelectMany(p => p.Booking?.Tickets ?? new List<Models.Ticket>()).Count();
+            var ticketsSold = payments
+                .SelectMany(p => p.Booking?.Tickets ?? new List<Models.Ticket>())
+                .Count();
             var avgTransactionValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
 
             // Calculate growth (compare with previous period)
@@ -70,10 +76,13 @@ namespace Pbl3.Controllers.Admin
             var previousTransactions = previousPayments.Count;
 
             var revenueGrowth =
-                previousRevenue > 0 ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 : 0;
+                previousRevenue > 0
+                    ? ((totalRevenue - previousRevenue) / previousRevenue) * 100
+                    : 0;
             var transactionGrowth =
                 previousTransactions > 0
-                    ? ((totalTransactions - previousTransactions) / (decimal)previousTransactions) * 100
+                    ? ((totalTransactions - previousTransactions) / (decimal)previousTransactions)
+                        * 100
                     : 0;
 
             var summary = new RevenueSummaryDto
@@ -96,7 +105,8 @@ namespace Pbl3.Controllers.Admin
                     Date = g.Key,
                     Revenue = g.Sum(p => p.Amount),
                     TransactionCount = g.Count(),
-                    TicketCount = g.SelectMany(p => p.Booking?.Tickets ?? new List<Models.Ticket>()).Count(),
+                    TicketCount = g.SelectMany(p => p.Booking?.Tickets ?? new List<Models.Ticket>())
+                        .Count(),
                     RefundAmount = g.SelectMany(p => p.Refunds).Sum(r => r.Amount),
                 })
                 .OrderBy(t => t.Date)
@@ -162,7 +172,8 @@ namespace Pbl3.Controllers.Admin
                     Revenue = g.Sum(t => t.FinalPrice),
                     TicketsSold = g.Count(),
                     TripCount = g.Select(t => t.TripID).Distinct().Count(),
-                    Percentage = totalRevenue > 0 ? (g.Sum(t => t.FinalPrice) / totalRevenue) * 100 : 0,
+                    Percentage =
+                        totalRevenue > 0 ? (g.Sum(t => t.FinalPrice) / totalRevenue) * 100 : 0,
                 })
                 .OrderByDescending(c => c.Revenue)
                 .Take(topCompaniesLimit)

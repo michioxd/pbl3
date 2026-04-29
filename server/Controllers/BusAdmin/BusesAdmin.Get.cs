@@ -33,7 +33,8 @@ namespace Pbl3.Controllers.BusAdmin
                 .Where(b => b.CompanyID == companyId.Value);
 
             var totalRecords = await query.CountAsync();
-            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+            var totalPages =
+                totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
 
             var buses = await query
                 .OrderBy(b => b.PlateNumber)
@@ -127,7 +128,8 @@ namespace Pbl3.Controllers.BusAdmin
             }
 
             var totalRecords = await query.CountAsync();
-            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+            var totalPages =
+                totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
 
             var tickets = await query
                 .OrderByDescending(t => t.Booking!.CreatedAt)
@@ -210,7 +212,8 @@ namespace Pbl3.Controllers.BusAdmin
             }
 
             var totalRecords = await query.CountAsync();
-            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+            var totalPages =
+                totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
 
             var trips = await query
                 .OrderByDescending(t => t.DepartureDate)
@@ -271,12 +274,11 @@ namespace Pbl3.Controllers.BusAdmin
             if (!hasOwnership)
                 return Forbid();
 
-            var query = _context
-                .SeatLayouts.AsNoTracking()
-                .Where(s => s.BusTypeID == busTypeId);
+            var query = _context.SeatLayouts.AsNoTracking().Where(s => s.BusTypeID == busTypeId);
 
             var totalRecords = await query.CountAsync();
-            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+            var totalPages =
+                totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
 
             var layouts = await query
                 .OrderBy(s => s.Floor)

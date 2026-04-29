@@ -27,8 +27,14 @@ namespace Pbl3.Controllers.Admin
             var normalizedStatuses = new HashSet<CompanyStatus>();
             if (statuses != null && statuses.Count > 0)
             {
-                foreach (var rawStatus in statuses.SelectMany(s =>
-                    s.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)))
+                foreach (
+                    var rawStatus in statuses.SelectMany(s =>
+                        s.Split(
+                            ',',
+                            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+                        )
+                    )
+                )
                 {
                     if (Enum.TryParse<CompanyStatus>(rawStatus, true, out var status))
                         normalizedStatuses.Add(status);
@@ -45,8 +51,8 @@ namespace Pbl3.Controllers.Admin
             {
                 var keyword = $"%{q.Trim()}%";
                 baseQuery = baseQuery.Where(c =>
-                    EF.Functions.ILike(c.Name, keyword) ||
-                    (c.LicenseNumber != null && EF.Functions.ILike(c.LicenseNumber, keyword))
+                    EF.Functions.ILike(c.Name, keyword)
+                    || (c.LicenseNumber != null && EF.Functions.ILike(c.LicenseNumber, keyword))
                 );
             }
 
@@ -55,41 +61,61 @@ namespace Pbl3.Controllers.Admin
                 baseQuery = baseQuery.Where(c => normalizedStatuses.Contains(c.Status));
 
             var filteredCount = await baseQuery.CountAsync();
-            var totalPages = filteredCount == 0 ? 1 : (int)Math.Ceiling(filteredCount / (double)pageSize);
+            var totalPages =
+                filteredCount == 0 ? 1 : (int)Math.Ceiling(filteredCount / (double)pageSize);
 
             // Sorting
-            var isDescending = !string.Equals(sortDirection, "asc", StringComparison.OrdinalIgnoreCase);
+            var isDescending = !string.Equals(
+                sortDirection,
+                "asc",
+                StringComparison.OrdinalIgnoreCase
+            );
             baseQuery = (sortBy ?? string.Empty).ToLowerInvariant() switch
             {
-                "name" => isDescending ? baseQuery.OrderByDescending(c => c.Name) : baseQuery.OrderBy(c => c.Name),
-                "status" => isDescending ? baseQuery.OrderByDescending(c => c.Status) : baseQuery.OrderBy(c => c.Status),
-                _ => isDescending ? baseQuery.OrderByDescending(c => c.CreatedAt) : baseQuery.OrderBy(c => c.CreatedAt),
+                "name" => isDescending
+                    ? baseQuery.OrderByDescending(c => c.Name)
+                    : baseQuery.OrderBy(c => c.Name),
+                "status" => isDescending
+                    ? baseQuery.OrderByDescending(c => c.Status)
+                    : baseQuery.OrderBy(c => c.Status),
+                _ => isDescending
+                    ? baseQuery.OrderByDescending(c => c.CreatedAt)
+                    : baseQuery.OrderBy(c => c.CreatedAt),
             };
 
             // Paginate
             var companies = await baseQuery
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(c => new { c.CompanyID, c.Name, c.LicenseNumber, c.Hotline, c.Status, c.IsApproved, c.CreatedAt })
+                .Select(c => new
+                {
+                    c.CompanyID,
+                    c.Name,
+                    c.LicenseNumber,
+                    c.Hotline,
+                    c.Status,
+                    c.IsApproved,
+                    c.CreatedAt,
+                })
                 .ToListAsync();
 
             var companyIds = companies.Select(c => c.CompanyID).ToList();
 
             // Aggregate related counts
-            var adminsCounts = await _context.BusCompanyAdmins
-                .Where(bca => companyIds.Contains(bca.CompanyID))
+            var adminsCounts = await _context
+                .BusCompanyAdmins.Where(bca => companyIds.Contains(bca.CompanyID))
                 .GroupBy(bca => bca.CompanyID)
                 .Select(g => new { CompanyID = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.CompanyID, x => x.Count);
 
-            var routesCounts = await _context.BusRoutes
-                .Where(r => companyIds.Contains(r.CompanyID))
+            var routesCounts = await _context
+                .BusRoutes.Where(r => companyIds.Contains(r.CompanyID))
                 .GroupBy(r => r.CompanyID)
                 .Select(g => new { CompanyID = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.CompanyID, x => x.Count);
 
-            var busesCounts = await _context.Buses
-                .Where(b => companyIds.Contains(b.CompanyID))
+            var busesCounts = await _context
+                .Buses.Where(b => companyIds.Contains(b.CompanyID))
                 .GroupBy(b => b.CompanyID)
                 .Select(g => new { CompanyID = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.CompanyID, x => x.Count);
@@ -98,24 +124,27 @@ namespace Pbl3.Controllers.Admin
             blockedDeleteIds.UnionWith(busesCounts.Keys);
 
             // Map to DTOs
-            var items = companies.Select(c => new AdminCompanyListItemDto
-            {
-                CompanyID = c.CompanyID,
-                Name = c.Name,
-                LicenseNumber = c.LicenseNumber,
-                Hotline = c.Hotline,
-                Status = (int)c.Status,
-                IsApproved = c.IsApproved,
-                CreatedAt = c.CreatedAt,
-                AdminsCount = adminsCounts.GetValueOrDefault(c.CompanyID),
-                RoutesCount = routesCounts.GetValueOrDefault(c.CompanyID),
-                BusesCount = busesCounts.GetValueOrDefault(c.CompanyID),
-                ActiveTripsCount = 0,
-                CanBeDeleted = !blockedDeleteIds.Contains(c.CompanyID),
-            }).ToList();
+            var items = companies
+                .Select(c => new AdminCompanyListItemDto
+                {
+                    CompanyID = c.CompanyID,
+                    Name = c.Name,
+                    LicenseNumber = c.LicenseNumber,
+                    Hotline = c.Hotline,
+                    Status = (int)c.Status,
+                    IsApproved = c.IsApproved,
+                    CreatedAt = c.CreatedAt,
+                    AdminsCount = adminsCounts.GetValueOrDefault(c.CompanyID),
+                    RoutesCount = routesCounts.GetValueOrDefault(c.CompanyID),
+                    BusesCount = busesCounts.GetValueOrDefault(c.CompanyID),
+                    ActiveTripsCount = 0,
+                    CanBeDeleted = !blockedDeleteIds.Contains(c.CompanyID),
+                })
+                .ToList();
 
             // Summary
-            var allStatuses = await _context.BusCompanies.AsNoTracking()
+            var allStatuses = await _context
+                .BusCompanies.AsNoTracking()
                 .Select(c => c.Status)
                 .ToListAsync();
 
@@ -128,33 +157,38 @@ namespace Pbl3.Controllers.Admin
                 RejectedCompanies = allStatuses.Count(s => s == CompanyStatus.Rejected),
             };
 
-            return Ok(new AdminCompaniesListResponseDto
-            {
-                Items = items,
-                TotalCount = totalCount,
-                FilteredCount = filteredCount,
-                Page = page,
-                PageSize = pageSize,
-                TotalPages = totalPages,
-                Summary = summary,
-            });
+            return Ok(
+                new AdminCompaniesListResponseDto
+                {
+                    Items = items,
+                    TotalCount = totalCount,
+                    FilteredCount = filteredCount,
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalPages = totalPages,
+                    Summary = summary,
+                }
+            );
         }
 
         [HttpGet("companies/stats")]
         public async Task<IActionResult> GetCompanyStats()
         {
-            var allStatuses = await _context.BusCompanies.AsNoTracking()
+            var allStatuses = await _context
+                .BusCompanies.AsNoTracking()
                 .Select(c => c.Status)
                 .ToListAsync();
 
-            return Ok(new AdminCompanySummaryDto
-            {
-                TotalCompanies = allStatuses.Count,
-                PendingCompanies = allStatuses.Count(s => s == CompanyStatus.Pending),
-                ApprovedCompanies = allStatuses.Count(s => s == CompanyStatus.Approved),
-                SuspendedCompanies = allStatuses.Count(s => s == CompanyStatus.Suspended),
-                RejectedCompanies = allStatuses.Count(s => s == CompanyStatus.Rejected),
-            });
+            return Ok(
+                new AdminCompanySummaryDto
+                {
+                    TotalCompanies = allStatuses.Count,
+                    PendingCompanies = allStatuses.Count(s => s == CompanyStatus.Pending),
+                    ApprovedCompanies = allStatuses.Count(s => s == CompanyStatus.Approved),
+                    SuspendedCompanies = allStatuses.Count(s => s == CompanyStatus.Suspended),
+                    RejectedCompanies = allStatuses.Count(s => s == CompanyStatus.Rejected),
+                }
+            );
         }
 
         [HttpGet("companies/{companyId:guid}/profile")]
@@ -259,10 +293,9 @@ namespace Pbl3.Controllers.Admin
 
             if (currentMonth.HasValue)
             {
-                tripsQuery = tripsQuery.Where(
-                    t =>
-                        t.DepartureTime.Year == currentYear
-                        && t.DepartureTime.Month == currentMonth.Value
+                tripsQuery = tripsQuery.Where(t =>
+                    t.DepartureTime.Year == currentYear
+                    && t.DepartureTime.Month == currentMonth.Value
                 );
             }
             else
@@ -277,7 +310,9 @@ namespace Pbl3.Controllers.Admin
                 .Tickets.AsNoTracking()
                 .Include(tk => tk.Booking)
                 .Where(tk => tripIds.Contains(tk.TripID))
-                .Where(tk => tk.Status == TicketStatus.Issued || tk.Status == TicketStatus.CheckedIn)
+                .Where(tk =>
+                    tk.Status == TicketStatus.Issued || tk.Status == TicketStatus.CheckedIn
+                )
                 .ToListAsync();
 
             var totalRevenue = tickets.Sum(tk => tk.FinalPrice);
@@ -340,7 +375,8 @@ namespace Pbl3.Controllers.Admin
             }
 
             var totalRecords = await query.CountAsync();
-            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+            var totalPages =
+                totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
 
             var tickets = await query
                 .OrderByDescending(t => t.Booking!.CreatedAt)
@@ -424,7 +460,8 @@ namespace Pbl3.Controllers.Admin
             }
 
             var totalRecords = await query.CountAsync();
-            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+            var totalPages =
+                totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
 
             var trips = await query
                 .OrderByDescending(t => t.DepartureDate)

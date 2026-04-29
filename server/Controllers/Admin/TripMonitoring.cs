@@ -40,7 +40,7 @@ namespace Pbl3.Controllers.Admin
             var query = _context
                 .Trips.AsNoTracking()
                 .Include(t => t.Route)
-                .ThenInclude(r => r!.BusCompany)
+                    .ThenInclude(r => r!.BusCompany)
                 .Include(t => t.Bus)
                 .Include(t => t.BusType)
                 .Include(t => t.Tickets)
@@ -50,11 +50,10 @@ namespace Pbl3.Controllers.Admin
             if (!string.IsNullOrWhiteSpace(q))
             {
                 var keyword = $"%{q.Trim()}%";
-                query = query.Where(
-                    t =>
-                        EF.Functions.ILike(t.Route!.RouteName, keyword)
-                        || (t.Bus != null && EF.Functions.ILike(t.Bus.PlateNumber, keyword))
-                        || EF.Functions.ILike(t.Route!.BusCompany!.Name, keyword)
+                query = query.Where(t =>
+                    EF.Functions.ILike(t.Route!.RouteName, keyword)
+                    || (t.Bus != null && EF.Functions.ILike(t.Bus.PlateNumber, keyword))
+                    || EF.Functions.ILike(t.Route!.BusCompany!.Name, keyword)
                 );
             }
 
@@ -81,18 +80,15 @@ namespace Pbl3.Controllers.Admin
             // Sorting
             query = (sortBy ?? "").ToLowerInvariant() switch
             {
-                "route"
-                    => sortDirection == "asc"
-                        ? query.OrderBy(t => t.Route!.RouteName)
-                        : query.OrderByDescending(t => t.Route!.RouteName),
-                "status"
-                    => sortDirection == "asc"
-                        ? query.OrderBy(t => t.Status)
-                        : query.OrderByDescending(t => t.Status),
-                "company"
-                    => sortDirection == "asc"
-                        ? query.OrderBy(t => t.Route!.BusCompany!.Name)
-                        : query.OrderByDescending(t => t.Route!.BusCompany!.Name),
+                "route" => sortDirection == "asc"
+                    ? query.OrderBy(t => t.Route!.RouteName)
+                    : query.OrderByDescending(t => t.Route!.RouteName),
+                "status" => sortDirection == "asc"
+                    ? query.OrderBy(t => t.Status)
+                    : query.OrderByDescending(t => t.Status),
+                "company" => sortDirection == "asc"
+                    ? query.OrderBy(t => t.Route!.BusCompany!.Name)
+                    : query.OrderByDescending(t => t.Route!.BusCompany!.Name),
                 _ => query.OrderByDescending(t => t.DepartureTime),
             };
 
@@ -102,32 +98,25 @@ namespace Pbl3.Controllers.Admin
             var items = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(
-                    t =>
-                        new TripMonitoringListItemDto
-                        {
-                            TripID = t.TripID,
-                            RouteName = t.Route!.RouteName,
-                            CompanyName = t.Route!.BusCompany!.Name,
-                            BusPlateNumber = t.Bus != null ? t.Bus.PlateNumber : null,
-                            DepartureTime = t.DepartureTime,
-                            ArrivalTime = t.ArrivalTime,
-                            Status = (int)t.Status,
-                            TotalSeats = t.BusType!.TotalSeats,
-                            BookedSeats = t.Tickets.Count(
-                                tk =>
-                                    tk.Status == TicketStatus.Issued
-                                    || tk.Status == TicketStatus.CheckedIn
-                            ),
-                            Revenue = t
-                                .Tickets.Where(
-                                    tk =>
-                                        tk.Status == TicketStatus.Issued
-                                        || tk.Status == TicketStatus.CheckedIn
-                                )
-                                .Sum(tk => tk.FinalPrice),
-                        }
-                )
+                .Select(t => new TripMonitoringListItemDto
+                {
+                    TripID = t.TripID,
+                    RouteName = t.Route!.RouteName,
+                    CompanyName = t.Route!.BusCompany!.Name,
+                    BusPlateNumber = t.Bus != null ? t.Bus.PlateNumber : null,
+                    DepartureTime = t.DepartureTime,
+                    ArrivalTime = t.ArrivalTime,
+                    Status = (int)t.Status,
+                    TotalSeats = t.BusType!.TotalSeats,
+                    BookedSeats = t.Tickets.Count(tk =>
+                        tk.Status == TicketStatus.Issued || tk.Status == TicketStatus.CheckedIn
+                    ),
+                    Revenue = t
+                        .Tickets.Where(tk =>
+                            tk.Status == TicketStatus.Issued || tk.Status == TicketStatus.CheckedIn
+                        )
+                        .Sum(tk => tk.FinalPrice),
+                })
                 .ToListAsync();
 
             // Summary
@@ -141,37 +130,32 @@ namespace Pbl3.Controllers.Admin
             var summary = new TripMonitoringSummaryDto
             {
                 TotalTrips = allTrips.Count,
-                ActiveTrips = allTrips.Count(
-                    t => t.Status == TripStatus.Running || t.Status == TripStatus.Scheduled
+                ActiveTrips = allTrips.Count(t =>
+                    t.Status == TripStatus.Running || t.Status == TripStatus.Scheduled
                 ),
                 ScheduledTrips = allTrips.Count(t => t.Status == TripStatus.Scheduled),
                 CompletedTrips = allTrips.Count(t => t.Status == TripStatus.Completed),
                 CancelledTrips = allTrips.Count(t => t.Status == TripStatus.Cancelled),
-                TotalRevenue = allTrips.Sum(
-                    t =>
-                        t.Tickets
-                            .Where(
-                                tk =>
-                                    tk.Status == TicketStatus.Issued
-                                    || tk.Status == TicketStatus.CheckedIn
-                            )
-                            .Sum(tk => tk.FinalPrice)
+                TotalRevenue = allTrips.Sum(t =>
+                    t.Tickets.Where(tk =>
+                            tk.Status == TicketStatus.Issued || tk.Status == TicketStatus.CheckedIn
+                        )
+                        .Sum(tk => tk.FinalPrice)
                 ),
-                AverageOccupancy = allTrips.Count > 0
-                    ? allTrips
-                        .Where(t => t.BusType != null && t.BusType.TotalSeats > 0)
-                        .Average(
-                            t =>
+                AverageOccupancy =
+                    allTrips.Count > 0
+                        ? allTrips
+                            .Where(t => t.BusType != null && t.BusType.TotalSeats > 0)
+                            .Average(t =>
                                 (double)
-                                    t.Tickets.Count(
-                                        tk =>
-                                            tk.Status == TicketStatus.Issued
-                                            || tk.Status == TicketStatus.CheckedIn
+                                    t.Tickets.Count(tk =>
+                                        tk.Status == TicketStatus.Issued
+                                        || tk.Status == TicketStatus.CheckedIn
                                     )
                                 / t.BusType!.TotalSeats
                                 * 100
-                        )
-                    : 0,
+                            )
+                        : 0,
             };
 
             return Ok(
@@ -195,46 +179,38 @@ namespace Pbl3.Controllers.Admin
             var activeTrips = await _context
                 .Trips.AsNoTracking()
                 .Include(t => t.Route)
-                .ThenInclude(r => r!.BusCompany)
+                    .ThenInclude(r => r!.BusCompany)
                 .Include(t => t.Bus)
                 .Include(t => t.BusType)
                 .Include(t => t.Tickets)
-                .Where(
-                    t =>
-                        t.Status == TripStatus.Running
-                        || (
-                            t.Status == TripStatus.Scheduled
-                            && t.DepartureTime <= now.AddHours(2)
-                            && t.DepartureTime >= now
-                        )
+                .Where(t =>
+                    t.Status == TripStatus.Running
+                    || (
+                        t.Status == TripStatus.Scheduled
+                        && t.DepartureTime <= now.AddHours(2)
+                        && t.DepartureTime >= now
+                    )
                 )
                 .OrderBy(t => t.DepartureTime)
-                .Select(
-                    t =>
-                        new TripMonitoringListItemDto
-                        {
-                            TripID = t.TripID,
-                            RouteName = t.Route!.RouteName,
-                            CompanyName = t.Route!.BusCompany!.Name,
-                            BusPlateNumber = t.Bus != null ? t.Bus.PlateNumber : null,
-                            DepartureTime = t.DepartureTime,
-                            ArrivalTime = t.ArrivalTime,
-                            Status = (int)t.Status,
-                            TotalSeats = t.BusType!.TotalSeats,
-                            BookedSeats = t.Tickets.Count(
-                                tk =>
-                                    tk.Status == TicketStatus.Issued
-                                    || tk.Status == TicketStatus.CheckedIn
-                            ),
-                            Revenue = t
-                                .Tickets.Where(
-                                    tk =>
-                                        tk.Status == TicketStatus.Issued
-                                        || tk.Status == TicketStatus.CheckedIn
-                                )
-                                .Sum(tk => tk.FinalPrice),
-                        }
-                )
+                .Select(t => new TripMonitoringListItemDto
+                {
+                    TripID = t.TripID,
+                    RouteName = t.Route!.RouteName,
+                    CompanyName = t.Route!.BusCompany!.Name,
+                    BusPlateNumber = t.Bus != null ? t.Bus.PlateNumber : null,
+                    DepartureTime = t.DepartureTime,
+                    ArrivalTime = t.ArrivalTime,
+                    Status = (int)t.Status,
+                    TotalSeats = t.BusType!.TotalSeats,
+                    BookedSeats = t.Tickets.Count(tk =>
+                        tk.Status == TicketStatus.Issued || tk.Status == TicketStatus.CheckedIn
+                    ),
+                    Revenue = t
+                        .Tickets.Where(tk =>
+                            tk.Status == TicketStatus.Issued || tk.Status == TicketStatus.CheckedIn
+                        )
+                        .Sum(tk => tk.FinalPrice),
+                })
                 .ToListAsync();
 
             return Ok(activeTrips);
@@ -263,78 +239,75 @@ namespace Pbl3.Controllers.Admin
                 .BusRoutes.AsNoTracking()
                 .Include(r => r.BusCompany)
                 .Include(r => r.Trips)
-                .ThenInclude(t => t.Tickets)
+                    .ThenInclude(t => t.Tickets)
                 .Include(r => r.Trips)
-                .ThenInclude(t => t.BusType)
+                    .ThenInclude(t => t.BusType)
                 .AsQueryable();
 
             var routes = await query.ToListAsync();
 
             var performance = routes
-                .Select(
-                    r =>
-                    {
-                        var trips = r.Trips;
-                        if (startDate.HasValue)
-                            trips = trips.Where(t => t.DepartureTime >= startDate.Value).ToList();
-                        if (endDate.HasValue)
-                            trips = trips
-                                .Where(t => t.DepartureTime <= endDate.Value.AddDays(1))
-                                .ToList();
+                .Select(r =>
+                {
+                    var trips = r.Trips;
+                    if (startDate.HasValue)
+                        trips = trips.Where(t => t.DepartureTime >= startDate.Value).ToList();
+                    if (endDate.HasValue)
+                        trips = trips
+                            .Where(t => t.DepartureTime <= endDate.Value.AddDays(1))
+                            .ToList();
 
-                        var completedTrips = trips.Count(t => t.Status == TripStatus.Completed);
-                        var cancelledTrips = trips.Count(t => t.Status == TripStatus.Cancelled);
-                        var totalTrips = trips.Count;
+                    var completedTrips = trips.Count(t => t.Status == TripStatus.Completed);
+                    var cancelledTrips = trips.Count(t => t.Status == TripStatus.Cancelled);
+                    var totalTrips = trips.Count;
 
-                        var averageOccupancy =
-                            trips.Count > 0
-                                ? trips
-                                    .Where(t => t.BusType != null && t.BusType.TotalSeats > 0)
-                                    .Average(
-                                        t =>
-                                            (double)
-                                                t.Tickets.Count(
-                                                    tk =>
-                                                        tk.Status == TicketStatus.Issued
-                                                        || tk.Status == TicketStatus.CheckedIn
-                                                )
-                                            / t.BusType!.TotalSeats
-                                            * 100
-                                    )
-                                : 0;
-
-                        var revenue = trips.Sum(
-                            t =>
-                                t.Tickets
-                                    .Where(
-                                        tk =>
+                    var averageOccupancy =
+                        trips.Count > 0
+                            ? trips
+                                .Where(t => t.BusType != null && t.BusType.TotalSeats > 0)
+                                .Average(t =>
+                                    (double)
+                                        t.Tickets.Count(tk =>
                                             tk.Status == TicketStatus.Issued
                                             || tk.Status == TicketStatus.CheckedIn
-                                    )
-                                    .Sum(tk => tk.FinalPrice)
-                        );
+                                        )
+                                    / t.BusType!.TotalSeats
+                                    * 100
+                                )
+                            : 0;
 
-                        return new RoutePerformanceDto
-                        {
-                            RouteID = r.RouteID,
-                            RouteName = r.RouteName,
-                            CompanyName = r.BusCompany!.Name,
-                            TotalTrips = totalTrips,
-                            CompletedTrips = completedTrips,
-                            CancelledTrips = cancelledTrips,
-                            CompletionRate =
-                                totalTrips > 0
-                                    ? (double)completedTrips / totalTrips * 100
-                                    : 0,
-                            AverageOccupancy = averageOccupancy,
-                            TotalRevenue = revenue,
-                        };
-                    }
-                )
+                    var revenue = trips.Sum(t =>
+                        t.Tickets.Where(tk =>
+                                tk.Status == TicketStatus.Issued
+                                || tk.Status == TicketStatus.CheckedIn
+                            )
+                            .Sum(tk => tk.FinalPrice)
+                    );
+
+                    return new RoutePerformanceDto
+                    {
+                        RouteID = r.RouteID,
+                        RouteName = r.RouteName,
+                        CompanyName = r.BusCompany!.Name,
+                        TotalTrips = totalTrips,
+                        CompletedTrips = completedTrips,
+                        CancelledTrips = cancelledTrips,
+                        CompletionRate =
+                            totalTrips > 0 ? (double)completedTrips / totalTrips * 100 : 0,
+                        AverageOccupancy = averageOccupancy,
+                        TotalRevenue = revenue,
+                    };
+                })
                 .OrderByDescending(r => r.TotalRevenue)
                 .ToList();
 
-            return Ok(new RoutePerformanceListResponseDto { Items = performance, TotalCount = performance.Count });
+            return Ok(
+                new RoutePerformanceListResponseDto
+                {
+                    Items = performance,
+                    TotalCount = performance.Count,
+                }
+            );
         }
     }
 }

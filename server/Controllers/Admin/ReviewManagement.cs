@@ -1,10 +1,10 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pbl3.Data;
 using Pbl3.Dtos;
 using Pbl3.Enums;
-using System.Security.Claims;
 
 namespace Pbl3.Controllers.Admin
 {
@@ -43,8 +43,8 @@ namespace Pbl3.Controllers.Admin
             var query = _context
                 .Reviews.AsNoTracking()
                 .Include(r => r.Trip)
-                .ThenInclude(t => t!.Route)
-                .ThenInclude(r => r!.BusCompany)
+                    .ThenInclude(t => t!.Route)
+                        .ThenInclude(r => r!.BusCompany)
                 .Include(r => r.Booking)
                 .AsQueryable();
 
@@ -52,11 +52,10 @@ namespace Pbl3.Controllers.Admin
             if (!string.IsNullOrWhiteSpace(q))
             {
                 var keyword = $"%{q.Trim()}%";
-                query = query.Where(
-                    r =>
-                        (r.Comment != null && EF.Functions.ILike(r.Comment, keyword))
-                        || EF.Functions.ILike(r.Booking!.ContactName, keyword)
-                        || EF.Functions.ILike(r.Booking!.ContactEmail, keyword)
+                query = query.Where(r =>
+                    (r.Comment != null && EF.Functions.ILike(r.Comment, keyword))
+                    || EF.Functions.ILike(r.Booking!.ContactName, keyword)
+                    || EF.Functions.ILike(r.Booking!.ContactEmail, keyword)
                 );
             }
 
@@ -89,14 +88,12 @@ namespace Pbl3.Controllers.Admin
             // Sorting
             query = (sortBy ?? "").ToLowerInvariant() switch
             {
-                "rating"
-                    => sortDirection == "asc"
-                        ? query.OrderBy(r => r.RatingScore)
-                        : query.OrderByDescending(r => r.RatingScore),
-                "status"
-                    => sortDirection == "asc"
-                        ? query.OrderBy(r => r.Status)
-                        : query.OrderByDescending(r => r.Status),
+                "rating" => sortDirection == "asc"
+                    ? query.OrderBy(r => r.RatingScore)
+                    : query.OrderByDescending(r => r.RatingScore),
+                "status" => sortDirection == "asc"
+                    ? query.OrderBy(r => r.Status)
+                    : query.OrderByDescending(r => r.Status),
                 _ => query.OrderByDescending(r => r.CreatedAt),
             };
 
@@ -106,23 +103,20 @@ namespace Pbl3.Controllers.Admin
             var items = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(
-                    r =>
-                        new ReviewListItemDto
-                        {
-                            ReviewID = r.ReviewID,
-                            RatingScore = r.RatingScore,
-                            Comment = r.Comment,
-                            Status = (int)r.Status,
-                            IsFlagged = r.IsFlagged,
-                            CreatedAt = r.CreatedAt,
-                            TripRoute = r.Trip!.Route!.RouteName,
-                            CompanyName = r.Trip!.Route!.BusCompany!.Name,
-                            TripDepartureTime = r.Trip!.DepartureTime,
-                            BookingContactName = r.Booking!.ContactName,
-                            BookingContactEmail = r.Booking!.ContactEmail,
-                        }
-                )
+                .Select(r => new ReviewListItemDto
+                {
+                    ReviewID = r.ReviewID,
+                    RatingScore = r.RatingScore,
+                    Comment = r.Comment,
+                    Status = (int)r.Status,
+                    IsFlagged = r.IsFlagged,
+                    CreatedAt = r.CreatedAt,
+                    TripRoute = r.Trip!.Route!.RouteName,
+                    CompanyName = r.Trip!.Route!.BusCompany!.Name,
+                    TripDepartureTime = r.Trip!.DepartureTime,
+                    BookingContactName = r.Booking!.ContactName,
+                    BookingContactEmail = r.Booking!.ContactEmail,
+                })
                 .ToListAsync();
 
             // Summary
@@ -134,8 +128,7 @@ namespace Pbl3.Controllers.Admin
                 ApprovedCount = allReviews.Count(r => r.Status == ReviewStatus.Approved),
                 RejectedCount = allReviews.Count(r => r.Status == ReviewStatus.Rejected),
                 FlaggedCount = allReviews.Count(r => r.IsFlagged),
-                AverageRating =
-                    allReviews.Count > 0 ? allReviews.Average(r => r.RatingScore) : 0,
+                AverageRating = allReviews.Count > 0 ? allReviews.Average(r => r.RatingScore) : 0,
             };
 
             return Ok(
@@ -158,8 +151,8 @@ namespace Pbl3.Controllers.Admin
             var review = await _context
                 .Reviews.AsNoTracking()
                 .Include(r => r.Trip)
-                .ThenInclude(t => t!.Route)
-                .ThenInclude(r => r!.BusCompany)
+                    .ThenInclude(t => t!.Route)
+                        .ThenInclude(r => r!.BusCompany)
                 .Include(r => r.Booking)
                 .Include(r => r.ModeratedByUser)
                 .FirstOrDefaultAsync(r => r.ReviewID == reviewId);
@@ -201,9 +194,7 @@ namespace Pbl3.Controllers.Admin
                 return NotFound(new { message = "Không tìm thấy đánh giá." });
 
             if (review.Status != ReviewStatus.Pending)
-                return BadRequest(
-                    new { message = "Chỉ có thể duyệt đánh giá đang chờ xử lý." }
-                );
+                return BadRequest(new { message = "Chỉ có thể duyệt đánh giá đang chờ xử lý." });
 
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
@@ -230,9 +221,7 @@ namespace Pbl3.Controllers.Admin
                 return NotFound(new { message = "Không tìm thấy đánh giá." });
 
             if (review.Status != ReviewStatus.Pending)
-                return BadRequest(
-                    new { message = "Chỉ có thể từ chối đánh giá đang chờ xử lý." }
-                );
+                return BadRequest(new { message = "Chỉ có thể từ chối đánh giá đang chờ xử lý." });
 
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
@@ -247,10 +236,7 @@ namespace Pbl3.Controllers.Admin
         }
 
         [HttpPost("{reviewId:guid}/flag")]
-        public async Task<IActionResult> FlagReview(
-            Guid reviewId,
-            [FromBody] ModerateReviewDto dto
-        )
+        public async Task<IActionResult> FlagReview(Guid reviewId, [FromBody] ModerateReviewDto dto)
         {
             var review = await _context.Reviews.FirstOrDefaultAsync(r => r.ReviewID == reviewId);
 

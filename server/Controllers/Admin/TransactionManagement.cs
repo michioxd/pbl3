@@ -46,9 +46,9 @@ namespace Pbl3.Controllers.Admin
             var query = _context
                 .PaymentIntents.AsNoTracking()
                 .Include(p => p.Booking)
-                .ThenInclude(b => b!.User)
+                    .ThenInclude(b => b!.User)
                 .Include(p => p.Booking)
-                .ThenInclude(b => b!.Tickets)
+                    .ThenInclude(b => b!.Tickets)
                 .Include(p => p.Refunds)
                 .AsQueryable();
 
@@ -79,16 +79,24 @@ namespace Pbl3.Controllers.Admin
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var searchLower = search.ToLower();
-                query = query.Where(
-                    p =>
-                        p.BookingID.ToString().ToLower().Contains(searchLower)
-                        || (p.Booking != null && p.Booking.ContactEmail != null && p.Booking.ContactEmail.ToLower().Contains(searchLower))
-                        || (p.Booking != null && p.Booking.User != null && p.Booking.User.Email.ToLower().Contains(searchLower))
+                query = query.Where(p =>
+                    p.BookingID.ToString().ToLower().Contains(searchLower)
+                    || (
+                        p.Booking != null
+                        && p.Booking.ContactEmail != null
+                        && p.Booking.ContactEmail.ToLower().Contains(searchLower)
+                    )
+                    || (
+                        p.Booking != null
+                        && p.Booking.User != null
+                        && p.Booking.User.Email.ToLower().Contains(searchLower)
+                    )
                 );
             }
 
             var totalRecords = await query.CountAsync();
-            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+            var totalPages =
+                totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
 
             var transactions = await query
                 .OrderByDescending(p => p.CreatedAt)
@@ -108,9 +116,12 @@ namespace Pbl3.Controllers.Admin
                     ContactPhone = p.Booking != null ? p.Booking.ContactPhone : null,
                     BookingStatus = p.Booking != null ? p.Booking.Status : BookingStatus.Cancelled,
                     UserID = p.Booking != null ? p.Booking.UserID : null,
-                    UserEmail = p.Booking != null && p.Booking.User != null ? p.Booking.User.Email : null,
+                    UserEmail =
+                        p.Booking != null && p.Booking.User != null ? p.Booking.User.Email : null,
                     UserFullName =
-                        p.Booking != null && p.Booking.User != null ? p.Booking.User.FullName : null,
+                        p.Booking != null && p.Booking.User != null
+                            ? p.Booking.User.FullName
+                            : null,
                     TicketCount = p.Booking != null ? p.Booking.Tickets.Count : 0,
                     HasRefund = p.Refunds.Any(),
                     RefundAmount = p.Refunds.Any() ? p.Refunds.Sum(r => r.Amount) : null,
@@ -124,7 +135,9 @@ namespace Pbl3.Controllers.Admin
             {
                 TotalTransactions = allTransactions.Count,
                 TotalAmount = allTransactions.Sum(p => p.Amount),
-                SucceededCount = allTransactions.Count(p => p.Status == PaymentIntentStatus.Succeeded),
+                SucceededCount = allTransactions.Count(p =>
+                    p.Status == PaymentIntentStatus.Succeeded
+                ),
                 SucceededAmount = allTransactions
                     .Where(p => p.Status == PaymentIntentStatus.Succeeded)
                     .Sum(p => p.Amount),
@@ -157,17 +170,17 @@ namespace Pbl3.Controllers.Admin
             var paymentIntent = await _context
                 .PaymentIntents.AsNoTracking()
                 .Include(p => p.Booking)
-                .ThenInclude(b => b!.User)
+                    .ThenInclude(b => b!.User)
                 .Include(p => p.Booking)
-                .ThenInclude(b => b!.Tickets)
-                .ThenInclude(t => t.Passenger)
+                    .ThenInclude(b => b!.Tickets)
+                        .ThenInclude(t => t.Passenger)
                 .Include(p => p.Booking)
-                .ThenInclude(b => b!.Tickets)
-                .ThenInclude(t => t.Trip)
-                .ThenInclude(tr => tr!.Route)
+                    .ThenInclude(b => b!.Tickets)
+                        .ThenInclude(t => t.Trip)
+                            .ThenInclude(tr => tr!.Route)
                 .Include(p => p.Booking)
-                .ThenInclude(b => b!.Tickets)
-                .ThenInclude(t => t.SeatLayout)
+                    .ThenInclude(b => b!.Tickets)
+                        .ThenInclude(t => t.SeatLayout)
                 .Include(p => p.Refunds)
                 .FirstOrDefaultAsync(p => p.IntentID == intentId);
 
@@ -201,8 +214,8 @@ namespace Pbl3.Controllers.Admin
                             UserID = paymentIntent.Booking.UserID,
                             UserEmail = paymentIntent.Booking.User?.Email,
                             UserFullName = paymentIntent.Booking.User?.FullName,
-                            Tickets = paymentIntent.Booking.Tickets
-                                .Select(t => new TicketDetailDto
+                            Tickets = paymentIntent
+                                .Booking.Tickets.Select(t => new TicketDetailDto
                                 {
                                     TicketID = t.TicketID,
                                     TicketCode = t.TicketCode,
@@ -214,13 +227,13 @@ namespace Pbl3.Controllers.Admin
                                     TripRouteName = t.Trip?.Route?.RouteName,
                                     TripDepartureTime = t.Trip?.DepartureTime ?? default,
                                     TripDepartureLocation = null, // RouteStops not included for performance
-                                    TripArrivalLocation = null,   // RouteStops not included for performance
+                                    TripArrivalLocation = null, // RouteStops not included for performance
                                     SeatName = t.SeatLayout?.SeatLabel,
                                 })
                                 .ToList(),
                         },
-                Refunds = paymentIntent.Refunds
-                    .Select(r => new RefundDetailDto
+                Refunds = paymentIntent
+                    .Refunds.Select(r => new RefundDetailDto
                     {
                         RefundID = r.RefundID,
                         Amount = r.Amount,

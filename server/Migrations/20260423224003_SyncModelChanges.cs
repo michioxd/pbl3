@@ -15,15 +15,14 @@ namespace pbl3_server.Migrations
                 table: "BusTypes",
                 type: "jsonb",
                 nullable: false,
-                defaultValue: "[]");
+                defaultValue: "[]"
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "Amenities",
-                table: "BusTypes");
+            migrationBuilder.DropColumn(name: "Amenities", table: "BusTypes");
         }
     }
 }

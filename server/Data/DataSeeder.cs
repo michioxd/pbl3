@@ -459,32 +459,92 @@ namespace Pbl3.Data
 
         private async Task SeedBusTypeAmenitiesAsync()
         {
-            var busType29 = await _context.BusTypes.FirstAsync(bt => bt.Name == "Giường nằm 29 chỗ");
+            var busType29 = await _context.BusTypes.FirstAsync(bt =>
+                bt.Name == "Giường nằm 29 chỗ"
+            );
             var busType40 = await _context.BusTypes.FirstAsync(bt => bt.Name == "Ghế ngồi 40 chỗ");
             var busType45 = await _context.BusTypes.FirstAsync(bt => bt.Name == "Ghế ngồi 45 chỗ");
 
             var amenities = new List<BusTypeAmenity>
             {
                 // Giường nằm 29 chỗ - Premium amenities
-                new BusTypeAmenity { BusTypeID = busType29.BusTypeID, AmenityID = Guid.Parse("11111111-1111-1111-1111-111111111111") }, // Điều hòa
-                new BusTypeAmenity { BusTypeID = busType29.BusTypeID, AmenityID = Guid.Parse("22222222-2222-2222-2222-222222222222") }, // Wi-Fi
-                new BusTypeAmenity { BusTypeID = busType29.BusTypeID, AmenityID = Guid.Parse("33333333-3333-3333-3333-333333333333") }, // Nước uống
-                new BusTypeAmenity { BusTypeID = busType29.BusTypeID, AmenityID = Guid.Parse("44444444-4444-4444-4444-444444444444") }, // Chăn
-                new BusTypeAmenity { BusTypeID = busType29.BusTypeID, AmenityID = Guid.Parse("55555555-5555-5555-5555-555555555555") }, // Gối
-                new BusTypeAmenity { BusTypeID = busType29.BusTypeID, AmenityID = Guid.Parse("66666666-6666-6666-6666-666666666666") }, // TV
-                new BusTypeAmenity { BusTypeID = busType29.BusTypeID, AmenityID = Guid.Parse("77777777-7777-7777-7777-777777777777") }, // Sạc điện thoại
-                new BusTypeAmenity { BusTypeID = busType29.BusTypeID, AmenityID = Guid.Parse("88888888-8888-8888-8888-888888888888") }, // Nhà vệ sinh
-                new BusTypeAmenity { BusTypeID = busType29.BusTypeID, AmenityID = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa") }, // Tiếp viên
-
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                }, // Điều hòa
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                }, // Wi-Fi
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("33333333-3333-3333-3333-333333333333"),
+                }, // Nước uống
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("44444444-4444-4444-4444-444444444444"),
+                }, // Chăn
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("55555555-5555-5555-5555-555555555555"),
+                }, // Gối
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("66666666-6666-6666-6666-666666666666"),
+                }, // TV
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("77777777-7777-7777-7777-777777777777"),
+                }, // Sạc điện thoại
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("88888888-8888-8888-8888-888888888888"),
+                }, // Nhà vệ sinh
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                }, // Tiếp viên
                 // Ghế ngồi 40 chỗ - Standard amenities
-                new BusTypeAmenity { BusTypeID = busType40.BusTypeID, AmenityID = Guid.Parse("11111111-1111-1111-1111-111111111111") }, // Điều hòa
-                new BusTypeAmenity { BusTypeID = busType40.BusTypeID, AmenityID = Guid.Parse("33333333-3333-3333-3333-333333333333") }, // Nước uống
-                new BusTypeAmenity { BusTypeID = busType40.BusTypeID, AmenityID = Guid.Parse("99999999-9999-9999-9999-999999999999") }, // Ghế ngả
-                new BusTypeAmenity { BusTypeID = busType40.BusTypeID, AmenityID = Guid.Parse("77777777-7777-7777-7777-777777777777") }, // Sạc điện thoại
-
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType40.BusTypeID,
+                    AmenityID = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                }, // Điều hòa
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType40.BusTypeID,
+                    AmenityID = Guid.Parse("33333333-3333-3333-3333-333333333333"),
+                }, // Nước uống
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType40.BusTypeID,
+                    AmenityID = Guid.Parse("99999999-9999-9999-9999-999999999999"),
+                }, // Ghế ngả
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType40.BusTypeID,
+                    AmenityID = Guid.Parse("77777777-7777-7777-7777-777777777777"),
+                }, // Sạc điện thoại
                 // Ghế ngồi 45 chỗ - Basic amenities
-                new BusTypeAmenity { BusTypeID = busType45.BusTypeID, AmenityID = Guid.Parse("11111111-1111-1111-1111-111111111111") }, // Điều hòa
-                new BusTypeAmenity { BusTypeID = busType45.BusTypeID, AmenityID = Guid.Parse("99999999-9999-9999-9999-999999999999") }, // Ghế ngả
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType45.BusTypeID,
+                    AmenityID = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                }, // Điều hòa
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType45.BusTypeID,
+                    AmenityID = Guid.Parse("99999999-9999-9999-9999-999999999999"),
+                }, // Ghế ngả
             };
 
             _context.BusTypeAmenities.AddRange(amenities);
@@ -1014,7 +1074,7 @@ namespace Pbl3.Data
         {
             var routes = await _context
                 .BusRoutes.Include(r => r.BusRouteStops)
-                .ThenInclude(stop => stop.Station)
+                    .ThenInclude(stop => stop.Station)
                 .ToListAsync();
 
             foreach (var route in routes)
@@ -1045,10 +1105,7 @@ namespace Pbl3.Data
             }
 
             await _context.SaveChangesAsync();
-            _logger.LogInformation(
-                "Updated location codes for {Count} routes",
-                routes.Count
-            );
+            _logger.LogInformation("Updated location codes for {Count} routes", routes.Count);
         }
 
         private async Task SeedTripsAsync()
