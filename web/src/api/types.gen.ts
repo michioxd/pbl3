@@ -189,6 +189,10 @@ export type OAuthGoogleRequestDto = {
     idToken: string;
 };
 
+export type PaymentIntentStatus = 0 | 1 | 2;
+
+export type PaymentProvider = 0 | 1 | 2;
+
 export type ProblemDetails = {
     type?: string | null;
     title?: string | null;
@@ -1370,6 +1374,28 @@ export type PostApiAdminSystemUsersData = {
 };
 
 export type PostApiAdminSystemUsersResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiAdminSystemTransactionsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        provider?: PaymentProvider;
+        status?: PaymentIntentStatus;
+        startDate?: string;
+        endDate?: string;
+        search?: string;
+        page?: number;
+        pageSize?: number;
+    };
+    url: '/api/admin/system/transactions';
+};
+
+export type GetApiAdminSystemTransactionsResponses = {
     /**
      * OK
      */

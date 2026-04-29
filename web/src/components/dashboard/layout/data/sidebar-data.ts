@@ -58,7 +58,7 @@ export const getAdminSidebarData = (pendingCount?: number): SidebarData => ({
             items: [
                 {
                     title: "Lịch sử giao dịch",
-                    url: `${adminBasePath}/finance/transactions`,
+                    url: `${adminBasePath}/transactions`,
                     icon: ClockIcon,
                 },
             ],
