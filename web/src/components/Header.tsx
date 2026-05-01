@@ -96,6 +96,14 @@ const MainHeader = observer(() => {
                                             </LinkRouter>
                                         </DropdownMenu.Item>
                                     )}
+                                    {store.user.user?.role.roleName === "BusAdmin" && (
+                                        <DropdownMenu.Item asChild>
+                                            <LinkRouter to="/busadmin">
+                                                <CogIcon size={18} />
+                                                BusAdmin
+                                            </LinkRouter>
+                                        </DropdownMenu.Item>
+                                    )}
                                     <DropdownMenu.Separator />
                                     <DropdownMenu.Item onSelect={askLogoutConfirmation}>
                                         <LogOutIcon size={18} />

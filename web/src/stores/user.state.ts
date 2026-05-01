@@ -52,8 +52,19 @@ export class UserStore {
         try {
             const f = await getApiUserMe();
 
-            if (!f.data?.user || !f.data?.passenger) {
-                console.error("[user.checkAuth] check failed: No user or passenger data", f.data);
+            if (!f.data?.user) {
+                console.error("[user.checkAuth] check failed: No user data", f.data);
+                this.user = null;
+                this.error = "common:unauthorized";
+                runInAction(() => this.logout());
+                return false;
+            }
+
+            const roleName = String(f.data.user.role?.roleName || "").toLowerCase();
+            const requiresPassengerProfile = roleName === "passenger";
+
+            if (requiresPassengerProfile && !f.data.passenger) {
+                console.error("[user.checkAuth] check failed: Missing passenger profile", f.data);
                 this.user = null;
                 this.error = "common:unauthorized";
                 runInAction(() => this.logout());
@@ -62,13 +73,13 @@ export class UserStore {
 
             return (
                 runInAction(() => {
-                    if (!f.data?.user || !f.data?.passenger) return;
+                    if (!f.data?.user) return;
                     this.user = {
                         id: f.data.user.userID || "",
                         email: f.data.user.email || "",
                         role: f.data.user.role || { roleID: "", roleName: "" },
                         currentUser: f.data.user,
-                        currentPassenger: f.data.passenger,
+                        currentPassenger: f.data.passenger || ({} as MePassengerDto),
                     };
                     this.error = null;
                     this.userToken = localStorage.getItem("auth_token");

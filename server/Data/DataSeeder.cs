@@ -26,35 +26,34 @@ namespace Pbl3.Data
         {
             await ImportAdministrativeLocationDataAsync();
 
-            if (await _context.Users.AnyAsync())
+            if (!await _context.Users.AnyAsync())
             {
-                _logger.LogInformation("Database already has data. Skipping seed.");
-                return;
+                _logger.LogInformation("Starting to seed full default data...");
+
+                await SeedRolesAsync();
+                await SeedUsersAsync();
+                await SeedBusCompaniesAsync();
+                await SeedBusTypesAsync();
+                await SeedSeatLayoutsAsync();
+                await SeedBusesAsync();
+                await SeedBusImagesAsync();
+                await SeedStationsAsync();
+                await SeedRoutesAsync();
+                await SeedRouteStopsAsync();
+                await SeedTripsAsync();
+                await SeedBookingsAsync();
+                await SeedPassengersAsync();
+                await SeedTicketsAsync();
+                await SeedPaymentIntentsAsync();
+                await SeedRefundsAsync();
+                await SeedReviewsAsync();
+                await SeedNotificationsAsync();
+                await SeedSeatHoldsAsync();
+
+                _logger.LogInformation("Successfully seeded comprehensive test data!");
             }
 
-            _logger.LogInformation("Starting to seed data...");
-
-            await SeedRolesAsync();
-            await SeedUsersAsync();
-            await SeedBusCompaniesAsync();
-            await SeedBusTypesAsync();
-            await SeedSeatLayoutsAsync();
-            await SeedBusesAsync();
-            await SeedBusImagesAsync();
-            await SeedStationsAsync();
-            await SeedRoutesAsync();
-            await SeedRouteStopsAsync();
-            await SeedTripsAsync();
-            await SeedBookingsAsync();
-            await SeedPassengersAsync();
-            await SeedTicketsAsync();
-            await SeedPaymentIntentsAsync();
-            await SeedRefundsAsync();
-            await SeedReviewsAsync();
-            await SeedNotificationsAsync();
-            await SeedSeatHoldsAsync();
-
-            _logger.LogInformation("Successfully seeded comprehensive test data!");
+            await SeedBusAdmin3SampleDataAsync();
         }
 
         private async Task ImportAdministrativeLocationDataAsync()
@@ -310,6 +309,363 @@ namespace Pbl3.Data
             _context.BusCompanyAdmins.AddRange(admins);
             await _context.SaveChangesAsync();
             _logger.LogInformation("Seeded {Count} bus companies", companies.Count);
+        }
+
+        private async Task SeedBusAdmin3SampleDataAsync()
+        {
+            if (!await _context.Roles.AnyAsync())
+            {
+                await SeedRolesAsync();
+            }
+
+            var busAdminRole = await _context.Roles.FirstAsync(r =>
+                r.RoleName == UserRole.BusAdmin.ToString()
+            );
+
+            const string targetEmail = "busadmin3@gmail.com";
+            var targetUserId = Guid.Parse("2a5b7937-91d1-4ca2-b447-495fe63f4e9a");
+            const string seedPassword = "1234567890";
+            var passwordHasher = new PasswordHasher<User>();
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            var user = await _context.Users.FirstOrDefaultAsync(u =>
+                u.UserID == targetUserId || u.Email == targetEmail
+            );
+
+            if (user == null)
+            {
+                user = new User
+                {
+                    UserID = targetUserId,
+                    Email = targetEmail,
+                    FullName = "BusAdmin 3",
+                    PhoneNumber = "0903003003",
+                    RoleID = busAdminRole.RoleID,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    PasswordHash = string.Empty,
+                };
+                _context.Users.Add(user);
+            }
+
+            user.UserID = targetUserId;
+            user.Email = targetEmail;
+            user.FullName = "BusAdmin 3";
+            user.PhoneNumber = "0903003003";
+            user.RoleID = busAdminRole.RoleID;
+            user.IsActive = true;
+            user.PasswordHash = passwordHasher.HashPassword(user, seedPassword);
+
+            var company = await _context.BusCompanies.FirstOrDefaultAsync(c =>
+                c.LicenseNumber == "VN-BA-003" || c.Name == "XeNhanh BusAdmin 3"
+            );
+
+            if (company == null)
+            {
+                company = new BusCompany
+                {
+                    CompanyID = Guid.NewGuid(),
+                    Name = "XeNhanh BusAdmin 3",
+                    LicenseNumber = "VN-BA-003",
+                    Hotline = "0903003003",
+                    IsApproved = true,
+                };
+                _context.BusCompanies.Add(company);
+            }
+
+            var adminLink = await _context.BusCompanyAdmins.FirstOrDefaultAsync(x =>
+                x.UserID == targetUserId
+            );
+
+            if (adminLink == null)
+            {
+                _context.BusCompanyAdmins.Add(
+                    new BusCompanyAdmin
+                    {
+                        UserID = targetUserId,
+                        CompanyID = company.CompanyID,
+                        Roles = "O",
+                    }
+                );
+            }
+            else
+            {
+                adminLink.CompanyID = company.CompanyID;
+                adminLink.Roles = "O";
+            }
+
+            var busType = await _context.BusTypes.FirstOrDefaultAsync(bt =>
+                bt.Name == "Giường nằm 34 chỗ BusAdmin 3"
+            );
+
+            if (busType == null)
+            {
+                busType = new BusType
+                {
+                    BusTypeID = Guid.NewGuid(),
+                    Name = "Giường nằm 34 chỗ BusAdmin 3",
+                    TotalSeats = 34,
+                    Description = "Xe giường nằm cao cấp dành cho workspace BusAdmin 3",
+                };
+                _context.BusTypes.Add(busType);
+            }
+
+            var hasLayouts = await _context.SeatLayouts.AnyAsync(s => s.BusTypeID == busType.BusTypeID);
+            if (!hasLayouts)
+            {
+                _context.SeatLayouts.AddRange(
+                    new SeatLayout
+                    {
+                        LayoutID = Guid.NewGuid(),
+                        BusTypeID = busType.BusTypeID,
+                        SeatLabel = "A1",
+                        Floor = 1,
+                        SeatType = SeatType.Window,
+                        PositionX = 1,
+                        PositionY = 1,
+                    },
+                    new SeatLayout
+                    {
+                        LayoutID = Guid.NewGuid(),
+                        BusTypeID = busType.BusTypeID,
+                        SeatLabel = "A2",
+                        Floor = 1,
+                        SeatType = SeatType.Aisle,
+                        PositionX = 2,
+                        PositionY = 1,
+                    },
+                    new SeatLayout
+                    {
+                        LayoutID = Guid.NewGuid(),
+                        BusTypeID = busType.BusTypeID,
+                        SeatLabel = "B1",
+                        Floor = 1,
+                        SeatType = SeatType.Window,
+                        PositionX = 1,
+                        PositionY = 2,
+                    },
+                    new SeatLayout
+                    {
+                        LayoutID = Guid.NewGuid(),
+                        BusTypeID = busType.BusTypeID,
+                        SeatLabel = "B2",
+                        Floor = 1,
+                        SeatType = SeatType.Aisle,
+                        PositionX = 2,
+                        PositionY = 2,
+                    }
+                );
+
+                await _context.SaveChangesAsync();
+            }
+
+            var bus = await _context.Buses.FirstOrDefaultAsync(b => b.PlateNumber == "51B-30303");
+            if (bus == null)
+            {
+                bus = new Bus
+                {
+                    BusID = Guid.NewGuid(),
+                    CompanyID = company.CompanyID,
+                    BusTypeID = busType.BusTypeID,
+                    PlateNumber = "51B-30303",
+                    IsActive = true,
+                };
+                _context.Buses.Add(bus);
+            }
+            else
+            {
+                bus.CompanyID = company.CompanyID;
+                bus.BusTypeID = busType.BusTypeID;
+                bus.IsActive = true;
+            }
+
+            var route = await _context.BusRoutes.FirstOrDefaultAsync(r =>
+                r.RouteName == "TP.HCM - Phan Thiết (BusAdmin 3)"
+            );
+
+            if (route == null)
+            {
+                route = new BusRoute
+                {
+                    RouteID = Guid.NewGuid(),
+                    CompanyID = company.CompanyID,
+                    RouteName = "TP.HCM - Phan Thiết (BusAdmin 3)",
+                    DistanceEstimate = 180,
+                    DurationEstimate = 4.5m,
+                    IsActive = true,
+                };
+                _context.BusRoutes.Add(route);
+            }
+            else
+            {
+                route.CompanyID = company.CompanyID;
+                route.DistanceEstimate = 180;
+                route.DurationEstimate = 4.5m;
+                route.IsActive = true;
+            }
+
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var departureTime = DateTime.SpecifyKind(
+                new DateTime(today.Year, today.Month, today.Day, 8, 0, 0),
+                DateTimeKind.Utc
+            );
+            var arrivalTime = DateTime.SpecifyKind(
+                new DateTime(today.Year, today.Month, today.Day, 12, 30, 0),
+                DateTimeKind.Utc
+            );
+
+            var trip = await _context.Trips.FirstOrDefaultAsync(t =>
+                t.RouteID == route.RouteID && t.DepartureDate == today
+            );
+
+            if (trip == null)
+            {
+                trip = new Trip
+                {
+                    TripID = Guid.NewGuid(),
+                    RouteID = route.RouteID,
+                    BusID = bus.BusID,
+                    BusTypeID = busType.BusTypeID,
+                    DepartureDate = today,
+                    DepartureTime = departureTime,
+                    ArrivalTime = arrivalTime,
+                    Status = TripStatus.Scheduled,
+                };
+                _context.Trips.Add(trip);
+            }
+            else
+            {
+                trip.BusID = bus.BusID;
+                trip.BusTypeID = busType.BusTypeID;
+                trip.DepartureTime = departureTime;
+                trip.ArrivalTime = arrivalTime;
+                trip.Status = TripStatus.Scheduled;
+            }
+
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b =>
+                b.ContactEmail == targetEmail && b.CreatedAt.Date == DateTime.UtcNow.Date
+            );
+
+            if (booking == null)
+            {
+                booking = new Booking
+                {
+                    BookingID = Guid.NewGuid(),
+                    ContactName = "BusAdmin 3 Customer",
+                    ContactPhone = "0903003003",
+                    ContactEmail = targetEmail,
+                    TotalAmount = 360000m,
+                    Status = BookingStatus.Paid,
+                    CreatedAt = DateTime.UtcNow,
+                };
+                _context.Bookings.Add(booking);
+            }
+
+            var seatA1 = await _context.SeatLayouts.FirstAsync(s =>
+                s.BusTypeID == busType.BusTypeID && s.SeatLabel == "A1"
+            );
+            var seatA2 = await _context.SeatLayouts.FirstAsync(s =>
+                s.BusTypeID == busType.BusTypeID && s.SeatLabel == "A2"
+            );
+            var seatB1 = await _context.SeatLayouts.FirstAsync(s =>
+                s.BusTypeID == busType.BusTypeID && s.SeatLabel == "B1"
+            );
+
+            var passenger1 = await _context.Passengers.FirstOrDefaultAsync(p =>
+                p.Email == "busadmin3.passenger1@gmail.com"
+            );
+            if (passenger1 == null)
+            {
+                passenger1 = new Passenger
+                {
+                    PassengerID = Guid.NewGuid(),
+                    FullName = "BusAdmin 3 Passenger 1",
+                    PhoneNumber = "0903003004",
+                    Email = "busadmin3.passenger1@gmail.com",
+                };
+                _context.Passengers.Add(passenger1);
+            }
+
+            var passenger2 = await _context.Passengers.FirstOrDefaultAsync(p =>
+                p.Email == "busadmin3.passenger2@gmail.com"
+            );
+            if (passenger2 == null)
+            {
+                passenger2 = new Passenger
+                {
+                    PassengerID = Guid.NewGuid(),
+                    FullName = "BusAdmin 3 Passenger 2",
+                    PhoneNumber = "0903003005",
+                    Email = "busadmin3.passenger2@gmail.com",
+                };
+                _context.Passengers.Add(passenger2);
+            }
+
+            var ticket1 = await _context.Tickets.FirstOrDefaultAsync(t => t.TicketCode == "BA3-001");
+            if (ticket1 == null)
+            {
+                ticket1 = new Ticket
+                {
+                    TicketID = Guid.NewGuid(),
+                    BookingID = booking.BookingID,
+                    TripID = trip.TripID,
+                    PassengerID = passenger1.PassengerID,
+                    SeatLayoutID = seatA1.LayoutID,
+                    FinalPrice = 180000m,
+                    Status = TicketStatus.Issued,
+                    TicketCode = "BA3-001",
+                    QrCode = "BA3-001",
+                };
+                _context.Tickets.Add(ticket1);
+            }
+
+            var ticket2 = await _context.Tickets.FirstOrDefaultAsync(t => t.TicketCode == "BA3-002");
+            if (ticket2 == null)
+            {
+                ticket2 = new Ticket
+                {
+                    TicketID = Guid.NewGuid(),
+                    BookingID = booking.BookingID,
+                    TripID = trip.TripID,
+                    PassengerID = passenger2.PassengerID,
+                    SeatLayoutID = seatA2.LayoutID,
+                    FinalPrice = 180000m,
+                    Status = TicketStatus.CheckedIn,
+                    TicketCode = "BA3-002",
+                    QrCode = "BA3-002",
+                };
+                _context.Tickets.Add(ticket2);
+            }
+
+            var ticket3 = await _context.Tickets.FirstOrDefaultAsync(t => t.TicketCode == "BA3-003");
+            if (ticket3 == null)
+            {
+                ticket3 = new Ticket
+                {
+                    TicketID = Guid.NewGuid(),
+                    BookingID = booking.BookingID,
+                    TripID = trip.TripID,
+                    PassengerID = passenger1.PassengerID,
+                    SeatLayoutID = seatB1.LayoutID,
+                    FinalPrice = 0m,
+                    Status = TicketStatus.Cancelled,
+                    TicketCode = "BA3-003",
+                    QrCode = "BA3-003",
+                };
+                _context.Tickets.Add(ticket3);
+            }
+
+            booking.TotalAmount = 360000m;
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            _logger.LogInformation(
+                "Seeded BusAdmin sample workspace for {Email} ({UserId})",
+                targetEmail,
+                targetUserId
+            );
         }
 
         private async Task SeedBusTypesAsync()

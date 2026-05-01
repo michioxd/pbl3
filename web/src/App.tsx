@@ -7,6 +7,8 @@ import ScreenLoading from "./screens/Loading";
 
 // eslint-disable-next-line react-refresh/only-export-components
 const RouterAdmin = lazy(() => import("./routers/admin"));
+// eslint-disable-next-line react-refresh/only-export-components
+const RouterBusAdmin = lazy(() => import("./routers/busadmin"));
 
 // eslint-disable-next-line react-refresh/only-export-components
 const App = () => {
@@ -27,6 +29,16 @@ const App = () => {
                         element={
                             <Suspense fallback={<ScreenLoading />}>
                                 <RouterAdmin />
+                            </Suspense>
+                        }
+                    />
+                )}
+                {store.user.isAuthenticated && store.user.user?.role.roleName === "BusAdmin" && (
+                    <Route
+                        path="/busadmin/*"
+                        element={
+                            <Suspense fallback={<ScreenLoading />}>
+                                <RouterBusAdmin />
                             </Suspense>
                         }
                     />
