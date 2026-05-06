@@ -1,7 +1,7 @@
 import { useThemeContext } from "@/controller/ThemeProvider";
 import { useState } from "react";
 import { Box, Flex, Container, Heading, Button, Link, IconButton, DropdownMenu } from "@radix-ui/themes";
-import { BusFront, CogIcon, ContrastIcon, LogOutIcon, Menu, Moon, Sun, UserIcon } from "lucide-react";
+import { Bus, BusFront, CogIcon, ContrastIcon, LogOutIcon, Menu, Moon, Sun, UserIcon } from "lucide-react";
 import LinkRouter from "@/utils/LinkRouter";
 import { LangSelectorComponent } from "./LangSelector";
 import { useTranslation } from "react-i18next";
@@ -93,6 +93,15 @@ const MainHeader = observer(() => {
                                             <LinkRouter to="/admin">
                                                 <CogIcon size={18} />
                                                 Admin
+                                            </LinkRouter>
+                                        </DropdownMenu.Item>
+                                    )}
+                                    {(store.user.user?.role.roleName === "BusAdmin" ||
+                                        store.user.user?.role.roleName === "SysAdmin") && (
+                                        <DropdownMenu.Item asChild>
+                                            <LinkRouter to="/busadmin">
+                                                <Bus size={18} />
+                                                Bus Admin
                                             </LinkRouter>
                                         </DropdownMenu.Item>
                                     )}

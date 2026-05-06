@@ -18,6 +18,8 @@ namespace Pbl3.Models
             new List<BusCompanyAdmin>();
         public ICollection<BusAdminUpgradeRequest> BusAdminUpgradeRequests { get; set; } =
             new List<BusAdminUpgradeRequest>();
+        public ICollection<CompanyProfileUpdateRequest> CompanyProfileUpdateRequests { get; set; } =
+            new List<CompanyProfileUpdateRequest>();
         public ICollection<Bus> Buses { get; set; } = new List<Bus>();
         public ICollection<BusRoute> Routes { get; set; } = new List<BusRoute>();
     }

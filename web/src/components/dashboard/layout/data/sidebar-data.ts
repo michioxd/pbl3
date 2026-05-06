@@ -11,6 +11,9 @@ import {
     TruckIcon,
     BarChart3Icon,
     MessageSquareIcon,
+    BusFront,
+    Ticket,
+    Route,
 } from "lucide-react";
 import { type SidebarData } from "../types";
 
@@ -140,6 +143,36 @@ export const busAdminSidebarData: SidebarData = {
                     title: "Tổng quan",
                     url: busAdminBasePath,
                     icon: LayoutDashboard,
+                },
+            ],
+        },
+        {
+            title: "Vận hành",
+            items: [
+                {
+                    title: "Vé xe",
+                    url: `${busAdminBasePath}/tickets`,
+                    icon: Ticket,
+                },
+                {
+                    title: "Chuyến xe",
+                    url: `${busAdminBasePath}/trips`,
+                    icon: Route,
+                },
+            ],
+        },
+        {
+            title: "Quản lý",
+            items: [
+                {
+                    title: "Danh sách xe",
+                    url: `${busAdminBasePath}/buses`,
+                    icon: BusFront,
+                },
+                {
+                    title: "Nhà xe",
+                    url: `${busAdminBasePath}/company`,
+                    icon: Building2Icon,
                 },
             ],
         },

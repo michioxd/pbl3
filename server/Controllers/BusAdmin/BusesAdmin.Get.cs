@@ -27,6 +27,10 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
+
             var query = _context
                 .Buses.AsNoTracking()
                 .Include(b => b.BusType)
@@ -114,6 +118,10 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
+
             var query = _context
                 .Tickets.AsNoTracking()
                 .Where(t =>
@@ -200,6 +208,10 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
+
             var query = _context
                 .Trips.AsNoTracking()
                 .Where(t => t.Route != null && t.Route.CompanyID == companyId.Value);
@@ -270,6 +282,10 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
+
             var hasOwnership = await IsBusTypeOwnedByCompanyAsync(companyId.Value, busTypeId);
             if (!hasOwnership)
                 return Forbid();
@@ -317,6 +333,10 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
+
             var hasOwnership = await IsBusTypeOwnedByCompanyAsync(companyId.Value, busTypeId);
             if (!hasOwnership)
                 return Forbid();
@@ -360,6 +380,10 @@ namespace Pbl3.Controllers.BusAdmin
             var companyId = await GetCurrentCompanyIdAsync();
             if (companyId == null)
                 return Forbid();
+
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
 
             var startDate = new DateOnly(year, month, 1);
             var endDate = startDate.AddMonths(1);

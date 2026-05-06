@@ -24,6 +24,13 @@ namespace Pbl3.Enums
         Rejected,
     }
 
+    public enum CompanyProfileUpdateRequestStatus
+    {
+        Pending,
+        Approved,
+        Rejected,
+    }
+
     public enum CompanyStatus
     {
         Pending, // 0 - Chờ duyệt

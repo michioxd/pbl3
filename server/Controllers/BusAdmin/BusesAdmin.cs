@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Pbl3.Data;
+using Pbl3.Enums;
 using Pbl3.Services;
 
 namespace Pbl3.Controllers.BusAdmin
@@ -56,6 +58,46 @@ namespace Pbl3.Controllers.BusAdmin
         private Task<bool> IsBusTypeExistsAsync(Guid busTypeId)
         {
             return _ownershipService.IsBusTypeExistsAsync(busTypeId);
+        }
+
+        private async Task<IActionResult?> EnsureCompanyAccessAsync(Guid companyId)
+        {
+            var company = await _context
+                .BusCompanies.AsNoTracking()
+                .Where(c => c.CompanyID == companyId)
+                .Select(c => new { c.IsApproved })
+                .FirstOrDefaultAsync();
+
+            if (company == null)
+            {
+                return NotFound(new { message = "Không tìm thấy nhà xe." });
+            }
+
+            if (!company.IsApproved)
+            {
+                return StatusCode(
+                    StatusCodes.Status403Forbidden,
+                    new { message = "Nhà xe đang chờ duyệt. Vui lòng đợi SysAdmin xét duyệt." }
+                );
+            }
+
+            var hasPendingUpdate = await _context.CompanyProfileUpdateRequests.AnyAsync(r =>
+                r.CompanyID == companyId
+                && r.Status == CompanyProfileUpdateRequestStatus.Pending
+            );
+
+            if (hasPendingUpdate)
+            {
+                return Conflict(
+                    new
+                    {
+                        message =
+                            "Hồ sơ nhà xe đang chờ duyệt. Vui lòng đợi SysAdmin xét duyệt.",
+                    }
+                );
+            }
+
+            return null;
         }
 
         private static bool IsValidPageSize(int pageSize)

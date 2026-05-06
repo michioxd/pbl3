@@ -16,6 +16,10 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
+
             var isBusTypeExists = await IsBusTypeExistsAsync(dto.BusTypeID);
             if (!isBusTypeExists)
                 return BadRequest(new { message = "Loại xe không tồn tại." });
@@ -41,6 +45,10 @@ namespace Pbl3.Controllers.BusAdmin
             var companyId = await GetCurrentCompanyIdAsync();
             if (companyId == null)
                 return Forbid();
+
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
 
             var bus = await _context.Buses.FirstOrDefaultAsync(b => b.BusID == id);
             if (bus == null)
@@ -72,6 +80,10 @@ namespace Pbl3.Controllers.BusAdmin
             var companyId = await GetCurrentCompanyIdAsync();
             if (companyId == null)
                 return Forbid();
+
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
 
             var isRouteOwned = await IsRouteOwnedByCompanyAsync(companyId.Value, dto.RouteID);
             if (!isRouteOwned)
@@ -109,6 +121,10 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
+
             var trip = await _context
                 .Trips.Include(t => t.Tickets)
                 .FirstOrDefaultAsync(t => t.TripID == tripId);
@@ -141,6 +157,10 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
+
             var hasOwnership = await IsBusTypeOwnedByCompanyAsync(companyId.Value, busTypeId);
             if (!hasOwnership)
                 return Forbid();
@@ -170,6 +190,10 @@ namespace Pbl3.Controllers.BusAdmin
             var companyId = await GetCurrentCompanyIdAsync();
             if (companyId == null)
                 return Forbid();
+
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
 
             var seatLayout = await _context.SeatLayouts.FirstOrDefaultAsync(s =>
                 s.LayoutID == layoutId

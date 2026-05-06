@@ -14,6 +14,7 @@ namespace Pbl3.Data
         public DbSet<BusCompany> BusCompanies { get; set; }
         public DbSet<BusCompanyAdmin> BusCompanyAdmins { get; set; }
         public DbSet<BusAdminUpgradeRequest> BusAdminUpgradeRequests { get; set; }
+        public DbSet<CompanyProfileUpdateRequest> CompanyProfileUpdateRequests { get; set; }
         public DbSet<BusType> BusTypes { get; set; }
         public DbSet<SeatLayout> SeatLayouts { get; set; }
         public DbSet<Bus> Buses { get; set; }
@@ -48,6 +49,7 @@ namespace Pbl3.Data
             // Register Enums
             modelBuilder.HasPostgresEnum<UserRole>();
             modelBuilder.HasPostgresEnum<BusAdminUpgradeRequestStatus>();
+            modelBuilder.HasPostgresEnum<CompanyProfileUpdateRequestStatus>();
             modelBuilder.HasPostgresEnum<TripStatus>();
             modelBuilder.HasPostgresEnum<SeatType>();
             modelBuilder.HasPostgresEnum<StationType>();
@@ -70,6 +72,54 @@ namespace Pbl3.Data
                 .HasForeignKey(bca => bca.UserID);
 
             modelBuilder.Entity<BusAdminUpgradeRequest>().HasKey(r => r.RequestID);
+
+            modelBuilder.Entity<CompanyProfileUpdateRequest>().HasKey(r => r.RequestID);
+
+            modelBuilder
+                .Entity<CompanyProfileUpdateRequest>()
+                .HasOne(r => r.RequesterUser)
+                .WithMany(u => u.CompanyProfileUpdateRequests)
+                .HasForeignKey(r => r.RequesterUserID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder
+                .Entity<CompanyProfileUpdateRequest>()
+                .HasOne(r => r.ReviewedByUser)
+                .WithMany(u => u.ReviewedCompanyProfileUpdateRequests)
+                .HasForeignKey(r => r.ReviewedByUserID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder
+                .Entity<CompanyProfileUpdateRequest>()
+                .HasOne(r => r.BusCompany)
+                .WithMany(c => c.CompanyProfileUpdateRequests)
+                .HasForeignKey(r => r.CompanyID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder
+                .Entity<CompanyProfileUpdateRequest>()
+                .Property(r => r.Name)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            modelBuilder
+                .Entity<CompanyProfileUpdateRequest>()
+                .Property(r => r.LicenseNumber)
+                .HasMaxLength(100);
+
+            modelBuilder
+                .Entity<CompanyProfileUpdateRequest>()
+                .Property(r => r.Hotline)
+                .HasMaxLength(20);
+
+            modelBuilder
+                .Entity<CompanyProfileUpdateRequest>()
+                .Property(r => r.ReviewNote)
+                .HasMaxLength(1000);
+
+            modelBuilder
+                .Entity<CompanyProfileUpdateRequest>()
+                .HasIndex(r => new { r.CompanyID, r.Status, r.RequestedAt });
 
             modelBuilder
                 .Entity<BusAdminUpgradeRequest>()
