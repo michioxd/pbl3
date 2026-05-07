@@ -33,10 +33,10 @@ namespace Pbl3.Enums
 
     public enum CompanyStatus
     {
-        Pending, // 0 - Chờ duyệt
-        Approved, // 1 - Đã duyệt
-        Suspended, // 2 - Tạm ngưng
-        Rejected, // 3 - Đã từ chối
+        Pending, 
+        Approved,
+        Suspended, 
+        Rejected,
     }
 
     public enum TripStatus

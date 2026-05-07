@@ -1,7 +1,8 @@
-import { getApiBusadminBusesTickets, type TicketStatus } from "@/api";
+import { getApiBusadminBusesTickets, getApiBusadminBusesStatsMonthly, type TicketStatus } from "@/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,6 +13,7 @@ import {
     type PaginationState,
     flexRender,
     getCoreRowModel,
+    getFilteredRowModel,
     useReactTable,
 } from "@tanstack/react-table";
 import {
@@ -29,6 +31,15 @@ const currencyFormatter = new Intl.NumberFormat("vi-VN", {
     currency: "VND",
     maximumFractionDigits: 0,
 });
+
+const numberFormatter = new Intl.NumberFormat("vi-VN");
+
+const monthOptions = [
+    ...Array.from({ length: 12 }).map((_, index) => ({
+        label: `Tháng ${index + 1}`,
+        value: String(index + 1),
+    })),
+];
 
 type BusAdminTicketListItem = {
     ticketID: string;
@@ -107,11 +118,18 @@ const formatDateTime = (value: string): string =>
     });
 
 export function PageBusAdminTickets() {
+    const now = useMemo(() => new Date(), []);
+    const [monthFilter, setMonthFilter] = useState(String(now.getMonth() + 1));
+    const [yearFilter, setYearFilter] = useState(String(now.getFullYear()));
+    const [stats, setStats] = useState<any>(null);
+    const [statsLoading, setStatsLoading] = useState(true);
+
     const [tickets, setTickets] = useState<BusAdminTicketListItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+    const [globalFilter, setGlobalFilter] = useState("");
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 25 });
     const [totalPages, setTotalPages] = useState(1);
     const [totalRecords, setTotalRecords] = useState(0);
@@ -132,6 +150,16 @@ export function PageBusAdminTickets() {
 
     const columns = useMemo<ColumnDef<BusAdminTicketListItem>[]>(
         () => [
+            {
+                id: "ticketID",
+                accessorKey: "ticketID",
+                header: "ID Vé",
+                cell: ({ row }) => (
+                    <span className="font-mono text-xs text-muted-foreground" title={row.original.ticketID}>
+                        {row.original.ticketID.substring(0, 8)}...
+                    </span>
+                ),
+            },
             {
                 id: "ticketCode",
                 accessorKey: "ticketCode",
@@ -206,13 +234,16 @@ export function PageBusAdminTickets() {
         columns,
         pageCount: totalPages,
         getCoreRowModel: getCoreRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
         manualPagination: true,
         state: {
             columnFilters,
             pagination,
+            globalFilter,
         },
         onColumnFiltersChange: setColumnFilters,
         onPaginationChange: setPagination,
+        onGlobalFilterChange: setGlobalFilter,
     });
 
     const fetchTickets = useCallback(
@@ -278,6 +309,29 @@ export function PageBusAdminTickets() {
         setPagination((current) => ({ ...current, pageIndex: 0 }));
     }, [selectedStatus]);
 
+    const fetchStats = useCallback(async () => {
+        setStatsLoading(true);
+        try {
+            const response = await getApiBusadminBusesStatsMonthly({
+                query: {
+                    year: Number(yearFilter),
+                    month: Number(monthFilter),
+                },
+            });
+            if (response.data) {
+                setStats(response.data);
+            }
+        } catch (error) {
+            console.error("Không thể tải thống kê", error);
+        } finally {
+            setStatsLoading(false);
+        }
+    }, [monthFilter, yearFilter]);
+
+    useEffect(() => {
+        void fetchStats();
+    }, [fetchStats]);
+
     useEffect(() => {
         void fetchTickets();
     }, [fetchTickets]);
@@ -289,10 +343,83 @@ export function PageBusAdminTickets() {
                     <h1 className="text-2xl font-bold tracking-tight">Quản lý vé xe</h1>
                     <p className="text-sm text-muted-foreground">Theo dõi trạng thái vé đã bán và thông tin hành khách.</p>
                 </div>
-                <Button variant="outline" onClick={() => fetchTickets(true)} disabled={refreshing}>
-                    <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
-                    Làm mới
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Select value={monthFilter} onValueChange={setMonthFilter}>
+                        <SelectTrigger className="w-32">
+                            <SelectValue placeholder="Tháng" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {monthOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Input
+                        className="w-24"
+                        type="number"
+                        min={2000}
+                        max={3000}
+                        value={yearFilter}
+                        onChange={(event) => setYearFilter(event.target.value)}
+                    />
+                    <Button variant="outline" onClick={() => { fetchTickets(true); fetchStats(); }} disabled={refreshing || statsLoading}>
+                        <RefreshCw className={cn("h-4 w-4 mr-2", (refreshing || statsLoading) && "animate-spin")} />
+                        Làm mới
+                    </Button>
+                </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Doanh thu tháng</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {statsLoading ? (
+                            <Skeleton className="h-8 w-24" />
+                        ) : (
+                            <div className="text-2xl font-bold">{currencyFormatter.format(stats?.grossRevenue ?? 0)}</div>
+                        )}
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Vé bán thành công</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {statsLoading ? (
+                            <Skeleton className="h-8 w-24" />
+                        ) : (
+                            <div className="text-2xl font-bold">{numberFormatter.format(stats?.soldTickets ?? 0)}</div>
+                        )}
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Tổng chuyến xe</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {statsLoading ? (
+                            <Skeleton className="h-8 w-24" />
+                        ) : (
+                            <div className="text-2xl font-bold">{numberFormatter.format(stats?.totalTrips ?? 0)}</div>
+                        )}
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Tỉ lệ hủy vé</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {statsLoading ? (
+                            <Skeleton className="h-8 w-24" />
+                        ) : (
+                            <div className="text-2xl font-bold">{stats?.cancellationRatePercent ?? 0}%</div>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
 
             <Card>
@@ -304,6 +431,12 @@ export function PageBusAdminTickets() {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
+                        <Input
+                            placeholder="Tìm kiếm ID vé, mã vé, SĐT..."
+                            value={globalFilter ?? ""}
+                            onChange={(event) => setGlobalFilter(String(event.target.value))}
+                            className="w-full md:w-64"
+                        />
                         <Select
                             value={selectedStatus}
                             onValueChange={(value) =>

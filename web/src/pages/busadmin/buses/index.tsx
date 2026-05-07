@@ -1,4 +1,4 @@
-import { getApiBusadminBusesCompany } from "@/api";
+import { getApiBusadminBusesCompany, deleteApiBusadminBusesById } from "@/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,11 +11,15 @@ import {
     type PaginationState,
     flexRender,
     getCoreRowModel,
+    getFilteredRowModel,
     useReactTable,
 } from "@tanstack/react-table";
+import { Input } from "@/components/ui/input";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { Edit, Plus, Trash2 } from "lucide-react";
+import { BusDialog } from "./components/bus-dialog";
 
 type BusAdminBusListItem = {
     busID: string;
@@ -48,12 +52,46 @@ export function PageBusAdminBuses() {
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 25 });
+    const [globalFilter, setGlobalFilter] = useState("");
     const [totalPages, setTotalPages] = useState(1);
     const [totalRecords, setTotalRecords] = useState(0);
     const hasLoadedOnceRef = useRef(false);
 
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [selectedBus, setSelectedBus] = useState<BusAdminBusListItem | null>(null);
+
+    const handleDelete = async (bus: BusAdminBusListItem) => {
+        if (!confirm(`Bạn có chắc muốn xóa xe ${bus.plateNumber}?`)) {
+            return;
+        }
+
+        try {
+            const response = await deleteApiBusadminBusesById({
+                path: { id: bus.busID }
+            });
+            if (response.error) {
+                throw new Error("Không thể xóa xe");
+            }
+            toast.success("Đã xóa xe");
+            void fetchBuses(true);
+        } catch (error) {
+            console.error(error);
+            toast.error("Xóa xe thất bại");
+        }
+    };
+
     const columns = useMemo<ColumnDef<BusAdminBusListItem>[]>(
         () => [
+            {
+                id: "busID",
+                accessorKey: "busID",
+                header: "ID Xe",
+                cell: ({ row }) => (
+                    <span className="font-mono text-xs text-muted-foreground" title={row.original.busID}>
+                        {row.original.busID.substring(0, 8)}...
+                    </span>
+                ),
+            },
             {
                 id: "plateNumber",
                 accessorKey: "plateNumber",
@@ -93,6 +131,34 @@ export function PageBusAdminBuses() {
                     </Badge>
                 ),
             },
+            {
+                id: "actions",
+                header: "Thao tác",
+                cell: ({ row }) => (
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                                setSelectedBus(row.original);
+                                setDialogOpen(true);
+                            }}
+                        >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Sửa
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => handleDelete(row.original)}
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Xóa
+                        </Button>
+                    </div>
+                ),
+            },
         ],
         [],
     );
@@ -102,11 +168,14 @@ export function PageBusAdminBuses() {
         columns,
         pageCount: totalPages,
         getCoreRowModel: getCoreRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
         manualPagination: true,
         state: {
             pagination,
+            globalFilter,
         },
         onPaginationChange: setPagination,
+        onGlobalFilterChange: setGlobalFilter,
     });
 
     const fetchBuses = useCallback(
@@ -168,6 +237,16 @@ export function PageBusAdminBuses() {
         void fetchBuses();
     }, [fetchBuses]);
 
+    const suggestedBusTypes = useMemo(() => {
+        const map = new Map<string, string>(); // map label -> id
+        buses.forEach(b => {
+            if (b.busType.busTypeID && b.busType.name && !map.has(b.busType.name)) {
+                map.set(b.busType.name, b.busType.busTypeID);
+            }
+        });
+        return Array.from(map.entries()).map(([label, id]) => ({ id, label }));
+    }, [buses]);
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -175,10 +254,21 @@ export function PageBusAdminBuses() {
                     <h1 className="text-2xl font-bold tracking-tight">Danh sách xe</h1>
                     <p className="text-sm text-muted-foreground">Quản lý thông tin xe thuộc nhà xe của bạn.</p>
                 </div>
-                <Button variant="outline" onClick={() => fetchBuses(true)} disabled={refreshing}>
-                    <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
-                    Làm mới
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        onClick={() => {
+                            setSelectedBus(null);
+                            setDialogOpen(true);
+                        }}
+                    >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Thêm xe mới
+                    </Button>
+                    <Button variant="outline" onClick={() => fetchBuses(true)} disabled={refreshing}>
+                        <RefreshCw className={cn("h-4 w-4 mr-2", refreshing && "animate-spin")} />
+                        Làm mới
+                    </Button>
+                </div>
             </div>
 
             <Card>
@@ -186,6 +276,14 @@ export function PageBusAdminBuses() {
                     <div>
                         <CardTitle>Xe đang quản lý</CardTitle>
                         <p className="text-sm text-muted-foreground">{totalRecords} xe trong hệ thống.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Input
+                            placeholder="Tìm kiếm ID, Biển số..."
+                            value={globalFilter ?? ""}
+                            onChange={(event) => setGlobalFilter(String(event.target.value))}
+                            className="w-full md:w-64"
+                        />
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -302,6 +400,14 @@ export function PageBusAdminBuses() {
                     )}
                 </CardContent>
             </Card>
+
+            <BusDialog
+                open={dialogOpen}
+                onOpenChange={setDialogOpen}
+                bus={selectedBus}
+                onSuccess={() => void fetchBuses(true)}
+                busTypes={suggestedBusTypes}
+            />
         </div>
     );
 }

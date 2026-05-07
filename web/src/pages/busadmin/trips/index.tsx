@@ -1,4 +1,4 @@
-import { getApiBusadminBusesTrips } from "@/api";
+import { getApiBusadminBusesTrips, deleteApiBusadminBusesTripsByTripId } from "@/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import {
     type PaginationState,
     flexRender,
     getCoreRowModel,
+    getFilteredRowModel,
     useReactTable,
 } from "@tanstack/react-table";
 import {
@@ -20,9 +21,13 @@ import {
     ChevronsLeft,
     ChevronsRight,
     RefreshCw,
+    Edit,
+    Plus,
+    Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { TripDialog } from "./components/trip-dialog";
 
 const monthOptions = [
     { label: "Tất cả", value: "all" },
@@ -92,12 +97,46 @@ export function PageBusAdminTrips() {
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 25 });
+    const [globalFilter, setGlobalFilter] = useState("");
     const [totalPages, setTotalPages] = useState(1);
     const [totalRecords, setTotalRecords] = useState(0);
     const hasLoadedOnceRef = useRef(false);
 
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [selectedTrip, setSelectedTrip] = useState<BusAdminTripListItem | null>(null);
+
+    const handleDelete = async (trip: BusAdminTripListItem) => {
+        if (!confirm(`Bạn có chắc muốn xóa chuyến xe đến ${trip.routeName} lúc ${formatTime(trip.departureTime)}?`)) {
+            return;
+        }
+
+        try {
+            const response = await deleteApiBusadminBusesTripsByTripId({
+                path: { tripId: trip.tripID }
+            });
+            if (response.error) {
+                throw new Error("Không thể xóa chuyến xe");
+            }
+            toast.success("Đã xóa chuyến xe");
+            void fetchTrips(true);
+        } catch (error) {
+            console.error(error);
+            toast.error("Xóa chuyến xe thất bại");
+        }
+    };
+
     const columns = useMemo<ColumnDef<BusAdminTripListItem>[]>(
         () => [
+            {
+                id: "tripID",
+                accessorKey: "tripID",
+                header: "ID Chuyến",
+                cell: ({ row }) => (
+                    <span className="font-mono text-xs text-muted-foreground" title={row.original.tripID}>
+                        {row.original.tripID.substring(0, 8)}...
+                    </span>
+                ),
+            },
             {
                 id: "routeName",
                 accessorKey: "routeName",
@@ -149,6 +188,34 @@ export function PageBusAdminTrips() {
                     return <Badge variant={status.variant}>{status.label}</Badge>;
                 },
             },
+            {
+                id: "actions",
+                header: "Thao tác",
+                cell: ({ row }) => (
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                                setSelectedTrip(row.original);
+                                setDialogOpen(true);
+                            }}
+                        >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Sửa
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => handleDelete(row.original)}
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Xóa
+                        </Button>
+                    </div>
+                ),
+            },
         ],
         [],
     );
@@ -158,11 +225,14 @@ export function PageBusAdminTrips() {
         columns,
         pageCount: totalPages,
         getCoreRowModel: getCoreRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
         manualPagination: true,
         state: {
             pagination,
+            globalFilter,
         },
         onPaginationChange: setPagination,
+        onGlobalFilterChange: setGlobalFilter,
     });
 
     const fetchTrips = useCallback(
@@ -232,6 +302,36 @@ export function PageBusAdminTrips() {
         void fetchTrips();
     }, [fetchTrips]);
 
+    const suggestedRoutes = useMemo(() => {
+        const map = new Map<string, string>(); // map label -> id
+        trips.forEach(t => {
+            if (t.routeID && t.routeName && !map.has(t.routeName)) {
+                map.set(t.routeName, t.routeID);
+            }
+        });
+        return Array.from(map.entries()).map(([label, id]) => ({ id, label }));
+    }, [trips]);
+
+    const suggestedBusTypes = useMemo(() => {
+        const map = new Map<string, string>(); // map label -> id
+        trips.forEach(t => {
+            if (t.busTypeID && t.busTypeName && !map.has(t.busTypeName)) {
+                map.set(t.busTypeName, t.busTypeID);
+            }
+        });
+        return Array.from(map.entries()).map(([label, id]) => ({ id, label }));
+    }, [trips]);
+
+    const suggestedBuses = useMemo(() => {
+        const map = new Map<string, string>(); // map label -> id
+        trips.forEach(t => {
+            if (t.busID && t.busPlateNumber && !map.has(t.busPlateNumber)) {
+                map.set(t.busPlateNumber, t.busID);
+            }
+        });
+        return Array.from(map.entries()).map(([label, id]) => ({ id, label }));
+    }, [trips]);
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -239,10 +339,21 @@ export function PageBusAdminTrips() {
                     <h1 className="text-2xl font-bold tracking-tight">Chuyến xe</h1>
                     <p className="text-sm text-muted-foreground">Quản lý lịch chạy xe của nhà xe theo tháng.</p>
                 </div>
-                <Button variant="outline" onClick={() => fetchTrips(true)} disabled={refreshing}>
-                    <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
-                    Làm mới
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        onClick={() => {
+                            setSelectedTrip(null);
+                            setDialogOpen(true);
+                        }}
+                    >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Thêm chuyến xe
+                    </Button>
+                    <Button variant="outline" onClick={() => fetchTrips(true)} disabled={refreshing}>
+                        <RefreshCw className={cn("h-4 w-4 mr-2", refreshing && "animate-spin")} />
+                        Làm mới
+                    </Button>
+                </div>
             </div>
 
             <Card>
@@ -272,6 +383,12 @@ export function PageBusAdminTrips() {
                             value={yearFilter}
                             onChange={(event) => setYearFilter(event.target.value)}
                             disabled={monthFilter === "all"}
+                        />
+                        <Input
+                            placeholder="Tìm kiếm ID, xe..."
+                            value={globalFilter ?? ""}
+                            onChange={(event) => setGlobalFilter(String(event.target.value))}
+                            className="w-full md:w-64"
                         />
                     </div>
                 </CardHeader>
@@ -389,6 +506,16 @@ export function PageBusAdminTrips() {
                     )}
                 </CardContent>
             </Card>
+
+            <TripDialog
+                open={dialogOpen}
+                onOpenChange={setDialogOpen}
+                trip={selectedTrip}
+                onSuccess={() => void fetchTrips(true)}
+                routes={suggestedRoutes}
+                busTypes={suggestedBusTypes}
+                buses={suggestedBuses}
+            />
         </div>
     );
 }
