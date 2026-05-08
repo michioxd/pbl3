@@ -11,9 +11,8 @@ import useDialog from "@/shared/dialog/Dialog";
 import { observer } from "mobx-react-lite";
 
 const NAV_ITEMS = [
-    { key: "nav.manageOrders", href: "#" },
-    { key: "nav.openTicketSale", href: "#" },
-    { key: "nav.becomePartner", href: "#" },
+    { key: "nav.manageOrders", href: "/orders" },
+    { key: "nav.becomePartner", href: "/partner-registration" },
 ];
 
 const MainHeader = observer(() => {

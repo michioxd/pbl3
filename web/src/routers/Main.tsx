@@ -1,5 +1,7 @@
 import PageMainIndex from "@/pages/Main";
 import PageMainSearch from "@/pages/Main/search";
+import PageManageOrders from "@/pages/Main/orders";
+import PagePartnerRegistration from "@/pages/Main/partner-registration";
 import Page404 from "@/screens/Main/404";
 import { Route, Routes } from "react-router-dom";
 
@@ -9,6 +11,8 @@ export default function RouterMain() {
             <Routes>
                 <Route index element={<PageMainIndex />} />
                 <Route path="search" element={<PageMainSearch />} />
+                <Route path="orders" element={<PageManageOrders />} />
+                <Route path="partner-registration" element={<PagePartnerRegistration />} />
                 <Route path="*" element={<Page404 />} />
             </Routes>
         </>
