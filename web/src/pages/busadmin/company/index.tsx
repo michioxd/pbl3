@@ -1,5 +1,4 @@
-import { getApiBusadminBusesCompanyProfile } from "@/api";
-import { createBusadminCompanyUpdateRequest } from "@/api/company-update-requests";
+import { getApiBusadminBusesCompanyProfile, postApiBusadminCompanyUpdateRequests } from "@/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -66,11 +65,17 @@ export function PageBusAdminCompany() {
 
         setSaving(true);
         try {
-            await createBusadminCompanyUpdateRequest({
-                name: formData.name.trim(),
-                licenseNumber: formData.licenseNumber.trim() || null,
-                hotline: formData.hotline.trim() || null,
+            const response = await postApiBusadminCompanyUpdateRequests({
+                body: {
+                    name: formData.name.trim(),
+                    licenseNumber: formData.licenseNumber.trim() || null,
+                    hotline: formData.hotline.trim() || null,
+                },
             });
+
+            if (response.error) {
+                throw response.error;
+            }
 
             toast.success("Đã gửi yêu cầu cập nhật. Vui lòng chờ duyệt.");
             await loadCompany();
@@ -97,9 +102,7 @@ export function PageBusAdminCompany() {
             <Card>
                 <CardHeader>
                     <CardTitle>Chưa có nhà xe</CardTitle>
-                    <CardDescription>
-                        Bạn cần tạo nhà xe trước khi chỉnh sửa hồ sơ.
-                    </CardDescription>
+                    <CardDescription>Bạn cần tạo nhà xe trước khi chỉnh sửa hồ sơ.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Button asChild>

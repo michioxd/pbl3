@@ -1,6 +1,7 @@
 import {
     getApiBusadminBusesCompanyProfile,
     getApiBusadminBusesStatsMonthly,
+    getApiBusadminCompanyUpdateRequestsCurrent,
     postApiBusadminAddBusCompany,
     type InforBusCompany,
 } from "@/api";
@@ -14,10 +15,6 @@ import { cn } from "@/lib/utils";
 import { RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import {
-    getBusadminCompanyUpdateRequestCurrent,
-    type CompanyProfileUpdateRequestDto,
-} from "@/api/company-update-requests";
 import { toast } from "sonner";
 
 type BusAdminCompanyProfile = {
@@ -27,6 +24,14 @@ type BusAdminCompanyProfile = {
     hotline?: string | null;
     isApproved: boolean;
 };
+
+type BusAdminCompanyUpdateRequest = {
+    status: number;
+    name?: string | null;
+    licenseNumber?: string | null;
+    hotline?: string | null;
+};
+
 type BusAdminMonthlyStats = {
     Year: number;
     Month: number;
@@ -58,7 +63,7 @@ const numberFormatter = new Intl.NumberFormat("vi-VN");
 
 export default function PageBusAdminIndex() {
     const [company, setCompany] = useState<BusAdminCompanyProfile | null>(null);
-    const [pendingRequest, setPendingRequest] = useState<CompanyProfileUpdateRequestDto | null>(null);
+    const [pendingRequest, setPendingRequest] = useState<BusAdminCompanyUpdateRequest | null>(null);
     const [companyState, setCompanyState] = useState<"loading" | "missing" | "pending" | "ready">("loading");
     const [stats, setStats] = useState<BusAdminMonthlyStats | null>(null);
     const [loadingStats, setLoadingStats] = useState(false);
@@ -88,7 +93,11 @@ export default function PageBusAdminIndex() {
 
             const data = response.data as BusAdminCompanyProfile;
             setCompany(data);
-            const request = await getBusadminCompanyUpdateRequestCurrent().catch(() => null);
+            const requestResponse = await getApiBusadminCompanyUpdateRequestsCurrent().catch(() => null);
+            const request =
+                requestResponse && !requestResponse.error
+                    ? ((requestResponse.data as BusAdminCompanyUpdateRequest | null) ?? null)
+                    : null;
             setPendingRequest(request);
 
             if (request?.status === 0) {
@@ -236,7 +245,9 @@ export default function PageBusAdminIndex() {
                                 <Input
                                     id="company-hotline"
                                     value={formData.hotline}
-                                    onChange={(event) => setFormData((prev) => ({ ...prev, hotline: event.target.value }))}
+                                    onChange={(event) =>
+                                        setFormData((prev) => ({ ...prev, hotline: event.target.value }))
+                                    }
                                     placeholder="Ví dụ: 1900 1234"
                                 />
                             </div>
@@ -359,9 +370,7 @@ export default function PageBusAdminIndex() {
                                     <div key={route.RouteName} className="flex items-center justify-between">
                                         <div>
                                             <div className="font-medium">{route.RouteName}</div>
-                                            <div className="text-xs text-muted-foreground">
-                                                {route.TicketsSold} vé
-                                            </div>
+                                            <div className="text-xs text-muted-foreground">{route.TicketsSold} vé</div>
                                         </div>
                                         <div className="font-medium">{currencyFormatter.format(route.Revenue)}</div>
                                     </div>

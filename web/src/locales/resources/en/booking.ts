@@ -33,7 +33,7 @@ export default {
     stop_not_available: "No stop available",
 
     payment_title: "Choose payment method",
-    payment_desc: "Backend integration will be added next. This screen currently simulates the payment flow.",
+    payment_desc: "Choose the payment method before creating your booking.",
     payment_option_vnpay_title: "VNPay",
     payment_option_vnpay_desc: "Pay online with ATM card, Visa, or bank QR.",
     payment_option_momo_title: "MoMo",
@@ -44,7 +44,8 @@ export default {
     payment_badge_fast: "Fast",
     payment_badge_flexible: "Flexible",
     payment_note_title: "Note",
-    payment_note_demo: "This flow is frontend-only for now. Real payment gateways will be connected in backend later.",
+    payment_note_demo:
+        "Online payments will continue through MoMo, while pay-at-counter bookings will be held for a limited time.",
 
     confirm_title: "Confirm and pay",
     confirm_desc: "Review everything one last time before creating the payment order.",
@@ -65,9 +66,13 @@ export default {
     action_back: "Back",
     action_continue: "Continue",
     action_pay: "Pay now",
+    action_processing: "Processing...",
 
-    payment_pending_backend: "Frontend flow is done. Real payment will be connected in the backend next.",
-    payment_done_badge: "Frontend demo",
-    payment_done_desc:
-        "You can now connect this screen to booking creation, payment intent, and payment callback APIs in the backend.",
+    payment_success_title: "Your booking has been created successfully.",
+    payment_done_badge: "Completed",
+    payment_done_desc: "Check your orders page anytime if you need to review the payment status.",
+    payment_redirecting_momo: "Redirecting you to MoMo to complete the payment.",
+    payment_cash_success: "Booking created successfully. Please pay at the counter before the hold expires.",
+    payment_created_check_orders: "Your booking was created. Please check your orders page to continue payment.",
+    payment_submit_error: "Unable to create the booking. Please try again.",
 } as const;

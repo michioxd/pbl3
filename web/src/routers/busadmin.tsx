@@ -1,5 +1,4 @@
-import { getApiBusadminBusesCompanyProfile } from "@/api";
-import { getBusadminCompanyUpdateRequestCurrent } from "@/api/company-update-requests";
+import { getApiBusadminBusesCompanyProfile, getApiBusadminCompanyUpdateRequestsCurrent } from "@/api";
 import PageBusAdminIndex from "@/pages/busadmin/index";
 import { PageBusAdminTickets } from "@/pages/busadmin/tickets";
 import { PageBusAdminTrips } from "@/pages/busadmin/trips";
@@ -18,6 +17,10 @@ type BusAdminCompanyProfile = {
     licenseNumber?: string | null;
     hotline?: string | null;
     isApproved: boolean;
+};
+
+type BusAdminCompanyUpdateRequest = {
+    status: number;
 };
 
 const BusAdminGate = ({ children }: { children: ReactNode }) => {
@@ -41,7 +44,11 @@ const BusAdminGate = ({ children }: { children: ReactNode }) => {
                 }
 
                 const company = response.data as BusAdminCompanyProfile;
-                const request = await getBusadminCompanyUpdateRequestCurrent().catch(() => null);
+                const requestResponse = await getApiBusadminCompanyUpdateRequestsCurrent().catch(() => null);
+                const request =
+                    requestResponse && !requestResponse.error
+                        ? ((requestResponse.data as BusAdminCompanyUpdateRequest | null) ?? null)
+                        : null;
                 if (isActive) {
                     setIsApproved(!!company.isApproved);
                     setHasPendingRequest(!!request && request.status === 0);

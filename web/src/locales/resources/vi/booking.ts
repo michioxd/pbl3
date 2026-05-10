@@ -33,7 +33,7 @@ export default {
     stop_not_available: "Chưa có điểm dừng",
 
     payment_title: "Chọn phương thức thanh toán",
-    payment_desc: "Bước backend sẽ được nối sau. Hiện tại frontend mô phỏng luồng thanh toán.",
+    payment_desc: "Chọn phương thức thanh toán phù hợp trước khi tạo đơn vé.",
     payment_option_vnpay_title: "VNPay",
     payment_option_vnpay_desc: "Thanh toán online bằng thẻ ATM, Visa hoặc QR ngân hàng.",
     payment_option_momo_title: "MoMo",
@@ -44,7 +44,8 @@ export default {
     payment_badge_fast: "Nhanh",
     payment_badge_flexible: "Linh hoạt",
     payment_note_title: "Lưu ý",
-    payment_note_demo: "Luồng này đang ở mức giao diện. Sau khi làm backend sẽ nối cổng thanh toán thật.",
+    payment_note_demo:
+        "Đơn thanh toán online sẽ được chuyển sang cổng MoMo, còn thanh toán tại quầy sẽ giữ vé trong thời gian ngắn.",
 
     confirm_title: "Xác nhận và thanh toán",
     confirm_desc: "Kiểm tra lại thông tin lần cuối trước khi tạo đơn thanh toán.",
@@ -65,9 +66,13 @@ export default {
     action_back: "Quay lại",
     action_continue: "Tiếp tục",
     action_pay: "Thanh toán",
+    action_processing: "Đang xử lý...",
 
-    payment_pending_backend: "Đã hoàn tất frontend. Bước thanh toán thật sẽ được nối ở backend tiếp theo.",
-    payment_done_badge: "Frontend demo",
-    payment_done_desc:
-        "Bạn có thể dùng màn hình này để tiếp tục nối API tạo booking, payment intent và callback thanh toán ở backend sau.",
+    payment_success_title: "Đơn vé đã được tạo thành công.",
+    payment_done_badge: "Hoàn tất",
+    payment_done_desc: "Kiểm tra đơn vé của bạn trong mục quản lý đơn hàng nếu cần theo dõi trạng thái thanh toán.",
+    payment_redirecting_momo: "Đang chuyển sang MoMo để bạn hoàn tất thanh toán.",
+    payment_cash_success: "Đặt vé thành công. Vui lòng thanh toán tại quầy theo thời gian giữ chỗ.",
+    payment_created_check_orders: "Đơn vé đã được tạo. Vui lòng kiểm tra trong mục đơn hàng để tiếp tục thanh toán.",
+    payment_submit_error: "Không thể tạo đơn vé. Vui lòng thử lại.",
 } as const;

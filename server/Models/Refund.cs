@@ -13,6 +13,11 @@ namespace Pbl3.Models
         public decimal Amount { get; set; }
         public string? Reason { get; set; }
         public RefundStatus Status { get; set; }
+        public string? ProviderRequestId { get; set; }
+        public long? ProviderTransactionId { get; set; }
+        public int? ProviderResultCode { get; set; }
+        public string? ProviderMessage { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? ProcessedAt { get; set; }
     }
 }

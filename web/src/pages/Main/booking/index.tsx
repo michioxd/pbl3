@@ -1,4 +1,4 @@
-import { getApiTripsByTripId } from "@/api";
+import { getApiTripsByTripId, postApiBookings, postApiPaymentsMomoCreate } from "@/api";
 import type { PaymentProvider, TripDetailDto } from "@/api";
 import BookingAddressStep from "./components/BookingAddressStep";
 import BookingConfirmStep from "./components/BookingConfirmStep";
@@ -15,7 +15,7 @@ import { Box, Button, Card, Container, Flex, Grid, Heading, Skeleton, Text } fro
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { observer } from "mobx-react-lite";
-import { ArrowLeft, Building2, CreditCard, Wallet } from "lucide-react";
+import { ArrowLeft, Building2, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
@@ -31,6 +31,23 @@ const INITIAL_FORM: BookingFormState = {
     paymentProvider: 0,
 };
 
+const MOMO_PAYMENT_PROVIDER = 0 as PaymentProvider;
+const CASH_PAYMENT_PROVIDER = 2 as PaymentProvider;
+
+function getMomoRedirectUrl(payload: unknown) {
+    if (!payload || typeof payload !== "object") {
+        return null;
+    }
+
+    const response = payload as {
+        payUrl?: string | null;
+        deeplink?: string | null;
+        qrCodeUrl?: string | null;
+    };
+
+    return response.payUrl || response.deeplink || response.qrCodeUrl || null;
+}
+
 const PageMainBooking = observer(() => {
     const store = useStore();
     const navigate = useNavigate();
@@ -44,6 +61,7 @@ const PageMainBooking = observer(() => {
     const [authDialogOpen, setAuthDialogOpen] = useState(false);
     const [hasPromptedLogin, setHasPromptedLogin] = useState(false);
     const [demoCompleted, setDemoCompleted] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
 
     const stepItems = useMemo<StepItem[]>(
         () => [
@@ -57,21 +75,14 @@ const PageMainBooking = observer(() => {
     const paymentOptions = useMemo<PaymentOption[]>(
         () => [
             {
-                value: 0 as PaymentProvider,
-                title: t("payment_option_vnpay_title"),
-                description: t("payment_option_vnpay_desc"),
-                badge: t("payment_badge_recommended"),
-                Icon: CreditCard,
-            },
-            {
-                value: 1 as PaymentProvider,
+                value: MOMO_PAYMENT_PROVIDER,
                 title: t("payment_option_momo_title"),
                 description: t("payment_option_momo_desc"),
-                badge: t("payment_badge_fast"),
+                badge: t("payment_badge_recommended"),
                 Icon: Wallet,
             },
             {
-                value: 2 as PaymentProvider,
+                value: CASH_PAYMENT_PROVIDER,
                 title: t("payment_option_counter_title"),
                 description: t("payment_option_counter_desc"),
                 badge: t("payment_badge_flexible"),
@@ -261,13 +272,71 @@ const PageMainBooking = observer(() => {
         });
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!validateStep(0) || !validateStep(1)) {
             return;
         }
 
-        setDemoCompleted(true);
-        toast.success(t("payment_pending_backend"));
+        if (!tripId) {
+            toast.error(t("page_missing_trip"));
+            return;
+        }
+
+        setSubmitting(true);
+        setDemoCompleted(false);
+
+        try {
+            const bookingResponse = await postApiBookings({
+                body: {
+                    tripId,
+                    contactName: form.fullName.trim(),
+                    contactPhone: form.phoneNumber.trim(),
+                    contactEmail: form.email.trim(),
+                    pickupStopId: form.pickupStopId,
+                    dropoffStopId: form.dropoffStopId,
+                    addressNote: form.addressNote.trim() || null,
+                    paymentProvider: form.paymentProvider,
+                },
+            });
+
+            if (bookingResponse.error || !bookingResponse.data?.bookingId) {
+                throw bookingResponse.error ?? new Error(t("payment_submit_error"));
+            }
+
+            const bookingId = bookingResponse.data.bookingId;
+            setDemoCompleted(true);
+
+            if (form.paymentProvider === MOMO_PAYMENT_PROVIDER) {
+                const momoResponse = await postApiPaymentsMomoCreate({
+                    body: {
+                        bookingId,
+                    },
+                });
+
+                if (momoResponse.error || !momoResponse.data) {
+                    throw momoResponse.error ?? new Error(t("payment_submit_error"));
+                }
+
+                const redirectUrl = getMomoRedirectUrl(momoResponse.data);
+
+                if (redirectUrl) {
+                    toast.success(t("payment_redirecting_momo"));
+                    window.location.assign(redirectUrl);
+                    return;
+                }
+
+                toast.success(t("payment_created_check_orders"));
+                navigate("/orders");
+                return;
+            }
+
+            toast.success(t("payment_cash_success"));
+            navigate("/orders");
+        } catch (submitError) {
+            toast.error(parseApiErrorMessage(submitError, t("payment_submit_error")));
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const renderStepContent = () => {
@@ -325,7 +394,7 @@ const PageMainBooking = observer(() => {
                     addressNoteTitle={t("confirm_address_note")}
                     emptyNoteLabel={t("confirm_no_note")}
                     doneBadge={t("payment_done_badge")}
-                    pendingBackendLabel={t("payment_pending_backend")}
+                    pendingBackendLabel={t("payment_success_title")}
                     doneDescription={t("payment_done_desc")}
                 />
             </Flex>
@@ -411,6 +480,7 @@ const PageMainBooking = observer(() => {
                                             <Button
                                                 variant="soft"
                                                 color="gray"
+                                                disabled={submitting || currentStep === 0}
                                                 onClick={() =>
                                                     setCurrentStep((current) => {
                                                         if (current === 2) {
@@ -424,18 +494,21 @@ const PageMainBooking = observer(() => {
                                                         return 0;
                                                     })
                                                 }
-                                                disabled={currentStep === 0}
                                             >
                                                 {t("action_back")}
                                             </Button>
 
                                             {currentStep < 2 ? (
-                                                <Button color="blue" onClick={handleNext}>
+                                                <Button color="blue" onClick={handleNext} disabled={submitting}>
                                                     {t("action_continue")}
                                                 </Button>
                                             ) : (
-                                                <Button color="amber" onClick={handleSubmit}>
-                                                    {t("action_pay")}
+                                                <Button
+                                                    color="amber"
+                                                    onClick={() => void handleSubmit()}
+                                                    disabled={submitting}
+                                                >
+                                                    {submitting ? t("action_processing") : t("action_pay")}
                                                 </Button>
                                             )}
                                         </Flex>

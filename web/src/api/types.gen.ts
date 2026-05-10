@@ -107,11 +107,56 @@ export type AuthResponseDto = {
     user: UserDto;
 };
 
+export type BookingResponseDto = {
+    bookingId?: string;
+    tripId?: string;
+    contactName?: string | null;
+    contactPhone?: string | null;
+    contactEmail?: string | null;
+    totalAmount?: number;
+    status?: BookingStatus;
+    createdAt?: string;
+    expiresAt?: string | null;
+    paymentIntentId?: string | null;
+    paymentProvider?: PaymentProvider;
+    paymentStatus?: PaymentIntentStatus;
+    requiresOnlinePayment?: boolean;
+    tickets?: Array<BookingTicketDto> | null;
+};
+
+export type BookingStatus = 0 | 1 | 2 | 3;
+
+export type BookingTicketDto = {
+    ticketId?: string;
+    ticketCode?: string | null;
+    seatLayoutId?: string;
+    seatLabel?: string | null;
+    finalPrice?: number;
+    status?: TicketStatus;
+    passengerFullName?: string | null;
+    departureTime?: string;
+    arrivalTime?: string;
+    routeName?: string | null;
+};
+
 export type BulkCompanyActionDto = {
     companyIds: Array<string>;
 };
 
 export type BusAdminUpgradeRequestStatus = 0 | 1 | 2;
+
+export type CompanyProfileUpdateRequestStatus = 0 | 1 | 2;
+
+export type CreateBookingRequestDto = {
+    tripId: string;
+    contactName: string;
+    contactPhone: string;
+    contactEmail: string;
+    pickupStopId: string;
+    dropoffStopId: string;
+    addressNote?: string | null;
+    paymentProvider?: PaymentProvider;
+};
 
 export type CreateBusAdminUpgradeRequestDto = {
     companyName: string;
@@ -124,6 +169,16 @@ export type CreateBusDto = {
     busTypeID?: string;
     plateNumber?: string | null;
     isActive?: boolean;
+};
+
+export type CreateCompanyProfileUpdateRequestDto = {
+    name?: string | null;
+    licenseNumber?: string | null;
+    hotline?: string | null;
+};
+
+export type CreateMomoPaymentRequestDto = {
+    bookingId: string;
 };
 
 export type CreateRefundRequestDto = {
@@ -199,6 +254,22 @@ export type ModerateReviewDto = {
     moderationReason: string | null;
 };
 
+export type MomoIpnRequestDto = {
+    partnerCode?: string | null;
+    orderId?: string | null;
+    requestId?: string | null;
+    amount?: number;
+    orderInfo?: string | null;
+    orderType?: string | null;
+    transId?: number;
+    resultCode?: number;
+    message?: string | null;
+    payType?: string | null;
+    responseTime?: number;
+    extraData?: string | null;
+    signature?: string | null;
+};
+
 export type OAuthGoogleRequestDto = {
     idToken: string;
 };
@@ -237,6 +308,11 @@ export type RegisterRequestDto = {
 
 export type ReviewBusAdminUpgradeRequestDto = {
     approve: boolean;
+    reviewNote?: string | null;
+};
+
+export type ReviewCompanyProfileUpdateRequestDto = {
+    status?: CompanyProfileUpdateRequestStatus;
     reviewNote?: string | null;
 };
 
@@ -478,6 +554,93 @@ export type PostApiAuthRegisterResponses = {
 };
 
 export type PostApiAuthRegisterResponse = PostApiAuthRegisterResponses[keyof PostApiAuthRegisterResponses];
+
+export type PostApiBookingsData = {
+    body?: CreateBookingRequestDto;
+    path?: never;
+    query?: never;
+    url: '/api/bookings';
+};
+
+export type PostApiBookingsErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+};
+
+export type PostApiBookingsError = PostApiBookingsErrors[keyof PostApiBookingsErrors];
+
+export type PostApiBookingsResponses = {
+    /**
+     * Created
+     */
+    201: BookingResponseDto;
+};
+
+export type PostApiBookingsResponse = PostApiBookingsResponses[keyof PostApiBookingsResponses];
+
+export type GetApiBookingsByBookingIdData = {
+    body?: never;
+    path: {
+        bookingId: string;
+    };
+    query?: never;
+    url: '/api/bookings/{bookingId}';
+};
+
+export type GetApiBookingsByBookingIdErrors = {
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+};
+
+export type GetApiBookingsByBookingIdError = GetApiBookingsByBookingIdErrors[keyof GetApiBookingsByBookingIdErrors];
+
+export type GetApiBookingsByBookingIdResponses = {
+    /**
+     * OK
+     */
+    200: BookingResponseDto;
+};
+
+export type GetApiBookingsByBookingIdResponse = GetApiBookingsByBookingIdResponses[keyof GetApiBookingsByBookingIdResponses];
+
+export type PutApiBookingsByBookingIdCancelData = {
+    body?: never;
+    path: {
+        bookingId: string;
+    };
+    query?: never;
+    url: '/api/bookings/{bookingId}/cancel';
+};
+
+export type PutApiBookingsByBookingIdCancelErrors = {
+    /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+};
+
+export type PutApiBookingsByBookingIdCancelError = PutApiBookingsByBookingIdCancelErrors[keyof PutApiBookingsByBookingIdCancelErrors];
+
+export type PutApiBookingsByBookingIdCancelResponses = {
+    /**
+     * OK
+     */
+    200: BookingResponseDto;
+};
+
+export type PutApiBookingsByBookingIdCancelResponse = PutApiBookingsByBookingIdCancelResponses[keyof PutApiBookingsByBookingIdCancelResponses];
 
 export type PostApiBusadminBusesData = {
     body?: CreateBusDto;
@@ -769,6 +932,34 @@ export type GetApiBusadminBusesStatsMonthlyResponses = {
     200: unknown;
 };
 
+export type GetApiBusadminCompanyUpdateRequestsCurrentData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/busadmin/company-update-requests/current';
+};
+
+export type GetApiBusadminCompanyUpdateRequestsCurrentResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiBusadminCompanyUpdateRequestsData = {
+    body?: CreateCompanyProfileUpdateRequestDto;
+    path?: never;
+    query?: never;
+    url: '/api/busadmin/company-update-requests';
+};
+
+export type PostApiBusadminCompanyUpdateRequestsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type PostApiBusadminAddBusCompanyData = {
     body?: InforBusCompany;
     path?: never;
@@ -777,6 +968,50 @@ export type PostApiBusadminAddBusCompanyData = {
 };
 
 export type PostApiBusadminAddBusCompanyResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiPaymentsMomoCreateData = {
+    body?: CreateMomoPaymentRequestDto;
+    path?: never;
+    query?: never;
+    url: '/api/payments/momo/create';
+};
+
+export type PostApiPaymentsMomoCreateResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiPaymentsMomoIntentsByIntentIdData = {
+    body?: never;
+    path: {
+        intentId: string;
+    };
+    query?: never;
+    url: '/api/payments/momo/intents/{intentId}';
+};
+
+export type GetApiPaymentsMomoIntentsByIntentIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiPaymentsMomoIpnData = {
+    body?: MomoIpnRequestDto;
+    path?: never;
+    query?: never;
+    url: '/api/payments/momo/ipn';
+};
+
+export type PostApiPaymentsMomoIpnResponses = {
     /**
      * OK
      */
@@ -1171,6 +1406,40 @@ export type PatchApiAdminSystemUpgradeRequestsByRequestIdReviewData = {
 };
 
 export type PatchApiAdminSystemUpgradeRequestsByRequestIdReviewResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiAdminSystemCompanyUpdateRequestsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        status?: CompanyProfileUpdateRequestStatus;
+        page?: number;
+        pageSize?: number;
+    };
+    url: '/api/admin/system/company-update-requests';
+};
+
+export type GetApiAdminSystemCompanyUpdateRequestsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PatchApiAdminSystemCompanyUpdateRequestsByRequestIdReviewData = {
+    body?: ReviewCompanyProfileUpdateRequestDto;
+    path: {
+        requestId: string;
+    };
+    query?: never;
+    url: '/api/admin/system/company-update-requests/{requestId}/review';
+};
+
+export type PatchApiAdminSystemCompanyUpdateRequestsByRequestIdReviewResponses = {
     /**
      * OK
      */

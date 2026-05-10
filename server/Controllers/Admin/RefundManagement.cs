@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +5,7 @@ using Pbl3.Data;
 using Pbl3.Dtos;
 using Pbl3.Enums;
 using Pbl3.Models;
+using Pbl3.Services;
 
 namespace Pbl3.Controllers.Admin
 {
@@ -15,10 +15,18 @@ namespace Pbl3.Controllers.Admin
     public class RefundManagementController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICurrentUserContext _currentUserContext;
+        private readonly IPaymentService _paymentService;
 
-        public RefundManagementController(ApplicationDbContext context)
+        public RefundManagementController(
+            ApplicationDbContext context,
+            ICurrentUserContext currentUserContext,
+            IPaymentService paymentService
+        )
         {
             _context = context;
+            _currentUserContext = currentUserContext;
+            _paymentService = paymentService;
         }
 
         [HttpGet]
@@ -191,7 +199,7 @@ namespace Pbl3.Controllers.Admin
             if (request.Status != RefundStatus.Pending)
                 return BadRequest(new { message = "Chỉ có thể duyệt yêu cầu đang chờ xử lý." });
 
-            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var userId = _currentUserContext.GetRequiredUserId();
 
             // Create actual refund
             var refund = new Refund
@@ -214,8 +222,7 @@ namespace Pbl3.Controllers.Admin
 
             await _context.SaveChangesAsync();
 
-            // TODO: Call payment provider API to process refund
-            // await ProcessRefundWithProvider(refund);
+            await _paymentService.ProcessRefundAsync(refund.RefundID);
 
             return Ok(new { message = "Đã duyệt yêu cầu hoàn tiền." });
         }
@@ -236,7 +243,7 @@ namespace Pbl3.Controllers.Admin
             if (request.Status != RefundStatus.Pending)
                 return BadRequest(new { message = "Chỉ có thể từ chối yêu cầu đang chờ xử lý." });
 
-            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var userId = _currentUserContext.GetRequiredUserId();
 
             request.Status = RefundStatus.Rejected;
             request.ProcessedAt = DateTime.UtcNow;
