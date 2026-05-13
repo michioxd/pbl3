@@ -14,7 +14,7 @@ namespace Pbl3.Controllers.Admin
     [Route("api/admin/system")]
     [Authorize(Policy = "AdminOnly")]
     [Tags("SystemAdmin")]
-    public partial class SystemAdminManagementController : ControllerBase
+    public partial class SystemAdminManagementController : ControllerB~ase
     {
         private readonly ApplicationDbContext _context;
         private readonly IPasswordHasher<User> _passwordHasher;

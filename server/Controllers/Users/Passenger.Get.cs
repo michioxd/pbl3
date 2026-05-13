@@ -46,6 +46,7 @@ namespace Pbl3.Controllers.Users
                 .Select(t => new
                 {
                     t.TicketID,
+                    t.TicketCode,
                     SeatLabel = t.SeatLayout != null ? t.SeatLayout.SeatLabel : null,
                     Price = t.FinalPrice,
                     t.Status,

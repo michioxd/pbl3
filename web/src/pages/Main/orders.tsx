@@ -99,10 +99,10 @@ const PageManageOrders = observer(() => {
                     </Table.Header>
                     <Table.Body>
                         {tickets.map((ticket, idx) => (
-                            <Table.Row key={ticket.id || idx}>
-                                <Table.RowHeaderCell>{ticket.id || "N/A"}</Table.RowHeaderCell>
-                                <Table.Cell>{ticket.trip?.id || ticket.tripId || "N/A"}</Table.Cell>
-                                <Table.Cell>{ticket.seatPosition || "N/A"}</Table.Cell>
+                            <Table.Row key={ticket.ticketId || ticket.ticketCode || idx}>
+                                <Table.RowHeaderCell>{ticket.ticketCode || ticket.ticketId || "N/A"}</Table.RowHeaderCell>
+                                <Table.Cell>{ticket.routeName || "N/A"}</Table.Cell>
+                                <Table.Cell>{ticket.seatLabel || "N/A"}</Table.Cell>
                                 <Table.Cell>{ticket.price ? `${ticket.price} VND` : "N/A"}</Table.Cell>
                                 <Table.Cell>
                                     <Badge color={ticket.status === 0 ? "green" : "gray"}>
