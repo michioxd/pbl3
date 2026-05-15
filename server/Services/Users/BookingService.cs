@@ -8,16 +8,16 @@ namespace Pbl3.Services
 {
     public interface IBookingService
     {
-        Task<BookingResponseDto> CreateBookingAsync(CreateBookingRequestDto request, Guid userId);
-        Task<BookingResponseDto> GetBookingAsync(Guid bookingId, Guid userId);
-        Task<BookingResponseDto> CancelBookingAsync(Guid bookingId, Guid userId);
+        Task<(int StatusCode, string? ErrorMessage, BookingResponseDto? Data)> CreateBookingAsync(CreateBookingRequestDto request, Guid userId);
+        Task<(int StatusCode, string? ErrorMessage, BookingResponseDto? Data)> GetBookingAsync(Guid bookingId, Guid userId);
+        Task<(int StatusCode, string? ErrorMessage, BookingResponseDto? Data)> CancelBookingAsync(Guid bookingId, Guid userId);
     }
 
     public class BookingService(ApplicationDbContext context) : IBookingService
     {
         private readonly ApplicationDbContext _context = context;
 
-        public async Task<BookingResponseDto> CreateBookingAsync(
+        public async Task<(int StatusCode, string? ErrorMessage, BookingResponseDto? Data)> CreateBookingAsync(
             CreateBookingRequestDto request,
             Guid userId
         )
@@ -29,12 +29,12 @@ namespace Pbl3.Services
 
             if (trip == null)
             {
-                throw new KeyNotFoundException("Không tìm thấy chuyến xe.");
+                return (404, "Không tìm thấy chuyến xe.", null);
             }
 
             if (trip.Status != TripStatus.Scheduled)
             {
-                throw new InvalidOperationException("Chuyến xe hiện không khả dụng.");
+                return (400, "Chuyến xe hiện không khả dụng.", null);
             }
 
             var routeStops = await _context
@@ -54,7 +54,7 @@ namespace Pbl3.Services
             );
             if (pickupStop == null)
             {
-                throw new InvalidOperationException("Điểm đón không hợp lệ.");
+                return (400, "Điểm đón không hợp lệ.", null);
             }
 
             var dropoffStop = routeStops.FirstOrDefault(stop =>
@@ -62,19 +62,19 @@ namespace Pbl3.Services
             );
             if (dropoffStop == null)
             {
-                throw new InvalidOperationException("Điểm trả không hợp lệ.");
+                return (400, "Điểm trả không hợp lệ.", null);
             }
 
             if (pickupStop.StopOrder >= dropoffStop.StopOrder)
             {
-                throw new InvalidOperationException("Điểm đón phải đứng trước điểm trả.");
+                return (400, "Điểm đón phải đứng trước điểm trả.", null);
             }
 
             var passenger = await _context.Passengers.FirstOrDefaultAsync(p => p.UserID == userId);
 
             if (passenger == null)
             {
-                throw new KeyNotFoundException("Không tìm thấy hồ sơ hành khách.");
+                return (404, "Không tìm thấy hồ sơ hành khách.", null);
             }
 
             var utcNow = DateTime.UtcNow;
@@ -106,7 +106,7 @@ namespace Pbl3.Services
 
             if (seat == null)
             {
-                throw new InvalidOperationException("Chuyến xe đã hết chỗ trống.");
+                return (400, "Chuyến xe đã hết chỗ trống.", null);
             }
 
             var booking = new Booking
@@ -147,7 +147,7 @@ namespace Pbl3.Services
             return await GetBookingAsync(booking.BookingID, userId);
         }
 
-        public async Task<BookingResponseDto> GetBookingAsync(Guid bookingId, Guid userId)
+        public async Task<(int StatusCode, string? ErrorMessage, BookingResponseDto? Data)> GetBookingAsync(Guid bookingId, Guid userId)
         {
             var booking = await _context
                 .Bookings.AsNoTracking()
@@ -204,13 +204,13 @@ namespace Pbl3.Services
 
             if (booking == null)
             {
-                throw new KeyNotFoundException("Không tìm thấy booking.");
+                return (404, "Không tìm thấy booking.", null);
             }
 
-            return booking;
+            return (200, null, booking);
         }
 
-        public async Task<BookingResponseDto> CancelBookingAsync(Guid bookingId, Guid userId)
+        public async Task<(int StatusCode, string? ErrorMessage, BookingResponseDto? Data)> CancelBookingAsync(Guid bookingId, Guid userId)
         {
             var booking = await _context
                 .Bookings.Include(b => b.Tickets)
@@ -218,12 +218,12 @@ namespace Pbl3.Services
 
             if (booking == null)
             {
-                throw new KeyNotFoundException("Không tìm thấy booking.");
+                return (404, "Không tìm thấy booking.", null);
             }
 
             if (booking.Status == BookingStatus.Paid)
             {
-                throw new InvalidOperationException("Không thể hủy booking đã thanh toán.");
+                return (400, "Không thể hủy booking đã thanh toán.", null);
             }
 
             if (booking.Status == BookingStatus.Cancelled)
