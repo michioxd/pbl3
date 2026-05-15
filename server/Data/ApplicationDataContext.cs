@@ -14,6 +14,7 @@ namespace Pbl3.Data
         public DbSet<BusCompany> BusCompanies { get; set; }
         public DbSet<BusCompanyAdmin> BusCompanyAdmins { get; set; }
         public DbSet<BusAdminUpgradeRequest> BusAdminUpgradeRequests { get; set; }
+        public DbSet<CompanyProfileUpdateRequest> CompanyProfileUpdateRequests { get; set; }
         public DbSet<BusType> BusTypes { get; set; }
         public DbSet<SeatLayout> SeatLayouts { get; set; }
         public DbSet<Bus> Buses { get; set; }
@@ -28,6 +29,7 @@ namespace Pbl3.Data
         public DbSet<SeatHold> SeatHolds { get; set; }
         public DbSet<PaymentIntent> PaymentIntents { get; set; }
         public DbSet<Refund> Refunds { get; set; }
+        public DbSet<RefundRequest> RefundRequests { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<AdministrativeRegion> AdministrativeRegions { get; set; }
@@ -35,6 +37,8 @@ namespace Pbl3.Data
         public DbSet<Province> Provinces { get; set; }
         public DbSet<District> Districts { get; set; }
         public DbSet<Ward> Wards { get; set; }
+        public DbSet<Amenity> Amenities { get; set; }
+        public DbSet<BusTypeAmenity> BusTypeAmenities { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -45,6 +49,7 @@ namespace Pbl3.Data
             // Register Enums
             modelBuilder.HasPostgresEnum<UserRole>();
             modelBuilder.HasPostgresEnum<BusAdminUpgradeRequestStatus>();
+            modelBuilder.HasPostgresEnum<CompanyProfileUpdateRequestStatus>();
             modelBuilder.HasPostgresEnum<TripStatus>();
             modelBuilder.HasPostgresEnum<SeatType>();
             modelBuilder.HasPostgresEnum<StationType>();
@@ -67,6 +72,54 @@ namespace Pbl3.Data
                 .HasForeignKey(bca => bca.UserID);
 
             modelBuilder.Entity<BusAdminUpgradeRequest>().HasKey(r => r.RequestID);
+
+            modelBuilder.Entity<CompanyProfileUpdateRequest>().HasKey(r => r.RequestID);
+
+            modelBuilder
+                .Entity<CompanyProfileUpdateRequest>()
+                .HasOne(r => r.RequesterUser)
+                .WithMany(u => u.CompanyProfileUpdateRequests)
+                .HasForeignKey(r => r.RequesterUserID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder
+                .Entity<CompanyProfileUpdateRequest>()
+                .HasOne(r => r.ReviewedByUser)
+                .WithMany(u => u.ReviewedCompanyProfileUpdateRequests)
+                .HasForeignKey(r => r.ReviewedByUserID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder
+                .Entity<CompanyProfileUpdateRequest>()
+                .HasOne(r => r.BusCompany)
+                .WithMany(c => c.CompanyProfileUpdateRequests)
+                .HasForeignKey(r => r.CompanyID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder
+                .Entity<CompanyProfileUpdateRequest>()
+                .Property(r => r.Name)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            modelBuilder
+                .Entity<CompanyProfileUpdateRequest>()
+                .Property(r => r.LicenseNumber)
+                .HasMaxLength(100);
+
+            modelBuilder
+                .Entity<CompanyProfileUpdateRequest>()
+                .Property(r => r.Hotline)
+                .HasMaxLength(20);
+
+            modelBuilder
+                .Entity<CompanyProfileUpdateRequest>()
+                .Property(r => r.ReviewNote)
+                .HasMaxLength(1000);
+
+            modelBuilder
+                .Entity<CompanyProfileUpdateRequest>()
+                .HasIndex(r => new { r.CompanyID, r.Status, r.RequestedAt });
 
             modelBuilder
                 .Entity<BusAdminUpgradeRequest>()
@@ -212,6 +265,25 @@ namespace Pbl3.Data
                 .WithMany(t => t.Reviews)
                 .HasForeignKey(r => r.TripID)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Review moderation relationships
+            modelBuilder
+                .Entity<Review>()
+                .HasOne(r => r.ModeratedByUser)
+                .WithMany()
+                .HasForeignKey(r => r.ModeratedByUserID)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder
+                .Entity<Review>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserID)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Index for filtering by status
+            modelBuilder.Entity<Review>().HasIndex(r => r.Status);
+
             modelBuilder
                 .Entity<BusRoute>()
                 .HasOne(r => r.BusCompany)
@@ -285,6 +357,42 @@ namespace Pbl3.Data
                 .WithMany(w => w.Stations)
                 .HasForeignKey(s => s.WardCode)
                 .HasPrincipalKey(w => w.Code)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // RefundRequest relationships
+            modelBuilder
+                .Entity<RefundRequest>()
+                .HasOne(rr => rr.Booking)
+                .WithMany()
+                .HasForeignKey(rr => rr.BookingID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder
+                .Entity<RefundRequest>()
+                .HasOne(rr => rr.PaymentIntent)
+                .WithMany()
+                .HasForeignKey(rr => rr.PaymentIntentID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder
+                .Entity<RefundRequest>()
+                .HasOne(rr => rr.User)
+                .WithMany()
+                .HasForeignKey(rr => rr.UserID)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder
+                .Entity<RefundRequest>()
+                .HasOne(rr => rr.ProcessedByUser)
+                .WithMany()
+                .HasForeignKey(rr => rr.ProcessedByUserID)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder
+                .Entity<RefundRequest>()
+                .HasOne(rr => rr.Refund)
+                .WithOne()
+                .HasForeignKey<RefundRequest>(rr => rr.RefundID)
                 .OnDelete(DeleteBehavior.SetNull);
         }
     }

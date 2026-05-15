@@ -4,8 +4,10 @@ import { ArrowRight, Headset, MapPin, PlusIcon, Search, ShieldCheck, Sparkles, S
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { DatePickerInput } from "@/components/ui/datepicker";
-import { useState } from "react";
-import AddressSearch from "@/components/Main/AddressSearch";
+import { format } from "date-fns";
+import { useCallback, useMemo, useState } from "react";
+import AddressSearch, { type SelectedAddress } from "@/components/Main/AddressSearch";
+import { useNavigate } from "react-router-dom";
 
 const PROMOS = [
     {
@@ -66,10 +68,134 @@ const POPULAR_ROUTES = [
     },
 ];
 
-function HeroAndSearch() {
-    const { mode } = useThemeContext();
+function HeroSearch() {
     const { t } = useTranslation("hero");
+    const navigate = useNavigate();
     const [withReturnDate, setWithReturnDate] = useState(false);
+    const [fromTxt, setFromTxt] = useState("");
+    const [toTxt, setToTxt] = useState("");
+    const [fromSelected, setFromSelected] = useState<SelectedAddress | null>(null);
+    const [toSelected, setToSelected] = useState<SelectedAddress | null>(null);
+    const [dateDeparture, setDateDeparture] = useState<Date | undefined>(new Date());
+    const [dateReturn, setDateReturn] = useState<Date | undefined>(undefined);
+
+    const handleSearch = useCallback(() => {
+        if (!fromSelected || !toSelected || !dateDeparture || (withReturnDate && !dateReturn)) {
+            return;
+        }
+
+        const searchParams = new URLSearchParams();
+        searchParams.set("fp", String(fromSelected.provinceId));
+        searchParams.set("tp", String(toSelected.provinceId));
+        searchParams.set("fd", fromSelected.districtId ? String(fromSelected.districtId) : "");
+        searchParams.set("td", toSelected.districtId ? String(toSelected.districtId) : "");
+        searchParams.set("fw", fromSelected.wardId ? String(fromSelected.wardId) : "");
+        searchParams.set("tw", toSelected.wardId ? String(toSelected.wardId) : "");
+        searchParams.set("date", format(dateDeparture, "yyyy-MM-dd"));
+        if (withReturnDate && dateReturn) {
+            searchParams.set("return", format(dateReturn, "yyyy-MM-dd"));
+        }
+
+        navigate(`/search?${searchParams.toString()}`);
+    }, [dateDeparture, dateReturn, fromSelected, navigate, toSelected, withReturnDate]);
+
+    const btnDisabled = useMemo(
+        () => !fromSelected || !toSelected || !dateDeparture || (withReturnDate && !dateReturn),
+        [fromSelected, toSelected, dateDeparture, withReturnDate, dateReturn],
+    );
+
+    return (
+        <Card size="3" variant="surface" className="pt-3!">
+            <Box pt="2">
+                <Grid columns={{ initial: "1", md: "1" }} gap="6" align="start">
+                    <Grid columns={{ initial: "1", md: "3" }} gap="4" align="end">
+                        <Box>
+                            <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
+                                {t("fields.from")}
+                            </Text>
+                            <AddressSearch
+                                inputProps={{
+                                    placeholder: t("placeholders.fromFull"),
+                                }}
+                                text={fromTxt}
+                                setText={setFromTxt}
+                                setSelected={setFromSelected}
+                            />
+                        </Box>
+
+                        <Box>
+                            <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
+                                {t("fields.to")}
+                            </Text>
+                            <AddressSearch
+                                inputProps={{
+                                    placeholder: t("placeholders.toFull"),
+                                }}
+                                text={toTxt}
+                                setText={setToTxt}
+                                setSelected={setToSelected}
+                            />
+                        </Box>
+                        <Grid columns={{ initial: "2", md: "2" }} gap="4" align="end">
+                            <Box>
+                                <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
+                                    {t("fields.departureDate")}
+                                </Text>
+                                <DatePickerInput
+                                    inputProps={{
+                                        placeholder: t("fields.departureDate"),
+                                    }}
+                                    date={dateDeparture || undefined}
+                                    setDate={setDateDeparture}
+                                />
+                            </Box>
+                            <Box>
+                                <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
+                                    {t("fields.returnDate")}
+                                </Text>
+                                {withReturnDate ? (
+                                    <DatePickerInput
+                                        inputProps={{
+                                            placeholder: t("fields.returnDate"),
+                                        }}
+                                        date={dateReturn || undefined}
+                                        setDate={setDateReturn}
+                                    />
+                                ) : (
+                                    <Button
+                                        variant="soft"
+                                        color="gray"
+                                        size="3"
+                                        className="w-full!"
+                                        onClick={() => setWithReturnDate(true)}
+                                    >
+                                        <PlusIcon size={18} />
+                                        {t("actions.add")}
+                                    </Button>
+                                )}
+                            </Box>
+                        </Grid>
+                    </Grid>
+                    <Button
+                        size="3"
+                        color="amber"
+                        variant="solid"
+                        style={{ cursor: "pointer" }}
+                        onClick={handleSearch}
+                        disabled={btnDisabled}
+                    >
+                        <Search size={18} />
+                        {t("actions.search")}
+                    </Button>
+                </Grid>
+            </Box>
+        </Card>
+    );
+}
+
+function HeroAndSearch() {
+    const { t } = useTranslation("hero");
+    const { mode } = useThemeContext();
 
     return (
         <Box position="relative" pb="9" style={{ backgroundColor: "var(--gray-2)" }}>
@@ -95,73 +221,7 @@ function HeroAndSearch() {
             </div>
 
             <Container size="4" px="4" style={{ marginTop: "-64px", position: "relative", zIndex: 10 }}>
-                <Card size="3" variant="surface" className="pt-3!">
-                    <Box pt="2">
-                        <Grid columns={{ initial: "1", md: "1" }} gap="6" align="start">
-                            <Grid columns={{ initial: "1", md: "3" }} gap="4" align="end">
-                                <Box>
-                                    <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
-                                        {t("fields.from")}
-                                    </Text>
-                                    <AddressSearch
-                                        inputProps={{
-                                            placeholder: t("placeholders.fromFull"),
-                                        }}
-                                    />
-                                </Box>
-
-                                <Box>
-                                    <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
-                                        {t("fields.to")}
-                                    </Text>
-                                    <AddressSearch
-                                        inputProps={{
-                                            placeholder: t("placeholders.toFull"),
-                                        }}
-                                    />
-                                </Box>
-                                <Grid columns={{ initial: "2", md: "2" }} gap="4" align="end">
-                                    <Box>
-                                        <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
-                                            {t("fields.departureDate")}
-                                        </Text>
-                                        <DatePickerInput
-                                            inputProps={{
-                                                placeholder: t("fields.departureDate"),
-                                            }}
-                                        />
-                                    </Box>
-                                    <Box>
-                                        <Text as="div" size="2" weight="bold" mb="2" color="gray" highContrast>
-                                            {t("fields.returnDate")}
-                                        </Text>
-                                        {withReturnDate ? (
-                                            <DatePickerInput
-                                                inputProps={{
-                                                    placeholder: t("fields.returnDate"),
-                                                }}
-                                            />
-                                        ) : (
-                                            <Button
-                                                variant="soft"
-                                                color="gray"
-                                                size="3"
-                                                onClick={() => setWithReturnDate(true)}
-                                            >
-                                                <PlusIcon size={14} />
-                                                {t("actions.addReturnDate")}
-                                            </Button>
-                                        )}
-                                    </Box>
-                                </Grid>
-                            </Grid>
-                            <Button size="3" color="amber" variant="solid" style={{ cursor: "pointer" }}>
-                                <Search size={18} />
-                                {t("actions.search")}
-                            </Button>
-                        </Grid>
-                    </Box>
-                </Card>
+                <HeroSearch />
             </Container>
         </Box>
     );

@@ -27,13 +27,18 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
+
             var query = _context
                 .Buses.AsNoTracking()
                 .Include(b => b.BusType)
                 .Where(b => b.CompanyID == companyId.Value);
 
             var totalRecords = await query.CountAsync();
-            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+            var totalPages =
+                totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
 
             var buses = await query
                 .OrderBy(b => b.PlateNumber)
@@ -113,6 +118,10 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
+
             var query = _context
                 .Tickets.AsNoTracking()
                 .Where(t =>
@@ -127,7 +136,8 @@ namespace Pbl3.Controllers.BusAdmin
             }
 
             var totalRecords = await query.CountAsync();
-            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+            var totalPages =
+                totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
 
             var tickets = await query
                 .OrderByDescending(t => t.Booking!.CreatedAt)
@@ -198,6 +208,10 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
+
             var query = _context
                 .Trips.AsNoTracking()
                 .Where(t => t.Route != null && t.Route.CompanyID == companyId.Value);
@@ -210,7 +224,8 @@ namespace Pbl3.Controllers.BusAdmin
             }
 
             var totalRecords = await query.CountAsync();
-            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+            var totalPages =
+                totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
 
             var trips = await query
                 .OrderByDescending(t => t.DepartureDate)
@@ -267,16 +282,19 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
+
             var hasOwnership = await IsBusTypeOwnedByCompanyAsync(companyId.Value, busTypeId);
             if (!hasOwnership)
                 return Forbid();
 
-            var query = _context
-                .SeatLayouts.AsNoTracking()
-                .Where(s => s.BusTypeID == busTypeId);
+            var query = _context.SeatLayouts.AsNoTracking().Where(s => s.BusTypeID == busTypeId);
 
             var totalRecords = await query.CountAsync();
-            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+            var totalPages =
+                totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
 
             var layouts = await query
                 .OrderBy(s => s.Floor)
@@ -314,6 +332,10 @@ namespace Pbl3.Controllers.BusAdmin
             var companyId = await GetCurrentCompanyIdAsync();
             if (companyId == null)
                 return Forbid();
+
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
 
             var hasOwnership = await IsBusTypeOwnedByCompanyAsync(companyId.Value, busTypeId);
             if (!hasOwnership)
@@ -358,6 +380,10 @@ namespace Pbl3.Controllers.BusAdmin
             var companyId = await GetCurrentCompanyIdAsync();
             if (companyId == null)
                 return Forbid();
+
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
 
             var startDate = new DateOnly(year, month, 1);
             var endDate = startDate.AddMonths(1);

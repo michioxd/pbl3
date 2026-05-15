@@ -1,4 +1,10 @@
-import { getApiUserMe, type MePassengerDto, type MeUserInfoDto, type MeUserRoleDto } from "@/api";
+import {
+    getApiAdminSystemUpgradeRequestsStatsPendingCount,
+    getApiUserMe,
+    type MePassengerDto,
+    type MeUserInfoDto,
+    type MeUserRoleDto,
+} from "@/api";
 import { makeAutoObservable, runInAction } from "mobx";
 
 export type ICurrentUser = {
@@ -14,6 +20,7 @@ export class UserStore {
     userToken: string | null = null;
     isLoading: boolean = true;
     error: string | null = null;
+    pendingUpgradeRequestCount: number = 0;
 
     constructor() {
         makeAutoObservable(this);
@@ -112,6 +119,29 @@ export class UserStore {
         localStorage.removeItem("auth_token");
         runInAction(() => {
             this.user = null;
+            this.pendingUpgradeRequestCount = 0;
         });
+    }
+
+    async fetchPendingUpgradeRequestCount() {
+        if (!this.isAuthenticated || this.user?.role.roleName !== "SysAdmin") {
+            runInAction(() => {
+                this.pendingUpgradeRequestCount = 0;
+            });
+            return;
+        }
+
+        try {
+            const response = await getApiAdminSystemUpgradeRequestsStatsPendingCount();
+            runInAction(() => {
+                const data = response.data as { pendingCount?: number } | undefined;
+                this.pendingUpgradeRequestCount = data?.pendingCount ?? 0;
+            });
+        } catch (e) {
+            console.error("Failed to fetch pending upgrade request count", e);
+            runInAction(() => {
+                this.pendingUpgradeRequestCount = 0;
+            });
+        }
     }
 }

@@ -1,275 +1,430 @@
 import {
-    getApiAdminBusAdminUpgradeRequests,
-    patchApiAdminBusAdminUpgradeRequestsByRequestIdReview,
-    type BusAdminUpgradeRequestStatus,
-    type ReviewBusAdminUpgradeRequestDto,
+    getApiAdminSystemUpgradeRequests,
+    patchApiAdminSystemUpgradeRequestsByRequestIdReview,
 } from "@/api";
+import {
+    DataTableColumnHeader,
+    DataTablePagination,
+    DataTableToolbar,
+} from "@/components/dashboard/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Clock3, RefreshCw, Search, ShieldAlert, ShieldCheck, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+    flexRender,
+    getCoreRowModel,
+    getFacetedRowModel,
+    getFacetedUniqueValues,
+    useReactTable,
+    type ColumnDef,
+    type ColumnFiltersState,
+    type FilterFn,
+    type PaginationState,
+    type SortingState,
+} from "@tanstack/react-table";
+import {
+    CheckCircle,
+    Clock,
+    Package,
+    RefreshCw,
+    XCircle,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-type UpgradeRequestItem = {
-    id: string;
-    companyId: string | null;
+// Local type definitions until OpenAPI regeneration (requires backend server running)
+// Backend uses enum: 0=Pending, 1=Approved, 2=Rejected
+type BusAdminUpgradeRequestStatus = 0 | 1 | 2;
+
+type BusCompanyBasicDto = {
+    companyID: string;
+    name: string;
+    licenseNumber?: string | null;
+    hotline?: string | null;
+    isApproved: boolean;
+};
+
+type UserBasicDto = {
+    userID: string;
+    email: string;
+    fullName?: string | null;
+};
+
+type BusAdminUpgradeRequestListItemDto = {
+    requestID: string;
+    requesterUserID: string;
+    requesterEmail?: string | null;
+    requesterName?: string | null;
     companyName: string;
-    licenseNumber: string | null;
-    hotline: string | null;
-    reason: string | null;
+    licenseNumber?: string | null;
+    hotline?: string | null;
+    reason?: string | null;
     status: BusAdminUpgradeRequestStatus;
-    requestedAt: string | null;
-    reviewedAt: string | null;
-    reviewNote: string | null;
-    requesterName: string | null;
-    requesterEmail: string | null;
-    reviewedBy: {
-        id: string | null;
-        email: string | null;
-        fullName: string | null;
-    } | null;
-    busCompany: {
-        id: string | null;
-        name: string | null;
-        licenseNumber: string | null;
-        hotline: string | null;
-        isApproved: boolean;
-    } | null;
+    requestedAt: string;
+    reviewedAt?: string | null;
+    reviewNote?: string | null;
+    companyID?: string | null;
+    busCompany?: BusCompanyBasicDto | null;
+    reviewedBy?: UserBasicDto | null;
 };
 
-type UpgradeRequestListResponse = {
-    page?: number;
-    pageSize?: number;
-    totalRecords?: number;
-    totalPages?: number;
-    records?: unknown[];
+type BusAdminUpgradeRequestListResponseDto = {
+    records: BusAdminUpgradeRequestListItemDto[];
+    page: number;
+    pageSize: number;
+    totalRecords: number;
+    totalPages: number;
 };
 
-type ReviewDialogState = {
-    request: UpgradeRequestItem | null;
-    note: string;
-    mode: "approve" | "reject" | null;
+// Status enum constants
+const STATUS_PENDING = 0 as BusAdminUpgradeRequestStatus;
+const STATUS_APPROVED = 1 as BusAdminUpgradeRequestStatus;
+const STATUS_REJECTED = 2 as BusAdminUpgradeRequestStatus;
+
+type ReviewFormState = {
+    reviewNote: string;
 };
 
-const PAGE_SIZES = [25, 50, 100, 200] as const;
-const STATUS_ALL = "all";
-const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
-    { value: STATUS_ALL, label: "Tất cả" },
-    { value: "0", label: "Chờ duyệt" },
-    { value: "1", label: "Đã chấp thuận" },
-    { value: "2", label: "Đã từ chối" },
+const emptyReviewForm: ReviewFormState = {
+    reviewNote: "",
+};
+
+const statusFilterOptions = [
+    { label: "Chờ xét duyệt", value: "0" },
+    { label: "Đã chấp thuận", value: "1" },
+    { label: "Đã từ chối", value: "2" },
 ];
 
+const statusFilterFn: FilterFn<BusAdminUpgradeRequestListItemDto> = (row, columnId, filterValue) => {
+    if (!Array.isArray(filterValue) || filterValue.length === 0) {
+        return true;
+    }
+
+    const rowStatus = String(row.getValue(columnId));
+    return filterValue.includes(rowStatus);
+};
+
 export function PageAdminUpgradeRequests() {
-    const [requests, setRequests] = useState<UpgradeRequestItem[]>([]);
+    const [requests, setRequests] = useState<BusAdminUpgradeRequestListItemDto[]>([]);
+    const [totalRecords, setTotalRecords] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState<string>(STATUS_ALL);
-    const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState<number>(25);
-    const [totalPages, setTotalPages] = useState(0);
-    const [totalRecords, setTotalRecords] = useState(0);
-    const [reviewDialog, setReviewDialog] = useState<ReviewDialogState>({ request: null, note: "", mode: null });
-    const [reviewSubmitting, setReviewSubmitting] = useState(false);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [reviewingRequest, setReviewingRequest] = useState<BusAdminUpgradeRequestListItemDto | null>(null);
+    const [reviewForm, setReviewForm] = useState<ReviewFormState>(emptyReviewForm);
+    const [sorting, setSorting] = useState<SortingState>([{ id: "ngayYeuCau", desc: true }]);
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+    const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 25 });
+    const hasLoadedOnceRef = useRef(false);
+
+    const statusFilterValues = useMemo(() => {
+        const value = columnFilters.find((filter) => filter.id === "trangThai")?.value;
+        return Array.isArray(value) ? value.map(String) : [];
+    }, [columnFilters]);
+
+    const statusFilterKey = statusFilterValues.join("|");
+
+    useEffect(() => {
+        setPagination((current) => {
+            if (current.pageIndex === 0) {
+                return current;
+            }
+
+            return {
+                ...current,
+                pageIndex: 0,
+            };
+        });
+    }, [statusFilterKey]);
+
+    const requestData = useCallback(async () => {
+        const statusParam: BusAdminUpgradeRequestStatus | undefined =
+            statusFilterValues.length === 1 ? (Number(statusFilterValues[0]) as BusAdminUpgradeRequestStatus) : undefined;
+
+        const response = await getApiAdminSystemUpgradeRequests({
+            query: {
+                ...(statusParam !== undefined ? { status: statusParam } : {}),
+                page: pagination.pageIndex + 1,
+                pageSize: pagination.pageSize,
+            },
+        });
+
+        if (response.error || !response.data) {
+            throw new Error(getApiErrorMessage(response.error, "Không thể tải danh sách yêu cầu."));
+        }
+
+        return response.data as unknown as BusAdminUpgradeRequestListResponseDto;
+    }, [pagination.pageIndex, pagination.pageSize, statusFilterValues]);
 
     const fetchRequests = useCallback(
-        async (showRefreshing: boolean) => {
-            if (showRefreshing) {
-                setRefreshing(true);
-            } else {
+        async (showRefreshing = hasLoadedOnceRef.current) => {
+            if (!showRefreshing) {
                 setLoading(true);
             }
 
+            if (showRefreshing) {
+                setRefreshing(true);
+            }
+
             try {
-                const query: { status?: BusAdminUpgradeRequestStatus; page?: number; pageSize?: number } = {
-                    page,
-                    pageSize,
-                    ...(statusFilter === STATUS_ALL ? {} : { status: Number(statusFilter) as BusAdminUpgradeRequestStatus }),
-                };
+                const data = await requestData();
+                setRequests(data.records ?? []);
+                setTotalRecords(data.totalRecords ?? 0);
+                setTotalPages(Math.max(data.totalPages ?? 1, 1));
+                setError(null);
 
-                const response = await getApiAdminBusAdminUpgradeRequests({ query });
-
-                if (response.error || !response.data) {
-                    throw new Error(getApiErrorMessage(response.error, "Không thể tải danh sách yêu cầu nâng cấp."));
+                if (data.pageSize && data.pageSize !== pagination.pageSize) {
+                    setPagination((current) => ({ ...current, pageSize: data.pageSize }));
                 }
 
-                const data = response.data as UpgradeRequestListResponse;
-                setRequests(normalizeRequests(data.records));
-                setTotalRecords(Number(data.totalRecords ?? 0));
-                setTotalPages(Number(data.totalPages ?? 0));
-                setError(null);
+                if (typeof data.page === "number" && data.page - 1 !== pagination.pageIndex) {
+                    setPagination((current) => ({ ...current, pageIndex: Math.max(data.page - 1, 0) }));
+                }
+
+                hasLoadedOnceRef.current = true;
             } catch (e) {
-                console.error("Không thể tải danh sách yêu cầu nâng cấp", e);
+                console.error("Không thể tải danh sách yêu cầu", e);
                 setRequests([]);
                 setTotalRecords(0);
-                setTotalPages(0);
-                setError(e instanceof Error ? e.message : "Không thể tải danh sách yêu cầu nâng cấp.");
+                setTotalPages(1);
+                setError(e instanceof Error ? e.message : "Không thể tải danh sách yêu cầu.");
+
                 if (showRefreshing) {
-                    toast.error("Làm mới danh sách yêu cầu nâng cấp thất bại");
+                    toast.error("Làm mới danh sách yêu cầu thất bại");
                 }
             } finally {
                 setLoading(false);
                 setRefreshing(false);
             }
         },
-        [page, pageSize, statusFilter],
+        [pagination.pageIndex, pagination.pageSize, requestData],
     );
 
     useEffect(() => {
-        void fetchRequests(false);
+        void fetchRequests();
     }, [fetchRequests]);
 
-    useEffect(() => {
-        setPage(1);
-    }, [pageSize, statusFilter, search]);
-
-    const filteredRequests = useMemo(() => {
-        const keyword = search.trim().toLowerCase();
-        if (!keyword) {
-            return requests;
-        }
-
-        return requests.filter((request) => {
-            return [request.companyName, request.requesterName, request.requesterEmail, request.licenseNumber, request.hotline, request.reason]
-                .filter(Boolean)
-                .some((value) => value!.toLowerCase().includes(keyword));
-        });
-    }, [requests, search]);
-
-    const counts = useMemo(
-        () => ({
-            pending: requests.filter((request) => request.status === 0).length,
-            approved: requests.filter((request) => request.status === 1).length,
-            rejected: requests.filter((request) => request.status === 2).length,
-        }),
-        [requests],
-    );
-
-    const canGoPrev = page > 1;
-    const canGoNext = totalPages > 0 && page < totalPages;
-
-    const openReviewDialog = (request: UpgradeRequestItem, mode: "approve" | "reject" | null = null) => {
-        setReviewDialog({
-            request,
-            note: request.reviewNote ?? "",
-            mode,
-        });
+    const openReviewDialog = (request: BusAdminUpgradeRequestListItemDto) => {
+        setReviewingRequest(request);
+        setReviewForm(emptyReviewForm);
+        setDialogOpen(true);
     };
 
-    const closeReviewDialog = () => {
-        setReviewDialog({ request: null, note: "", mode: null });
+    const closeDialog = () => {
+        setDialogOpen(false);
+        setReviewingRequest(null);
+        setReviewForm(emptyReviewForm);
     };
 
-    const submitReview = async (approve: boolean) => {
-        if (!reviewDialog.request) {
-            return;
-        }
+    const handleReview = async (approve: boolean) => {
+        if (!reviewingRequest) return;
 
-        setReviewSubmitting(true);
+        setSubmitting(true);
         try {
-            const payload: ReviewBusAdminUpgradeRequestDto = {
-                approve,
-                reviewNote: reviewDialog.note.trim() || null,
-            };
-
-            const response = await patchApiAdminBusAdminUpgradeRequestsByRequestIdReview({
-                path: { requestId: reviewDialog.request.id },
-                body: payload,
+            const response = await patchApiAdminSystemUpgradeRequestsByRequestIdReview({
+                path: { requestId: reviewingRequest.requestID },
+                body: {
+                    approve,
+                    reviewNote: reviewForm.reviewNote.trim() || null,
+                },
             });
 
             if (response.error) {
-                throw new Error(getApiErrorMessage(response.error, approve ? "Không thể chấp thuận yêu cầu." : "Không thể từ chối yêu cầu."));
+                throw new Error(getApiErrorMessage(response.error, "Không thể xét duyệt yêu cầu"));
             }
 
-            toast.success(approve ? "Đã chấp thuận yêu cầu nâng cấp" : "Đã từ chối yêu cầu nâng cấp");
-            closeReviewDialog();
+            toast.success(approve ? "Đã chấp thuận yêu cầu" : "Đã từ chối yêu cầu");
+            closeDialog();
             await fetchRequests(true);
         } catch (e) {
-            console.error("Không thể xử lý yêu cầu nâng cấp", e);
-            toast.error(e instanceof Error ? e.message : "Không thể xử lý yêu cầu nâng cấp.");
+            console.error("Review failed", e);
+            toast.error(e instanceof Error ? e.message : "Không thể xét duyệt yêu cầu");
         } finally {
-            setReviewSubmitting(false);
+            setSubmitting(false);
         }
     };
 
+    const columns = useMemo<ColumnDef<BusAdminUpgradeRequestListItemDto>[]>(
+        () => [
+            {
+                id: "nguoiYeuCau",
+                accessorFn: (row) => `${row.requesterName ?? ""} ${row.requesterEmail ?? ""}`.toLowerCase(),
+                header: ({ column }) => <DataTableColumnHeader column={column} title="Người yêu cầu" />,
+                cell: ({ row }) => (
+                    <div className="space-y-1">
+                        <div className="font-medium">{row.original.requesterName || "Chưa có tên"}</div>
+                        <div className="text-sm text-muted-foreground">{row.original.requesterEmail}</div>
+                    </div>
+                ),
+            },
+            {
+                id: "congTy",
+                accessorFn: (row) => row.companyName.toLowerCase(),
+                header: ({ column }) => <DataTableColumnHeader column={column} title="Công ty" />,
+                cell: ({ row }) => (
+                    <div className="space-y-1">
+                        <div className="font-medium">{row.original.companyName}</div>
+                        {row.original.licenseNumber && (
+                            <div className="text-xs text-muted-foreground">GP: {row.original.licenseNumber}</div>
+                        )}
+                        {row.original.hotline && (
+                            <div className="text-xs text-muted-foreground">Hotline: {row.original.hotline}</div>
+                        )}
+                    </div>
+                ),
+            },
+            {
+                id: "trangThai",
+                accessorFn: (row) => row.status,
+                header: ({ column }) => <DataTableColumnHeader column={column} title="Trạng thái" />,
+                cell: ({ row }) => (
+                    <Badge variant={getStatusBadgeVariant(row.original.status)}>
+                        {formatStatus(row.original.status)}
+                    </Badge>
+                ),
+                filterFn: statusFilterFn,
+            },
+            {
+                id: "ngayYeuCau",
+                accessorFn: (row) => new Date(row.requestedAt).getTime(),
+                header: ({ column }) => <DataTableColumnHeader column={column} title="Ngày yêu cầu" />,
+                cell: ({ row }) => <div className="text-muted-foreground">{formatDateTime(row.original.requestedAt)}</div>,
+            },
+            {
+                id: "ngayXetDuyet",
+                accessorFn: (row) => (row.reviewedAt ? new Date(row.reviewedAt).getTime() : 0),
+                header: ({ column }) => <DataTableColumnHeader column={column} title="Ngày xét duyệt" />,
+                cell: ({ row }) =>
+                    row.original.reviewedAt ? (
+                        <div className="text-muted-foreground">{formatDateTime(row.original.reviewedAt)}</div>
+                    ) : (
+                        <div className="text-xs text-muted-foreground">Chưa xét duyệt</div>
+                    ),
+            },
+            {
+                id: "nguoiXetDuyet",
+                accessorFn: (row) => row.reviewedBy?.fullName ?? "",
+                header: ({ column }) => <DataTableColumnHeader column={column} title="Người xét duyệt" />,
+                cell: ({ row }) =>
+                    row.original.reviewedBy ? (
+                        <div className="space-y-1">
+                            <div className="font-medium">{row.original.reviewedBy.fullName || "Chưa có tên"}</div>
+                            <div className="text-xs text-muted-foreground">{row.original.reviewedBy.email}</div>
+                        </div>
+                    ) : (
+                        <div className="text-xs text-muted-foreground">—</div>
+                    ),
+            },
+            {
+                id: "thaoTac",
+                header: () => <div className="text-right">Thao tác</div>,
+                cell: ({ row }) => (
+                    <div className="flex justify-end">
+                        <Button
+                            variant={row.original.status === STATUS_PENDING ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => openReviewDialog(row.original)}
+                            disabled={row.original.status !== STATUS_PENDING}
+                        >
+                            {row.original.status === STATUS_PENDING ? "Xem & Xét duyệt" : "Xem chi tiết"}
+                        </Button>
+                    </div>
+                ),
+                enableSorting: false,
+                enableHiding: false,
+            },
+        ],
+        [],
+    );
+
+    const table = useReactTable({
+        data: requests,
+        columns,
+        state: {
+            sorting,
+            columnFilters,
+            pagination,
+        },
+        onSortingChange: setSorting,
+        onColumnFiltersChange: setColumnFilters,
+        onPaginationChange: setPagination,
+        manualPagination: true,
+        manualFiltering: true,
+        manualSorting: true,
+        pageCount: totalPages,
+        getCoreRowModel: getCoreRowModel(),
+        getFacetedRowModel: getFacetedRowModel(),
+        getFacetedUniqueValues: getFacetedUniqueValues(),
+    });
+
+    const pendingCount = requests.filter((r) => r.status === STATUS_PENDING).length;
+    const approvedCount = requests.filter((r) => r.status === STATUS_APPROVED).length;
+    const rejectedCount = requests.filter((r) => r.status === STATUS_REJECTED).length;
+
     return (
         <>
-            <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                     <div className="flex flex-wrap items-center gap-2">
                         <h1 className="text-2xl font-bold tracking-tight">Yêu cầu nâng cấp BusAdmin</h1>
-                        <Badge variant="outline">Trang {page} / {Math.max(totalPages, 1)}</Badge>
+                        <Badge variant="outline">{totalRecords} yêu cầu</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                        Theo dõi danh sách request, trạng thái xử lý và duyệt trực tiếp trong dialog.
+                        Xét duyệt yêu cầu nâng cấp tài khoản từ Hành khách lên Quản trị nhà xe.
                     </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                    <div className="relative w-72 max-w-full">
-                        <Search className="pointer-events-none absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            value={search}
-                            onChange={(event) => setSearch(event.target.value)}
-                            placeholder="Tìm công ty, người gửi, lý do..."
-                            className="pl-8"
-                        />
-                    </div>
-
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-44">
-                            <SelectValue placeholder="Trạng thái" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {STATUS_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    <select
-                        value={pageSize}
-                        onChange={(event) => setPageSize(Number(event.target.value))}
-                        className="h-10 rounded-md border bg-background px-3 text-sm"
-                    >
-                        {PAGE_SIZES.map((size) => (
-                            <option key={size} value={size}>
-                                {size} bản ghi
-                            </option>
-                        ))}
-                    </select>
-
-                    <Button variant="outline" onClick={() => void fetchRequests(true)} disabled={loading || refreshing}>
-                        <RefreshCw className={cn("mr-2 h-4 w-4", refreshing && "animate-spin")} />
-                        Làm mới
-                    </Button>
-                </div>
+                <Button variant="outline" onClick={() => void fetchRequests(true)} disabled={loading || refreshing}>
+                    <RefreshCw className={cn("mr-2 h-4 w-4", refreshing && "animate-spin")} />
+                    Làm mới
+                </Button>
             </div>
 
-            <div className="mb-4 grid gap-4 md:grid-cols-3">
-                <SummaryCard title="Chờ duyệt" value={counts.pending} icon={<Clock3 className="h-4 w-4" />} loading={loading} />
-                <SummaryCard title="Đã chấp thuận" value={counts.approved} icon={<ShieldCheck className="h-4 w-4" />} loading={loading} />
-                <SummaryCard title="Đã từ chối" value={counts.rejected} icon={<ShieldAlert className="h-4 w-4" />} loading={loading} />
+            <div className="mb-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <SummaryCard
+                    title="Tổng yêu cầu"
+                    value={totalRecords}
+                    icon={<Package className="h-4 w-4" />}
+                    loading={loading}
+                />
+                <SummaryCard
+                    title="Chờ xét duyệt"
+                    value={pendingCount}
+                    icon={<Clock className="h-4 w-4" />}
+                    variant="warning"
+                    loading={loading}
+                />
+                <SummaryCard
+                    title="Đã chấp thuận"
+                    value={approvedCount}
+                    icon={<CheckCircle className="h-4 w-4" />}
+                    variant="success"
+                    loading={loading}
+                />
+                <SummaryCard
+                    title="Đã từ chối"
+                    value={rejectedCount}
+                    icon={<XCircle className="h-4 w-4" />}
+                    variant="destructive"
+                    loading={loading}
+                />
             </div>
 
             <Card>
-                <CardHeader>
-                    <CardTitle>Danh sách yêu cầu</CardTitle>
-                    <CardDescription>
-                        Hiển thị {filteredRequests.length} / {new Intl.NumberFormat("vi-VN").format(totalRecords)} bản ghi.
-                    </CardDescription>
-                </CardHeader>
                 <CardContent className="space-y-4">
                     {error ? (
                         <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
@@ -277,24 +432,52 @@ export function PageAdminUpgradeRequests() {
                         </div>
                     ) : null}
 
+                    <DataTableToolbar
+                        table={table}
+                        searchPlaceholder="Tìm theo tên, email, công ty"
+                        filters={[{ columnId: "trangThai", title: "Trạng thái", options: statusFilterOptions }]}
+                    />
+
                     <div className="overflow-hidden rounded-md border">
                         <div className="overflow-x-auto">
                             <table className="min-w-full text-sm">
                                 <thead>
-                                    <tr className="border-b bg-muted/30">
-                                        <th className="h-11 px-3 text-left font-medium text-muted-foreground">Công ty</th>
-                                        <th className="h-11 px-3 text-left font-medium text-muted-foreground">Người gửi</th>
-                                        <th className="h-11 px-3 text-left font-medium text-muted-foreground">Trạng thái</th>
-                                        <th className="h-11 px-3 text-left font-medium text-muted-foreground">Ngày gửi</th>
-                                        <th className="h-11 px-3 text-right font-medium text-muted-foreground">Thao tác</th>
-                                    </tr>
+                                    {table.getHeaderGroups().map((headerGroup) => (
+                                        <tr key={headerGroup.id} className="border-b bg-muted/30">
+                                            {headerGroup.headers.map((header) => {
+                                                const isActionColumn = header.column.id === "thaoTac";
+
+                                                return (
+                                                    <th
+                                                        key={header.id}
+                                                        colSpan={header.colSpan}
+                                                        className={cn(
+                                                            "h-11 px-3 align-middle font-medium text-muted-foreground",
+                                                            "text-left",
+                                                            isActionColumn && "text-right",
+                                                        )}
+                                                    >
+                                                        {header.isPlaceholder
+                                                            ? null
+                                                            : flexRender(header.column.columnDef.header, header.getContext())}
+                                                    </th>
+                                                );
+                                            })}
+                                        </tr>
+                                    ))}
                                 </thead>
                                 <tbody>
                                     {loading
-                                        ? Array.from({ length: 6 }).map((_, index) => (
-                                              <tr key={index} className="border-b">
-                                                  {Array.from({ length: 5 }).map((__, cellIndex) => (
-                                                      <td key={cellIndex} className="px-3 py-3">
+                                        ? Array.from({ length: 6 }).map((_, rowIndex) => (
+                                              <tr key={rowIndex} className="border-b">
+                                                  {columns.map((column) => (
+                                                      <td
+                                                          key={column.id?.toString()}
+                                                          className={cn(
+                                                              "px-3 py-3 align-top",
+                                                              column.id === "thaoTac" && "text-right",
+                                                          )}
+                                                      >
                                                           <Skeleton className="h-6 w-full" />
                                                       </td>
                                                   ))}
@@ -302,41 +485,35 @@ export function PageAdminUpgradeRequests() {
                                           ))
                                         : null}
 
-                                    {!loading && filteredRequests.length === 0 ? (
+                                    {!loading && table.getRowModel().rows.length === 0 ? (
                                         <tr>
-                                            <td colSpan={5} className="h-24 px-3 text-center text-muted-foreground">
-                                                Không có yêu cầu phù hợp.
+                                            <td
+                                                colSpan={table.getVisibleLeafColumns().length}
+                                                className="h-24 px-3 text-center text-muted-foreground"
+                                            >
+                                                Không tìm thấy yêu cầu phù hợp.
                                             </td>
                                         </tr>
                                     ) : null}
 
                                     {!loading
-                                        ? filteredRequests.map((request) => (
-                                              <tr key={request.id} className="border-b align-top transition-colors hover:bg-muted/30">
-                                                  <td className="px-3 py-3">
-                                                      <div className="font-medium">{request.companyName}</div>
-                                                      <div className="text-xs text-muted-foreground">
-                                                          {request.licenseNumber || "Chưa có giấy phép"} · {request.hotline || "Chưa có hotline"}
-                                                      </div>
-                                                  </td>
-                                                  <td className="px-3 py-3">
-                                                      <div className="font-medium">{request.requesterName || "Không rõ"}</div>
-                                                      <div className="text-xs text-muted-foreground">{request.requesterEmail || "Không có email"}</div>
-                                                  </td>
-                                                  <td className="px-3 py-3">
-                                                      <StatusBadge status={request.status} />
-                                                  </td>
-                                                  <td className="px-3 py-3 text-muted-foreground">{formatDateTime(request.requestedAt)}</td>
-                                                  <td className="px-3 py-3 text-right">
-                                                      <div className="inline-flex gap-2">
-                                                          <Button variant="outline" size="sm" onClick={() => openReviewDialog(request)}>
-                                                              Xem
-                                                          </Button>
-                                                          <Button size="sm" onClick={() => openReviewDialog(request, "approve")}>
-                                                              Duyệt
-                                                          </Button>
-                                                      </div>
-                                                  </td>
+                                        ? table.getRowModel().rows.map((row) => (
+                                              <tr
+                                                  key={row.id}
+                                                  className="border-b align-top transition-colors hover:bg-muted/30"
+                                              >
+                                                  {row.getVisibleCells().map((cell) => {
+                                                      const isActionColumn = cell.column.id === "thaoTac";
+
+                                                      return (
+                                                          <td
+                                                              key={cell.id}
+                                                              className={cn("px-3 py-3 align-top", isActionColumn && "text-right")}
+                                                          >
+                                                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                          </td>
+                                                      );
+                                                  })}
                                               </tr>
                                           ))
                                         : null}
@@ -345,115 +522,106 @@ export function PageAdminUpgradeRequests() {
                         </div>
                     </div>
 
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="text-sm text-muted-foreground">
-                            Hển thị {filteredRequests.length} / {new Intl.NumberFormat("vi-VN").format(totalRecords)} bản ghi
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={() => setPage((current) => current - 1)} disabled={!canGoPrev}>
-                                Trang trước
-                            </Button>
-                            <Badge variant="outline">Trang {page}</Badge>
-                            <Button variant="outline" size="sm" onClick={() => setPage((current) => current + 1)} disabled={!canGoNext}>
-                                Trang sau
-                            </Button>
-                        </div>
-                    </div>
+                    <DataTablePagination table={table} className="mt-auto" />
                 </CardContent>
             </Card>
 
-            <Dialog open={Boolean(reviewDialog.request)} onOpenChange={(open) => (!open ? closeReviewDialog() : null)}>
-                <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+            <Dialog open={dialogOpen} onOpenChange={(open) => (!open ? closeDialog() : setDialogOpen(true))}>
+                <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
-                        <DialogTitle>{reviewDialog.request?.companyName || "Chi tiết yêu cầu"}</DialogTitle>
+                        <DialogTitle>Xét duyệt yêu cầu nâng cấp BusAdmin</DialogTitle>
                         <DialogDescription>
-                            Xem thông tin request và ghi chú review trước khi chấp thuận hoặc từ chối.
+                            Xem chi tiết yêu cầu và quyết định chấp thuận hoặc từ chối.
                         </DialogDescription>
                     </DialogHeader>
 
-                    {reviewDialog.request ? (
+                    {reviewingRequest && (
                         <div className="space-y-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-base">Thông tin request</CardTitle>
-                                </CardHeader>
-                                <CardContent className="grid gap-2 text-sm md:grid-cols-2">
-                                    <InfoField label="Công ty" value={reviewDialog.request.companyName} />
-                                    <InfoField label="Mã công ty" value={reviewDialog.request.companyId || "Chưa có"} />
-                                    <InfoField label="Giấy phép" value={reviewDialog.request.licenseNumber || "Chưa có"} />
-                                    <InfoField label="Hotline" value={reviewDialog.request.hotline || "Chưa có"} />
-                                    <InfoField label="Người gửi" value={reviewDialog.request.requesterName || "Không rõ"} />
-                                    <InfoField label="Email" value={reviewDialog.request.requesterEmail || "Không có"} />
-                                    <InfoField label="Trạng thái" value={renderStatusText(reviewDialog.request.status)} />
-                                    <InfoField label="Ngày gửi" value={formatDateTime(reviewDialog.request.requestedAt)} />
-                                </CardContent>
-                            </Card>
+                            <div className="rounded-lg border p-4">
+                                <h3 className="mb-3 font-medium">Người yêu cầu</h3>
+                                <div className="space-y-2 text-sm">
+                                    <InfoRow label="Họ tên" value={reviewingRequest.requesterName || "Chưa cung cấp"} />
+                                    <InfoRow label="Email" value={reviewingRequest.requesterEmail || "Chưa cung cấp"} />
+                                </div>
+                            </div>
 
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-base">Lý do</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-2">
-                                    <p className="text-sm text-muted-foreground">
-                                        {reviewDialog.request.reason || "Không có lý do chi tiết."}
-                                    </p>
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-base">Ghi chú review</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <Textarea
-                                        value={reviewDialog.note}
-                                        onChange={(event) => setReviewDialog((current) => ({ ...current, note: event.target.value }))}
-                                        placeholder="Nhập ghi chú nội bộ nếu cần..."
-                                        rows={5}
+                            <div className="rounded-lg border p-4">
+                                <h3 className="mb-3 font-medium">Thông tin công ty</h3>
+                                <div className="space-y-2 text-sm">
+                                    <InfoRow label="Tên công ty" value={reviewingRequest.companyName} />
+                                    <InfoRow
+                                        label="Số giấy phép"
+                                        value={reviewingRequest.licenseNumber || "Chưa cung cấp"}
                                     />
-                                </CardContent>
-                            </Card>
+                                    <InfoRow label="Hotline" value={reviewingRequest.hotline || "Chưa cung cấp"} />
+                                </div>
+                            </div>
 
-                            {reviewDialog.request.reviewedAt || reviewDialog.request.reviewedBy ? (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="text-base">Lịch sử review</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="grid gap-2 text-sm md:grid-cols-2">
-                                        <InfoField label="Reviewed at" value={formatDateTime(reviewDialog.request.reviewedAt)} />
-                                        <InfoField
-                                            label="Reviewed by"
-                                            value={reviewDialog.request.reviewedBy?.fullName || reviewDialog.request.reviewedBy?.email || "Chưa có"}
+                            {reviewingRequest.reason && (
+                                <div className="rounded-lg border p-4">
+                                    <h3 className="mb-3 font-medium">Lý do nâng cấp</h3>
+                                    <p className="text-sm text-muted-foreground">{reviewingRequest.reason}</p>
+                                </div>
+                            )}
+
+                            {reviewingRequest.status !== STATUS_PENDING && (
+                                <div className="rounded-lg border p-4">
+                                    <h3 className="mb-3 font-medium">Kết quả xét duyệt</h3>
+                                    <div className="space-y-2 text-sm">
+                                        <InfoRow
+                                            label="Trạng thái"
+                                            value={
+                                                <Badge variant={getStatusBadgeVariant(reviewingRequest.status)}>
+                                                    {formatStatus(reviewingRequest.status)}
+                                                </Badge>
+                                            }
                                         />
-                                        <InfoField
-                                            label="Ghi chú"
-                                            value={reviewDialog.request.reviewNote || "Chưa có ghi chú"}
-                                        />
-                                    </CardContent>
-                                </Card>
-                            ) : null}
+                                        {reviewingRequest.reviewedAt && (
+                                            <InfoRow label="Ngày xét duyệt" value={formatDateTime(reviewingRequest.reviewedAt)} />
+                                        )}
+                                        {reviewingRequest.reviewedBy && (
+                                            <InfoRow
+                                                label="Người xét duyệt"
+                                                value={`${reviewingRequest.reviewedBy.fullName} (${reviewingRequest.reviewedBy.email})`}
+                                            />
+                                        )}
+                                        {reviewingRequest.reviewNote && (
+                                            <InfoRow label="Ghi chú" value={reviewingRequest.reviewNote} />
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {reviewingRequest.status === STATUS_PENDING && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Ghi chú xét duyệt (tùy chọn)</label>
+                                    <Textarea
+                                        value={reviewForm.reviewNote}
+                                        onChange={(e) => setReviewForm((prev) => ({ ...prev, reviewNote: e.target.value }))}
+                                        placeholder="Nhập ghi chú về quyết định xét duyệt..."
+                                        rows={3}
+                                    />
+                                </div>
+                            )}
                         </div>
-                    ) : null}
+                    )}
 
-                    <DialogFooter className="gap-2 sm:justify-between">
-                        <Button variant="outline" onClick={closeReviewDialog} disabled={reviewSubmitting}>
-                            Đóng
+                    <DialogFooter>
+                        <Button variant="outline" onClick={closeDialog} disabled={submitting}>
+                            {reviewingRequest?.status === STATUS_PENDING ? "Hủy" : "Đóng"}
                         </Button>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="destructive"
-                                onClick={() => void submitReview(false)}
-                                disabled={reviewSubmitting || reviewDialog.request?.status !== 0}
-                            >
-                                {reviewSubmitting && reviewDialog.mode === "reject" ? "Đang xử lý..." : "Từ chối"}
-                            </Button>
-                            <Button
-                                onClick={() => void submitReview(true)}
-                                disabled={reviewSubmitting || reviewDialog.request?.status !== 0}
-                            >
-                                {reviewSubmitting && reviewDialog.mode === "approve" ? "Đang xử lý..." : "Chấp thuận"}
-                            </Button>
-                        </div>
+                        {reviewingRequest?.status === STATUS_PENDING && (
+                            <>
+                                <Button variant="destructive" onClick={() => void handleReview(false)} disabled={submitting}>
+                                    {submitting && <RefreshCw className="mr-2 h-4 w-4 animate-spin" />}
+                                    Từ chối
+                                </Button>
+                                <Button onClick={() => void handleReview(true)} disabled={submitting}>
+                                    {submitting && <RefreshCw className="mr-2 h-4 w-4 animate-spin" />}
+                                    Chấp thuận
+                                </Button>
+                            </>
+                        )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -461,180 +629,90 @@ export function PageAdminUpgradeRequests() {
     );
 }
 
-function SummaryCard({ title, value, icon, loading }: { title: string; value: number; icon: React.ReactNode; loading: boolean }) {
+function SummaryCard({
+    title,
+    value,
+    icon,
+    variant,
+    loading,
+}: {
+    title: string;
+    value: number;
+    icon: React.ReactNode;
+    variant?: "default" | "warning" | "success" | "destructive";
+    loading: boolean;
+}) {
+    const colorClass = variant === "warning"
+        ? "text-yellow-600"
+        : variant === "success"
+          ? "text-green-600"
+          : variant === "destructive"
+            ? "text-red-600"
+            : "";
+
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{title}</CardTitle>
-                <div className="text-muted-foreground">{icon}</div>
+                <div className={cn("text-muted-foreground", colorClass)}>{icon}</div>
             </CardHeader>
             <CardContent>
-                {loading ? <Skeleton className="h-8 w-20" /> : <div className="text-2xl font-bold">{formatNumber(value)}</div>}
+                {loading ? <Skeleton className="h-8 w-24" /> : <div className="text-2xl font-bold">{formatNumber(value)}</div>}
             </CardContent>
         </Card>
     );
 }
 
-function InfoField({ label, value }: { label: string; value: string }) {
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
     return (
-        <div>
-            <span className="text-muted-foreground">{label}: </span>
+        <div className="flex justify-between">
+            <span className="text-muted-foreground">{label}:</span>
             <span className="font-medium">{value}</span>
         </div>
     );
 }
 
-function StatusBadge({ status }: { status: BusAdminUpgradeRequestStatus }) {
-    if (status === 0) {
-        return <Badge variant="secondary">Chờ duyệt</Badge>;
+function formatStatus(status: BusAdminUpgradeRequestStatus): string {
+    switch (status) {
+        case STATUS_PENDING:
+            return "Chờ xét duyệt";
+        case STATUS_APPROVED:
+            return "Đã chấp thuận";
+        case STATUS_REJECTED:
+            return "Đã từ chối";
+        default:
+            return String(status);
     }
-
-    if (status === 1) {
-        return <Badge>Đã chấp thuận</Badge>;
-    }
-
-    return <Badge variant="destructive">Đã từ chối</Badge>;
 }
 
-function renderStatusText(status: BusAdminUpgradeRequestStatus): string {
-    if (status === 0) {
-        return "Chờ duyệt";
+function getStatusBadgeVariant(status: BusAdminUpgradeRequestStatus): "default" | "secondary" | "destructive" {
+    switch (status) {
+        case STATUS_PENDING:
+            return "secondary";
+        case STATUS_APPROVED:
+            return "default";
+        case STATUS_REJECTED:
+            return "destructive";
+        default:
+            return "secondary";
     }
-
-    if (status === 1) {
-        return "Đã chấp thuận";
-    }
-
-    return "Đã từ chối";
 }
 
-function formatDateTime(value: string | null): string {
-    if (!value) {
-        return "Chưa có";
-    }
-
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-        return value;
-    }
-
+function formatDateTime(value: string) {
     return new Intl.DateTimeFormat("vi-VN", {
-        dateStyle: "medium",
-        timeStyle: "short",
-    }).format(date);
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(new Date(value));
 }
 
-function normalizeRequests(records: unknown[] | undefined): UpgradeRequestItem[] {
-    if (!Array.isArray(records)) {
-        return [];
-    }
-
-    return records
-        .map((item) => {
-            if (!isObject(item)) {
-                return null;
-            }
-
-            const id = pickString(item, ["requestID", "requestId", "id"]);
-            const companyName = pickString(item, ["companyName"]);
-
-            if (!id || !companyName) {
-                return null;
-            }
-
-            const statusValue = pickStatus(item, ["status"]);
-
-            return {
-                id,
-                companyId: pickString(item, ["companyID", "companyId"]),
-                companyName,
-                licenseNumber: pickString(item, ["licenseNumber"]),
-                hotline: pickString(item, ["hotline"]),
-                reason: pickString(item, ["reason"]),
-                status: statusValue,
-                requestedAt: pickString(item, ["requestedAt"]),
-                reviewedAt: pickString(item, ["reviewedAt"]),
-                reviewNote: pickString(item, ["reviewNote"]),
-                requesterName: pickString(item, ["requesterName"]),
-                requesterEmail: pickString(item, ["requesterEmail"]),
-                reviewedBy: isObject(item.reviewedBy)
-                    ? {
-                          id: pickString(item.reviewedBy, ["userID", "userId", "id"]),
-                          email: pickString(item.reviewedBy, ["email"]),
-                          fullName: pickString(item.reviewedBy, ["fullName"]),
-                      }
-                    : null,
-                busCompany: isObject(item.busCompany)
-                    ? {
-                          id: pickString(item.busCompany, ["companyID", "companyId", "id"]),
-                          name: pickString(item.busCompany, ["name"]),
-                          licenseNumber: pickString(item.busCompany, ["licenseNumber"]),
-                          hotline: pickString(item.busCompany, ["hotline"]),
-                          isApproved: pickBoolean(item.busCompany, ["isApproved"]),
-                      }
-                    : null,
-            } satisfies UpgradeRequestItem;
-        })
-        .filter((item): item is UpgradeRequestItem => Boolean(item));
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-    return Boolean(value) && typeof value === "object";
-}
-
-function pickString(source: Record<string, unknown>, keys: string[]): string | null {
-    for (const key of keys) {
-        const value = readDeepValue(source, key);
-        if (typeof value === "string" && value.trim()) {
-            return value;
-        }
-    }
-
-    return null;
-}
-
-function pickBoolean(source: Record<string, unknown>, keys: string[]): boolean {
-    for (const key of keys) {
-        const value = readDeepValue(source, key);
-        if (typeof value === "boolean") {
-            return value;
-        }
-    }
-
-    return false;
-}
-
-function pickStatus(source: Record<string, unknown>, keys: string[]): BusAdminUpgradeRequestStatus {
-    for (const key of keys) {
-        const value = readDeepValue(source, key);
-        if (typeof value === "number" && [0, 1, 2].includes(value)) {
-            return value as BusAdminUpgradeRequestStatus;
-        }
-    }
-
-    return 0;
-}
-
-function readDeepValue(source: Record<string, unknown>, path: string): unknown {
-    const parts = path.split(".");
-    let current: unknown = source;
-
-    for (const part of parts) {
-        if (!isObject(current)) {
-            return undefined;
-        }
-
-        current = current[part];
-    }
-
-    return current;
-}
-
-function formatNumber(value: number): string {
+function formatNumber(value: number) {
     return new Intl.NumberFormat("vi-VN").format(value);
 }
 
-function getApiErrorMessage(error: unknown, fallback: string): string {
+function getApiErrorMessage(error: unknown, fallback: string) {
     if (!error) {
         return fallback;
     }

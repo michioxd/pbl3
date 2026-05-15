@@ -24,6 +24,21 @@ namespace Pbl3.Enums
         Rejected,
     }
 
+    public enum CompanyProfileUpdateRequestStatus
+    {
+        Pending,
+        Approved,
+        Rejected,
+    }
+
+    public enum CompanyStatus
+    {
+        Pending, 
+        Approved,
+        Suspended, 
+        Rejected,
+    }
+
     public enum TripStatus
     {
         Scheduled,
@@ -87,8 +102,21 @@ namespace Pbl3.Enums
 
     public enum RefundStatus
     {
-        Pending,
-        Processed,
+        Pending, // Initial request
+        Processed, // Old: kept for compatibility
+        Approved, // SysAdmin approved
+        Processing, // Being processed by payment provider
+        Completed, // Successfully refunded
+        Rejected, // SysAdmin rejected
+        Failed, // Provider failed to process
+    }
+
+    public enum ReviewStatus
+    {
+        Pending = 0, // Awaiting SysAdmin moderation
+        Approved = 1, // Published and visible to public
+        Rejected = 2, // Declined by admin
+        Flagged = 3, // Flagged for policy violations
     }
 
     public enum NotificationType

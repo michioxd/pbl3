@@ -1,264 +1,521 @@
-import { getApiBusadminBusesTrips, type GetApiBusadminBusesTripsData } from "@/api";
+import { getApiBusadminBusesTrips, deleteApiBusadminBusesTripsByTripId } from "@/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw, Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import {
+    type ColumnDef,
+    type PaginationState,
+    flexRender,
+    getCoreRowModel,
+    getFilteredRowModel,
+    useReactTable,
+} from "@tanstack/react-table";
+import {
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
+    RefreshCw,
+    Edit,
+    Plus,
+    Trash2,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { TripDialog } from "./components/trip-dialog";
 
-type TripItem = {
-    tripID?: string;
-    departureDate?: string;
-    departureTime?: string;
-    arrivalTime?: string;
-    status?: string;
-    routeID?: string;
-    routeName?: string;
+const monthOptions = [
+    { label: "Tất cả", value: "all" },
+    ...Array.from({ length: 12 }).map((_, index) => ({
+        label: `Tháng ${index + 1}`,
+        value: String(index + 1),
+    })),
+];
+
+type BusAdminTripListItem = {
+    tripID: string;
+    departureDate: string;
+    departureTime: string;
+    arrivalTime: string;
+    status: number;
+    routeID: string;
+    routeName: string;
     busID?: string | null;
     busPlateNumber?: string | null;
-    busTypeID?: string | null;
+    busTypeID: string;
     busTypeName?: string | null;
-    ticketCount?: number;
+    ticketCount: number;
 };
 
-type TripListResponse = {
-    page?: number;
-    pageSize?: number;
-    totalRecords?: number;
-    totalPages?: number;
-    records?: unknown[];
+type BusAdminTripsResponse = {
+    page: number;
+    pageSize: number;
+    totalRecords: number;
+    totalPages: number;
+    records: BusAdminTripListItem[];
 };
+
+const formatTripStatus = (status: number): { label: string; variant: "default" | "secondary" | "destructive" | "outline" } => {
+    switch (status) {
+        case 0:
+            return { label: "Đã lên lịch", variant: "secondary" };
+        case 1:
+            return { label: "Đang chạy", variant: "default" };
+        case 2:
+            return { label: "Hoàn thành", variant: "outline" };
+        case 3:
+            return { label: "Đã hủy", variant: "destructive" };
+        default:
+            return { label: "Không rõ", variant: "outline" };
+    }
+};
+
+const formatDate = (value: string): string =>
+    new Date(value).toLocaleDateString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    });
+
+const formatTime = (value: string): string =>
+    new Date(value).toLocaleTimeString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
 
 export function PageBusAdminTrips() {
-    const [items, setItems] = useState<TripItem[]>([]);
+    const now = useMemo(() => new Date(), []);
+    const [monthFilter, setMonthFilter] = useState(String(now.getMonth() + 1));
+    const [yearFilter, setYearFilter] = useState(String(now.getFullYear()));
+    const [trips, setTrips] = useState<BusAdminTripListItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [page, setPage] = useState(1);
-    const [pageSize] = useState(25);
-    const [search, setSearch] = useState("");
-    const [year, setYear] = useState<string>(String(new Date().getFullYear()));
-    const [month, setMonth] = useState<string>(String(new Date().getMonth() + 1));
-    const [totalPages, setTotalPages] = useState(0);
+    const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 25 });
+    const [globalFilter, setGlobalFilter] = useState("");
+    const [totalPages, setTotalPages] = useState(1);
     const [totalRecords, setTotalRecords] = useState(0);
+    const hasLoadedOnceRef = useRef(false);
 
-    useEffect(() => {
-        void load(false);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page, pageSize, year, month]);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [selectedTrip, setSelectedTrip] = useState<BusAdminTripListItem | null>(null);
 
-    useEffect(() => {
-        setPage(1);
-    }, [pageSize, year, month]);
-
-    const filteredItems = useMemo(() => {
-        const query = search.trim().toLowerCase();
-        if (!query) return items;
-        return items.filter((item) =>
-            [item.routeName, item.busPlateNumber, item.status, item.departureDate].some((value) =>
-                String(value ?? "").toLowerCase().includes(query),
-            ),
-        );
-    }, [items, search]);
-
-    async function load(showRefreshing: boolean) {
-        if (showRefreshing) setRefreshing(true);
-        else setLoading(true);
+    const handleDelete = async (trip: BusAdminTripListItem) => {
+        if (!confirm(`Bạn có chắc muốn xóa chuyến xe đến ${trip.routeName} lúc ${formatTime(trip.departureTime)}?`)) {
+            return;
+        }
 
         try {
-            const query = { page, pageSize } as unknown as GetApiBusadminBusesTripsData["query"] & {
-                page: number;
-                pageSize: number;
-            };
-            const yearValue = Number(year);
-            const monthValue = Number(month);
-
-            if (!Number.isNaN(yearValue) && !Number.isNaN(monthValue)) {
-                query.year = yearValue;
-                query.month = monthValue;
-            }
-
-            const response = await getApiBusadminBusesTrips({
-                query: query as never,
+            const response = await deleteApiBusadminBusesTripsByTripId({
+                path: { tripId: trip.tripID }
             });
+            if (response.error) {
+                throw new Error("Không thể xóa chuyến xe");
+            }
+            toast.success("Đã xóa chuyến xe");
+            void fetchTrips(true);
+        } catch (error) {
+            console.error(error);
+            toast.error("Xóa chuyến xe thất bại");
+        }
+    };
 
-            if (response.error || !response.data) {
-                throw new Error("Không thể tải danh sách chuyến xe.");
+    const columns = useMemo<ColumnDef<BusAdminTripListItem>[]>(
+        () => [
+            {
+                id: "tripID",
+                accessorKey: "tripID",
+                header: "ID Chuyến",
+                cell: ({ row }) => (
+                    <span className="font-mono text-xs text-muted-foreground" title={row.original.tripID}>
+                        {row.original.tripID.substring(0, 8)}...
+                    </span>
+                ),
+            },
+            {
+                id: "routeName",
+                accessorKey: "routeName",
+                header: "Tuyến",
+                cell: ({ row }) => (
+                    <div>
+                        <div className="font-medium">{row.original.routeName}</div>
+                        <div className="text-xs text-muted-foreground">{row.original.busTypeName || "--"}</div>
+                    </div>
+                ),
+            },
+            {
+                id: "departureDate",
+                accessorKey: "departureDate",
+                header: "Khởi hành",
+                cell: ({ row }) => (
+                    <div>
+                        <div className="font-medium">{formatDate(row.original.departureDate)}</div>
+                        <div className="text-xs text-muted-foreground">{formatTime(row.original.departureTime)}</div>
+                    </div>
+                ),
+            },
+            {
+                id: "arrivalTime",
+                accessorKey: "arrivalTime",
+                header: "Đến nơi",
+                cell: ({ row }) => formatTime(row.original.arrivalTime),
+            },
+            {
+                id: "busPlateNumber",
+                accessorKey: "busPlateNumber",
+                header: "Xe",
+                cell: ({ row }) => (
+                    <span className="font-mono text-sm">{row.original.busPlateNumber || "Chưa phân"}</span>
+                ),
+            },
+            {
+                id: "ticketCount",
+                accessorKey: "ticketCount",
+                header: "Vé đã bán",
+                cell: ({ row }) => <div className="text-center">{row.original.ticketCount}</div>,
+            },
+            {
+                id: "status",
+                accessorKey: "status",
+                header: "Trạng thái",
+                cell: ({ row }) => {
+                    const status = formatTripStatus(row.original.status);
+                    return <Badge variant={status.variant}>{status.label}</Badge>;
+                },
+            },
+            {
+                id: "actions",
+                header: "Thao tác",
+                cell: ({ row }) => (
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                                setSelectedTrip(row.original);
+                                setDialogOpen(true);
+                            }}
+                        >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Sửa
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => handleDelete(row.original)}
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Xóa
+                        </Button>
+                    </div>
+                ),
+            },
+        ],
+        [],
+    );
+
+    const table = useReactTable({
+        data: trips,
+        columns,
+        pageCount: totalPages,
+        getCoreRowModel: getCoreRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        manualPagination: true,
+        state: {
+            pagination,
+            globalFilter,
+        },
+        onPaginationChange: setPagination,
+        onGlobalFilterChange: setGlobalFilter,
+    });
+
+    const fetchTrips = useCallback(
+        async (showRefreshing = hasLoadedOnceRef.current) => {
+            if (!showRefreshing) {
+                setLoading(true);
             }
 
-            const data = response.data as TripListResponse;
-            setItems(normalizeRecords(data.records));
-            setTotalRecords(Number(data.totalRecords ?? 0));
-            setTotalPages(Number(data.totalPages ?? 0));
-            setError(null);
-        } catch (e) {
-            setItems([]);
-            setTotalRecords(0);
-            setTotalPages(0);
-            setError(e instanceof Error ? e.message : "Không thể tải danh sách chuyến xe.");
-            if (showRefreshing) toast.error("Làm mới danh sách chuyến xe thất bại");
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
-        }
-    }
+            if (showRefreshing) {
+                setRefreshing(true);
+            }
+
+            try {
+                const month = monthFilter === "all" ? undefined : Number(monthFilter);
+                const year = monthFilter === "all" ? undefined : Number(yearFilter);
+
+                const response = await getApiBusadminBusesTrips({
+                    query: {
+                        ...(month && year ? { month, year } : {}),
+                        page: pagination.pageIndex + 1,
+                        pageSize: pagination.pageSize,
+                    },
+                });
+
+                if (response.error || !response.data) {
+                    throw new Error("Không thể tải danh sách chuyến xe.");
+                }
+
+                const data = response.data as BusAdminTripsResponse;
+                setTrips(data.records ?? []);
+                setTotalPages(Math.max(data.totalPages ?? 1, 1));
+                setTotalRecords(data.totalRecords ?? 0);
+
+                if (typeof data.page === "number" && data.page - 1 !== pagination.pageIndex) {
+                    setPagination((current) => ({ ...current, pageIndex: Math.max(data.page - 1, 0) }));
+                }
+
+                if (data.pageSize && data.pageSize !== pagination.pageSize) {
+                    setPagination((current) => ({ ...current, pageSize: data.pageSize }));
+                }
+
+                setError(null);
+                hasLoadedOnceRef.current = true;
+            } catch (error) {
+                console.error("Không thể tải danh sách chuyến xe", error);
+                setTrips([]);
+                setTotalPages(1);
+                setTotalRecords(0);
+                setError("Không thể tải danh sách chuyến xe.");
+
+                if (showRefreshing) {
+                    toast.error("Làm mới chuyến xe thất bại");
+                }
+            } finally {
+                setLoading(false);
+                setRefreshing(false);
+            }
+        },
+        [monthFilter, pagination.pageIndex, pagination.pageSize, yearFilter],
+    );
+
+    useEffect(() => {
+        setPagination((current) => ({ ...current, pageIndex: 0 }));
+    }, [monthFilter, yearFilter]);
+
+    useEffect(() => {
+        void fetchTrips();
+    }, [fetchTrips]);
+
+    const suggestedRoutes = useMemo(() => {
+        const map = new Map<string, string>(); // map label -> id
+        trips.forEach(t => {
+            if (t.routeID && t.routeName && !map.has(t.routeName)) {
+                map.set(t.routeName, t.routeID);
+            }
+        });
+        return Array.from(map.entries()).map(([label, id]) => ({ id, label }));
+    }, [trips]);
+
+    const suggestedBusTypes = useMemo(() => {
+        const map = new Map<string, string>(); // map label -> id
+        trips.forEach(t => {
+            if (t.busTypeID && t.busTypeName && !map.has(t.busTypeName)) {
+                map.set(t.busTypeName, t.busTypeID);
+            }
+        });
+        return Array.from(map.entries()).map(([label, id]) => ({ id, label }));
+    }, [trips]);
+
+    const suggestedBuses = useMemo(() => {
+        const map = new Map<string, string>(); // map label -> id
+        trips.forEach(t => {
+            if (t.busID && t.busPlateNumber && !map.has(t.busPlateNumber)) {
+                map.set(t.busPlateNumber, t.busID);
+            }
+        });
+        return Array.from(map.entries()).map(([label, id]) => ({ id, label }));
+    }, [trips]);
 
     return (
-        <>
-            <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-6">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <h1 className="text-2xl font-bold tracking-tight">Quản lý chuyến</h1>
-                        <Badge variant="outline">{totalRecords} chuyến</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">Lọc theo tháng, tìm chuyến và kiểm tra trạng thái vận hành.</p>
+                    <h1 className="text-2xl font-bold tracking-tight">Chuyến xe</h1>
+                    <p className="text-sm text-muted-foreground">Quản lý lịch chạy xe của nhà xe theo tháng.</p>
                 </div>
-                <Button variant="outline" onClick={() => void load(true)} disabled={loading || refreshing}>
-                    <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-                    Làm mới
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        onClick={() => {
+                            setSelectedTrip(null);
+                            setDialogOpen(true);
+                        }}
+                    >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Thêm chuyến xe
+                    </Button>
+                    <Button variant="outline" onClick={() => fetchTrips(true)} disabled={refreshing}>
+                        <RefreshCw className={cn("h-4 w-4 mr-2", refreshing && "animate-spin")} />
+                        Làm mới
+                    </Button>
+                </div>
             </div>
 
             <Card>
-                <CardHeader>
-                    <CardTitle>Bộ lọc</CardTitle>
-                    <CardDescription>Lấy dữ liệu theo tháng và năm hiện tại của nhà xe.</CardDescription>
+                <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <CardTitle>Danh sách chuyến</CardTitle>
+                        <p className="text-sm text-muted-foreground">{totalRecords} chuyến trong bộ lọc hiện tại.</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Select value={monthFilter} onValueChange={setMonthFilter}>
+                            <SelectTrigger className="w-40">
+                                <SelectValue placeholder="Tháng" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {monthOptions.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Input
+                            className="w-28"
+                            type="number"
+                            min={2000}
+                            max={3000}
+                            value={yearFilter}
+                            onChange={(event) => setYearFilter(event.target.value)}
+                            disabled={monthFilter === "all"}
+                        />
+                        <Input
+                            placeholder="Tìm kiếm ID, xe..."
+                            value={globalFilter ?? ""}
+                            onChange={(event) => setGlobalFilter(String(event.target.value))}
+                            className="w-full md:w-64"
+                        />
+                    </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid gap-3 md:grid-cols-4">
-                        <Input value={year} onChange={(e) => setYear(e.target.value)} placeholder="Năm" inputMode="numeric" />
-                        <Input value={month} onChange={(e) => setMonth(e.target.value)} placeholder="Tháng" inputMode="numeric" />
-                        <div className="relative md:col-span-2">
-                            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" placeholder="Tìm theo tuyến, biển số, trạng thái..." />
+                    {loading ? (
+                        <div className="space-y-3">
+                            {Array.from({ length: 6 }).map((_, index) => (
+                                <Skeleton key={index} className="h-12 w-full" />
+                            ))}
                         </div>
-                    </div>
+                    ) : error ? (
+                        <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
+                            {error}
+                        </div>
+                    ) : (
+                        <>
+                            <div className="overflow-hidden rounded-md border">
+                                <Table>
+                                    <TableHeader>
+                                        {table.getHeaderGroups().map((headerGroup) => (
+                                            <TableRow key={headerGroup.id}>
+                                                {headerGroup.headers.map((header) => (
+                                                    <TableHead key={header.id}>
+                                                        {header.isPlaceholder
+                                                            ? null
+                                                            : flexRender(
+                                                                  header.column.columnDef.header,
+                                                                  header.getContext(),
+                                                              )}
+                                                    </TableHead>
+                                                ))}
+                                            </TableRow>
+                                        ))}
+                                    </TableHeader>
+                                    <TableBody>
+                                        {table.getRowModel().rows.length ? (
+                                            table.getRowModel().rows.map((row) => (
+                                                <TableRow key={row.id}>
+                                                    {row.getVisibleCells().map((cell) => (
+                                                        <TableCell key={cell.id}>
+                                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                        </TableCell>
+                                                    ))}
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={columns.length} className="h-24 text-center">
+                                                    Không có chuyến xe phù hợp.
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
+
+                            <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                                <div className="text-sm text-muted-foreground">
+                                    Trang {pagination.pageIndex + 1} / {totalPages}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => table.setPageIndex(0)}
+                                        disabled={!table.getCanPreviousPage()}
+                                    >
+                                        <ChevronsLeft className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => table.previousPage()}
+                                        disabled={!table.getCanPreviousPage()}
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => table.nextPage()}
+                                        disabled={!table.getCanNextPage()}
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => table.setPageIndex(totalPages - 1)}
+                                        disabled={!table.getCanNextPage()}
+                                    >
+                                        <ChevronsRight className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-muted-foreground">Hiển thị</span>
+                                    <Select
+                                        value={String(pagination.pageSize)}
+                                        onValueChange={(value) => table.setPageSize(Number(value))}
+                                    >
+                                        <SelectTrigger className="h-8 w-24">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {[25, 50, 100, 200].map((size) => (
+                                                <SelectItem key={size} value={String(size)}>
+                                                    {size}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </CardContent>
             </Card>
 
-            {error ? (
-                <Card className="mt-4">
-                    <CardHeader>
-                        <CardTitle>Không thể tải dữ liệu</CardTitle>
-                        <CardDescription>{error}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button onClick={() => void load(true)}>Thử lại</Button>
-                    </CardContent>
-                </Card>
-            ) : null}
-
-            <div className="mt-4 grid gap-4">
-                {loading
-                    ? Array.from({ length: 6 }, (_, index) => (
-                          <Card key={index}>
-                              <CardHeader>
-                                  <Skeleton className="h-6 w-40" />
-                                  <Skeleton className="h-4 w-60" />
-                              </CardHeader>
-                              <CardContent className="space-y-3">
-                                  <Skeleton className="h-4 w-full" />
-                                  <Skeleton className="h-4 w-5/6" />
-                                  <Skeleton className="h-4 w-2/3" />
-                              </CardContent>
-                          </Card>
-                      ))
-                    : filteredItems.map((item) => (
-                          <Card key={item.tripID ?? `${item.routeName}-${item.departureDate}-${item.departureTime}`}>
-                              <CardHeader>
-                                  <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                                      <div>
-                                          <CardTitle className="text-base">{item.routeName || "Chuyến không tên"}</CardTitle>
-                                          <CardDescription>
-                                              {item.departureDate || "-"} | {item.departureTime || "-"} - {item.arrivalTime || "-"}
-                                          </CardDescription>
-                                      </div>
-                                      <Badge variant="outline">{item.status || "Unknown"}</Badge>
-                                  </div>
-                              </CardHeader>
-                              <CardContent className="grid gap-3 text-sm text-muted-foreground md:grid-cols-2 xl:grid-cols-4">
-                                  <Meta label="Xe" value={item.busPlateNumber || "Chưa gán"} />
-                                  <Meta label="Loại xe" value={item.busTypeName || "-"} />
-                                  <Meta label="Mã chuyến" value={item.tripID || "-"} />
-                                  <Meta label="Số vé" value={String(item.ticketCount ?? 0)} />
-                              </CardContent>
-                          </Card>
-                      ))}
-            </div>
-
-            {!loading && filteredItems.length === 0 ? (
-                <Card className="mt-4">
-                    <CardHeader>
-                        <CardTitle>Chưa có chuyến</CardTitle>
-                        <CardDescription>Không có chuyến nào khớp bộ lọc hiện tại.</CardDescription>
-                    </CardHeader>
-                </Card>
-            ) : null}
-
-            <div className="mt-4 flex items-center justify-between gap-3">
-                <div className="text-sm text-muted-foreground">
-                    Trang {page} / {Math.max(totalPages, 1)}
-                </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" disabled={page <= 1 || loading} onClick={() => setPage((value) => Math.max(1, value - 1))}>
-                        Trước
-                    </Button>
-                    <Button variant="outline" disabled={totalPages > 0 ? page >= totalPages : loading} onClick={() => setPage((value) => value + 1)}>
-                        Sau
-                    </Button>
-                </div>
-            </div>
-        </>
-    );
-}
-
-function Meta({ label, value }: { label: string; value: string }) {
-    return (
-        <div>
-            <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">{label}</div>
-            <div className="mt-1 font-medium text-foreground">{value}</div>
+            <TripDialog
+                open={dialogOpen}
+                onOpenChange={setDialogOpen}
+                trip={selectedTrip}
+                onSuccess={() => void fetchTrips(true)}
+                routes={suggestedRoutes}
+                busTypes={suggestedBusTypes}
+                buses={suggestedBuses}
+            />
         </div>
     );
-}
-
-function normalizeRecords(records: unknown[] | undefined): TripItem[] {
-    if (!Array.isArray(records)) return [];
-    return records.map((record) => {
-        if (!isRecord(record)) return {};
-
-        return {
-            tripID: pickString(record.tripID),
-            departureDate: pickString(record.departureDate),
-            departureTime: pickString(record.departureTime),
-            arrivalTime: pickString(record.arrivalTime),
-            status: pickString(record.status),
-            routeID: pickString(record.routeID),
-            routeName: pickString(record.routeName),
-            busID: pickNullableString(record.busID),
-            busPlateNumber: pickNullableString(record.busPlateNumber),
-            busTypeID: pickNullableString(record.busTypeID),
-            busTypeName: pickNullableString(record.busTypeName),
-            ticketCount: pickNumber(record.ticketCount),
-        };
-    });
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === "object" && value !== null;
-}
-
-function pickString(value: unknown): string | undefined {
-    return typeof value === "string" && value.trim() ? value : undefined;
-}
-
-function pickNullableString(value: unknown): string | null | undefined {
-    if (typeof value === "string") return value.trim() || null;
-    if (value === null) return null;
-    return undefined;
-}
-
-function pickNumber(value: unknown): number | undefined {
-    return typeof value === "number" ? value : undefined;
 }

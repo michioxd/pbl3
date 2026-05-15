@@ -21,6 +21,7 @@ const hero = {
         searchTrip: "Search trips",
         search: "Search",
         addReturnDate: "Add return date",
+        add: "Add",
     },
     promotions: {
         badge: "Today's promotions",

@@ -22,11 +22,12 @@ namespace pbl3_server.Migrations
 
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "booking_status", new[] { "pending", "paid", "cancelled", "refunded" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "bus_admin_upgrade_request_status", new[] { "pending", "approved", "rejected" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "company_profile_update_request_status", new[] { "pending", "approved", "rejected" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "notification_status", new[] { "sent", "failed" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "notification_type", new[] { "email", "sms", "push" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "payment_intent_status", new[] { "created", "succeeded", "failed" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "payment_provider", new[] { "momo", "stripe", "cash" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "refund_status", new[] { "pending", "processed" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "refund_status", new[] { "pending", "processed", "approved", "processing", "completed", "rejected", "failed" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "seat_hold_status", new[] { "held", "confirmed", "expired" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "seat_type", new[] { "window", "aisle", "middle", "driver", "upper_deck", "lower_deck" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "station_type", new[] { "bus_station", "office", "pick_up_point" });
@@ -103,6 +104,48 @@ namespace pbl3_server.Migrations
                     b.HasKey("AdministrativeUnitID");
 
                     b.ToTable("administrative_units");
+                });
+
+            modelBuilder.Entity("Pbl3.Models.Amenity", b =>
+                {
+                    b.Property<Guid>("AmenityID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("IconName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("AmenityID");
+
+                    b.ToTable("Amenities");
                 });
 
             modelBuilder.Entity("Pbl3.Models.Booking", b =>
@@ -238,6 +281,9 @@ namespace pbl3_server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Hotline")
                         .HasColumnType("text");
 
@@ -250,6 +296,9 @@ namespace pbl3_server.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.HasKey("CompanyID");
 
@@ -304,8 +353,32 @@ namespace pbl3_server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ArrivalDistrictCode")
+                        .HasColumnType("text")
+                        .HasColumnName("arrival_district_code");
+
+                    b.Property<string>("ArrivalProvinceCode")
+                        .HasColumnType("text")
+                        .HasColumnName("arrival_province_code");
+
+                    b.Property<string>("ArrivalWardCode")
+                        .HasColumnType("text")
+                        .HasColumnName("arrival_ward_code");
+
                     b.Property<Guid>("CompanyID")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("DepartureDistrictCode")
+                        .HasColumnType("text")
+                        .HasColumnName("departure_district_code");
+
+                    b.Property<string>("DepartureProvinceCode")
+                        .HasColumnType("text")
+                        .HasColumnName("departure_province_code");
+
+                    b.Property<string>("DepartureWardCode")
+                        .HasColumnType("text")
+                        .HasColumnName("departure_ward_code");
 
                     b.Property<decimal>("DistanceEstimate")
                         .HasColumnType("numeric");
@@ -366,19 +439,103 @@ namespace pbl3_server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Description")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("TotalSeats")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("BusTypeID");
 
                     b.ToTable("BusTypes");
+                });
+
+            modelBuilder.Entity("Pbl3.Models.BusTypeAmenity", b =>
+                {
+                    b.Property<Guid>("BusTypeAmenityID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AmenityID")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BusTypeID")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("BusTypeAmenityID");
+
+                    b.HasIndex("AmenityID");
+
+                    b.HasIndex("BusTypeID");
+
+                    b.ToTable("BusTypeAmenities");
+                });
+
+            modelBuilder.Entity("Pbl3.Models.CompanyProfileUpdateRequest", b =>
+                {
+                    b.Property<Guid>("RequestID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyID")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Hotline")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("LicenseNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RequesterUserID")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReviewNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ReviewedByUserID")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("RequestID");
+
+                    b.HasIndex("RequesterUserID");
+
+                    b.HasIndex("ReviewedByUserID");
+
+                    b.HasIndex("CompanyID", "Status", "RequestedAt");
+
+                    b.ToTable("CompanyProfileUpdateRequests");
                 });
 
             modelBuilder.Entity("Pbl3.Models.District", b =>
@@ -509,8 +666,35 @@ namespace pbl3_server.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Deeplink")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PayUrl")
+                        .HasColumnType("text");
+
                     b.Property<int>("Provider")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ProviderMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProviderOrderId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProviderRequestId")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("ProviderResultCode")
+                        .HasColumnType("integer");
+
+                    b.Property<long?>("ProviderTransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("QrCodeUrl")
+                        .HasColumnType("text");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -582,6 +766,21 @@ namespace pbl3_server.Migrations
                     b.Property<Guid>("IntentID")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ProviderMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProviderRequestId")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("ProviderResultCode")
+                        .HasColumnType("integer");
+
+                    b.Property<long?>("ProviderTransactionId")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Reason")
                         .HasColumnType("text");
 
@@ -593,6 +792,62 @@ namespace pbl3_server.Migrations
                     b.HasIndex("IntentID");
 
                     b.ToTable("Refunds");
+                });
+
+            modelBuilder.Entity("Pbl3.Models.RefundRequest", b =>
+                {
+                    b.Property<Guid>("RefundRequestID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AdminNotes")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("BookingID")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PaymentIntentID")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ProcessedByUserID")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("RefundID")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("RequestedAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("UserID")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("RefundRequestID");
+
+                    b.HasIndex("BookingID");
+
+                    b.HasIndex("PaymentIntentID");
+
+                    b.HasIndex("ProcessedByUserID");
+
+                    b.HasIndex("RefundID")
+                        .IsUnique();
+
+                    b.HasIndex("UserID");
+
+                    b.ToTable("RefundRequests");
                 });
 
             modelBuilder.Entity("Pbl3.Models.Review", b =>
@@ -607,17 +862,44 @@ namespace pbl3_server.Migrations
                     b.Property<string>("Comment")
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsFlagged")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ModeratedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModeratedByUserID")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ModerationReason")
+                        .HasColumnType("text");
+
                     b.Property<int>("RatingScore")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("TripID")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("UserID")
                         .HasColumnType("uuid");
 
                     b.HasKey("ReviewID");
 
                     b.HasIndex("BookingID");
 
+                    b.HasIndex("ModeratedByUserID");
+
+                    b.HasIndex("Status");
+
                     b.HasIndex("TripID");
+
+                    b.HasIndex("UserID");
 
                     b.ToTable("Reviews");
                 });
@@ -802,17 +1084,26 @@ namespace pbl3_server.Migrations
                     b.Property<DateTime>("ArrivalTime")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal>("BasePrice")
+                        .HasColumnType("numeric");
+
                     b.Property<Guid?>("BusID")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("BusTypeID")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CancellationPolicy")
+                        .HasColumnType("text");
+
                     b.Property<DateOnly>("DepartureDate")
                         .HasColumnType("date");
 
                     b.Property<DateTime>("DepartureTime")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
 
                     b.Property<Guid>("RouteID")
                         .HasColumnType("uuid");
@@ -1024,6 +1315,51 @@ namespace pbl3_server.Migrations
                     b.Navigation("Station");
                 });
 
+            modelBuilder.Entity("Pbl3.Models.BusTypeAmenity", b =>
+                {
+                    b.HasOne("Pbl3.Models.Amenity", "Amenity")
+                        .WithMany("BusTypeAmenities")
+                        .HasForeignKey("AmenityID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pbl3.Models.BusType", "BusType")
+                        .WithMany("BusTypeAmenities")
+                        .HasForeignKey("BusTypeID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Amenity");
+
+                    b.Navigation("BusType");
+                });
+
+            modelBuilder.Entity("Pbl3.Models.CompanyProfileUpdateRequest", b =>
+                {
+                    b.HasOne("Pbl3.Models.BusCompany", "BusCompany")
+                        .WithMany("CompanyProfileUpdateRequests")
+                        .HasForeignKey("CompanyID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pbl3.Models.User", "RequesterUser")
+                        .WithMany("CompanyProfileUpdateRequests")
+                        .HasForeignKey("RequesterUserID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Pbl3.Models.User", "ReviewedByUser")
+                        .WithMany("ReviewedCompanyProfileUpdateRequests")
+                        .HasForeignKey("ReviewedByUserID")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("BusCompany");
+
+                    b.Navigation("RequesterUser");
+
+                    b.Navigation("ReviewedByUser");
+                });
+
             modelBuilder.Entity("Pbl3.Models.District", b =>
                 {
                     b.HasOne("Pbl3.Models.AdministrativeUnit", "AdministrativeUnit")
@@ -1110,6 +1446,46 @@ namespace pbl3_server.Migrations
                     b.Navigation("PaymentIntent");
                 });
 
+            modelBuilder.Entity("Pbl3.Models.RefundRequest", b =>
+                {
+                    b.HasOne("Pbl3.Models.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Pbl3.Models.PaymentIntent", "PaymentIntent")
+                        .WithMany()
+                        .HasForeignKey("PaymentIntentID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Pbl3.Models.User", "ProcessedByUser")
+                        .WithMany()
+                        .HasForeignKey("ProcessedByUserID")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Pbl3.Models.Refund", "Refund")
+                        .WithOne()
+                        .HasForeignKey("Pbl3.Models.RefundRequest", "RefundID")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Pbl3.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("PaymentIntent");
+
+                    b.Navigation("ProcessedByUser");
+
+                    b.Navigation("Refund");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Pbl3.Models.Review", b =>
                 {
                     b.HasOne("Pbl3.Models.Booking", "Booking")
@@ -1118,15 +1494,29 @@ namespace pbl3_server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Pbl3.Models.User", "ModeratedByUser")
+                        .WithMany()
+                        .HasForeignKey("ModeratedByUserID")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Pbl3.Models.Trip", "Trip")
                         .WithMany("Reviews")
                         .HasForeignKey("TripID")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Pbl3.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Booking");
 
+                    b.Navigation("ModeratedByUser");
+
                     b.Navigation("Trip");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Pbl3.Models.SeatHold", b =>
@@ -1289,6 +1679,11 @@ namespace pbl3_server.Migrations
                     b.Navigation("Wards");
                 });
 
+            modelBuilder.Entity("Pbl3.Models.Amenity", b =>
+                {
+                    b.Navigation("BusTypeAmenities");
+                });
+
             modelBuilder.Entity("Pbl3.Models.Booking", b =>
                 {
                     b.Navigation("Notifications");
@@ -1320,6 +1715,8 @@ namespace pbl3_server.Migrations
 
                     b.Navigation("Buses");
 
+                    b.Navigation("CompanyProfileUpdateRequests");
+
                     b.Navigation("Routes");
                 });
 
@@ -1332,6 +1729,8 @@ namespace pbl3_server.Migrations
 
             modelBuilder.Entity("Pbl3.Models.BusType", b =>
                 {
+                    b.Navigation("BusTypeAmenities");
+
                     b.Navigation("Buses");
 
                     b.Navigation("SeatLayouts");
@@ -1390,11 +1789,15 @@ namespace pbl3_server.Migrations
 
                     b.Navigation("BusCompanyAdmins");
 
+                    b.Navigation("CompanyProfileUpdateRequests");
+
                     b.Navigation("Notifications");
 
                     b.Navigation("Passengers");
 
                     b.Navigation("ReviewedBusAdminUpgradeRequests");
+
+                    b.Navigation("ReviewedCompanyProfileUpdateRequests");
 
                     b.Navigation("SeatHolds");
                 });

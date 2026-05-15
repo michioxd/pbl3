@@ -1,182 +1,170 @@
-import { getApiBusadminBusesCompanyProfile, putApiBusadminBusesCompanyProfile, type UpdateCompanyProfileDto } from "@/api";
+import { getApiBusadminBusesCompanyProfile, postApiBusadminCompanyUpdateRequests } from "@/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
-type CompanyProfile = {
-    companyID?: string;
-    name?: string;
+type BusAdminCompanyProfile = {
+    companyID: string;
+    name: string;
     licenseNumber?: string | null;
     hotline?: string | null;
-    isApproved?: boolean;
+    isApproved: boolean;
 };
 
 export function PageBusAdminCompany() {
-    const [company, setCompany] = useState<CompanyProfile | null>(null);
+    const [company, setCompany] = useState<BusAdminCompanyProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [name, setName] = useState("");
-    const [licenseNumber, setLicenseNumber] = useState("");
-    const [hotline, setHotline] = useState("");
-    const [error, setError] = useState<string | null>(null);
+    const [formData, setFormData] = useState({
+        name: "",
+        licenseNumber: "",
+        hotline: "",
+    });
 
-    useEffect(() => {
-        void load();
-    }, []);
-
-    async function load() {
+    const loadCompany = useCallback(async () => {
         setLoading(true);
         try {
             const response = await getApiBusadminBusesCompanyProfile();
             if (response.error || !response.data) {
-                throw new Error("Không thể tải thông tin nhà xe.");
+                setCompany(null);
+                return;
             }
 
-            const data = normalizeCompanyProfile(response.data);
+            const data = response.data as BusAdminCompanyProfile;
             setCompany(data);
-            setName(data.name || "");
-            setLicenseNumber(data.licenseNumber || "");
-            setHotline(data.hotline || "");
-            setError(null);
-        } catch (e) {
+            setFormData({
+                name: data.name ?? "",
+                licenseNumber: data.licenseNumber ?? "",
+                hotline: data.hotline ?? "",
+            });
+        } catch (error) {
+            console.error("Không thể tải hồ sơ nhà xe", error);
             setCompany(null);
-            setError(e instanceof Error ? e.message : "Không thể tải thông tin nhà xe.");
         } finally {
             setLoading(false);
         }
-    }
+    }, []);
 
-    async function save(event: React.FormEvent<HTMLFormElement>) {
+    useEffect(() => {
+        void loadCompany();
+    }, [loadCompany]);
+
+    const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        if (!name.trim()) {
+        if (!formData.name.trim()) {
             toast.error("Vui lòng nhập tên nhà xe.");
             return;
         }
 
         setSaving(true);
         try {
-            const payload: UpdateCompanyProfileDto = {
-                name: name.trim(),
-                licenseNumber: trimToNull(licenseNumber),
-                hotline: trimToNull(hotline),
-            };
+            const response = await postApiBusadminCompanyUpdateRequests({
+                body: {
+                    name: formData.name.trim(),
+                    licenseNumber: formData.licenseNumber.trim() || null,
+                    hotline: formData.hotline.trim() || null,
+                },
+            });
 
-            const response = await putApiBusadminBusesCompanyProfile({ body: payload });
             if (response.error) {
-                throw new Error("Không thể cập nhật hồ sơ nhà xe.");
+                throw response.error;
             }
 
-            toast.success("Đã cập nhật hồ sơ nhà xe.");
-            await load();
-        } catch (e) {
-            toast.error(e instanceof Error ? e.message : "Không thể cập nhật hồ sơ nhà xe.");
+            toast.success("Đã gửi yêu cầu cập nhật. Vui lòng chờ duyệt.");
+            await loadCompany();
+        } catch (error) {
+            console.error("Không thể cập nhật nhà xe", error);
+            toast.error("Không thể gửi yêu cầu. Vui lòng thử lại.");
         } finally {
             setSaving(false);
         }
+    };
+
+    if (loading) {
+        return (
+            <div className="space-y-4">
+                <Skeleton className="h-7 w-48" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+            </div>
+        );
+    }
+
+    if (!company) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Chưa có nhà xe</CardTitle>
+                    <CardDescription>Bạn cần tạo nhà xe trước khi chỉnh sửa hồ sơ.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button asChild>
+                        <Link to="/busadmin">Quay lại trang tổng quan</Link>
+                    </Button>
+                </CardContent>
+            </Card>
+        );
     }
 
     return (
-        <Card className="border-slate-200 bg-white/95">
-            <CardHeader>
-                <div className="flex items-center gap-2">
-                    <CardTitle>Nhà xe</CardTitle>
-                    <Badge variant="outline">{company?.isApproved ? "Đã duyệt" : "Chờ duyệt"}</Badge>
+        <div className="space-y-6">
+            <div className="flex items-center gap-3">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">Hồ sơ nhà xe</h1>
+                    <p className="text-sm text-muted-foreground">Cập nhật thông tin hiển thị với hành khách.</p>
                 </div>
-                <CardDescription>Chỉnh sửa thông tin nhà xe đang được liên kết với tài khoản BusAdmin.</CardDescription>
-            </CardHeader>
-            <CardContent className="text-slate-900">
-                {loading ? (
-                    <div className="space-y-4">
-                        <Skeleton className="h-12 w-full rounded-2xl" />
-                        <Skeleton className="h-12 w-full rounded-2xl" />
-                        <Skeleton className="h-12 w-full rounded-2xl" />
-                    </div>
-                ) : error ? (
-                    <div className="space-y-4">
-                        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</div>
-                        <Button onClick={() => void load()}>Thử lại</Button>
-                    </div>
-                ) : (
-                    <form className="space-y-5 text-slate-900" onSubmit={save}>
+                <Badge variant={company.isApproved ? "default" : "secondary"}>
+                    {company.isApproved ? "Đã duyệt" : "Chờ duyệt"}
+                </Badge>
+            </div>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Thông tin cơ bản</CardTitle>
+                    <CardDescription>Thông tin này sẽ hiển thị cho khách hàng.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form className="space-y-4" onSubmit={onSubmit}>
                         <div className="space-y-2">
-                            <Label htmlFor="company-name" className="text-slate-700">
-                                Tên nhà xe
-                            </Label>
+                            <Label htmlFor="company-name">Tên nhà xe</Label>
                             <Input
                                 id="company-name"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="border-slate-300 bg-white text-slate-900 placeholder:text-slate-400"
+                                value={formData.name}
+                                onChange={(event) => setFormData((prev) => ({ ...prev, name: event.target.value }))}
+                                required
                             />
                         </div>
-                        <div className="grid gap-5 sm:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="license-number" className="text-slate-700">
-                                    Số giấy phép
-                                </Label>
-                                <Input
-                                    id="license-number"
-                                    value={licenseNumber}
-                                    onChange={(e) => setLicenseNumber(e.target.value)}
-                                    className="border-slate-300 bg-white text-slate-900 placeholder:text-slate-400"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="hotline" className="text-slate-700">
-                                    Hotline
-                                </Label>
-                                <Input
-                                    id="hotline"
-                                    value={hotline}
-                                    onChange={(e) => setHotline(e.target.value)}
-                                    className="border-slate-300 bg-white text-slate-900 placeholder:text-slate-400"
-                                />
-                            </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="company-license">Giấy phép kinh doanh</Label>
+                            <Input
+                                id="company-license"
+                                value={formData.licenseNumber}
+                                onChange={(event) =>
+                                    setFormData((prev) => ({ ...prev, licenseNumber: event.target.value }))
+                                }
+                            />
                         </div>
-                        <Button type="submit" disabled={saving}>{saving ? "Đang lưu..." : "Lưu thay đổi"}</Button>
+                        <div className="space-y-2">
+                            <Label htmlFor="company-hotline">Hotline</Label>
+                            <Input
+                                id="company-hotline"
+                                value={formData.hotline}
+                                onChange={(event) => setFormData((prev) => ({ ...prev, hotline: event.target.value }))}
+                            />
+                        </div>
+                        <Button type="submit" disabled={saving}>
+                            {saving ? "Đang lưu..." : "Lưu thay đổi"}
+                        </Button>
                     </form>
-                )}
-            </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
+        </div>
     );
-}
-
-function normalizeCompanyProfile(data: unknown): CompanyProfile {
-    if (!isRecord(data)) return {};
-    return {
-        companyID: pickString(data.companyID),
-        name: pickString(data.name),
-        licenseNumber: pickNullableString(data.licenseNumber),
-        hotline: pickNullableString(data.hotline),
-        isApproved: pickBoolean(data.isApproved),
-    };
-}
-
-function trimToNull(value: string) {
-    const trimmed = value.trim();
-    return trimmed ? trimmed : null;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === "object" && value !== null;
-}
-
-function pickString(value: unknown): string | undefined {
-    return typeof value === "string" && value.trim() ? value : undefined;
-}
-
-function pickNullableString(value: unknown): string | null | undefined {
-    if (typeof value === "string") return value.trim() || null;
-    if (value === null) return null;
-    return undefined;
-}
-
-function pickBoolean(value: unknown): boolean | undefined {
-    return typeof value === "boolean" ? value : undefined;
 }

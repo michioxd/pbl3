@@ -5,24 +5,20 @@ import { AppSidebar } from "@/components/dashboard/layout/app-sidebar";
 import { Header } from "@/components/dashboard/layout/header";
 import { Main } from "@/components/dashboard/layout/main";
 // import { Main } from "@/components/dashboard/layout/main";
-import { TopNav } from "@/components/dashboard/layout/top-nav";
+// import { TopNav } from "@/components/dashboard/layout/top-nav";
 import { ProfileDropdown } from "@/components/dashboard/profile-dropdown";
 import { ThemeSwitch } from "@/components/dashboard/theme-switch";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { DirectionProvider } from "@/context/dashboard/direction-provider";
 import { LayoutProvider } from "@/context/dashboard/layout-provider";
 import { cn } from "@/lib/utils";
-// import { Analytics } from "./components/analytics";
-// import { Overview } from "./components/overview";
-// import { RecentSales } from "./components/recent-sales";
-
-export function ScreenDashboard({ children }: { children: React.ReactNode }) {
+export function ScreenDashboard({ children, role = 0 }: { children: React.ReactNode; role: 0 | 1 }) {
     return (
         <>
             <LayoutProvider>
                 <SidebarProvider>
                     <DirectionProvider>
-                        <AppSidebar />
+                        <AppSidebar role={role} />
                         <SidebarInset
                             className={cn(
                                 "@container/content",
@@ -31,7 +27,6 @@ export function ScreenDashboard({ children }: { children: React.ReactNode }) {
                             )}
                         >
                             <Header>
-                                <TopNav links={topNav} />
                                 <div className="ms-auto flex items-center space-x-4">
                                     <ThemeSwitch />
                                     <ProfileDropdown />
@@ -45,30 +40,3 @@ export function ScreenDashboard({ children }: { children: React.ReactNode }) {
         </>
     );
 }
-
-const topNav = [
-    {
-        title: "Overview",
-        href: "dashboard/overview",
-        isActive: true,
-        disabled: false,
-    },
-    {
-        title: "Customers",
-        href: "dashboard/customers",
-        isActive: false,
-        disabled: true,
-    },
-    {
-        title: "Products",
-        href: "dashboard/products",
-        isActive: false,
-        disabled: true,
-    },
-    {
-        title: "Settings",
-        href: "dashboard/settings",
-        isActive: false,
-        disabled: true,
-    },
-];

@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pbl3.Dtos;
+using Pbl3.Enums;
+using Pbl3.Models;
 
 namespace Pbl3.Controllers.BusAdmin
 {
@@ -14,6 +16,10 @@ namespace Pbl3.Controllers.BusAdmin
             var companyId = await GetCurrentCompanyIdAsync();
             if (companyId == null)
                 return Forbid();
+
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
 
             var bus = await _context.Buses.FirstOrDefaultAsync(b => b.BusID == id);
             if (bus == null)
@@ -39,18 +45,37 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
-            var company = await _context.BusCompanies.FirstOrDefaultAsync(c =>
-                c.CompanyID == companyId.Value
+            var hasPendingRequest = await _context.CompanyProfileUpdateRequests.AnyAsync(r =>
+                r.CompanyID == companyId.Value
+                && r.Status == CompanyProfileUpdateRequestStatus.Pending
             );
-            if (company == null)
-                return NotFound(new { message = "Không tìm thấy nhà xe." });
 
-            company.Name = dto.Name;
-            company.Hotline = dto.Hotline;
-            company.LicenseNumber = dto.LicenseNumber;
+            if (hasPendingRequest)
+            {
+                return Conflict(new { message = "Bạn đã có yêu cầu cập nhật đang chờ duyệt." });
+            }
 
+            var request = new CompanyProfileUpdateRequest
+            {
+                RequestID = Guid.NewGuid(),
+                CompanyID = companyId.Value,
+                RequesterUserID = _currentUserContext.GetRequiredUserId(),
+                Name = dto.Name.Trim(),
+                LicenseNumber = string.IsNullOrWhiteSpace(dto.LicenseNumber)
+                    ? null
+                    : dto.LicenseNumber.Trim(),
+                Hotline = string.IsNullOrWhiteSpace(dto.Hotline) ? null : dto.Hotline.Trim(),
+                Status = CompanyProfileUpdateRequestStatus.Pending,
+                RequestedAt = DateTime.UtcNow,
+            };
+
+            _context.CompanyProfileUpdateRequests.Add(request);
             await _context.SaveChangesAsync();
-            return Ok(new { message = "Cập nhật thông tin nhà xe thành công." });
+
+            return StatusCode(
+                StatusCodes.Status201Created,
+                new { message = "Đã gửi yêu cầu cập nhật hồ sơ nhà xe." }
+            );
         }
 
         [HttpPut("trips/{tripId:guid}")]
@@ -59,6 +84,10 @@ namespace Pbl3.Controllers.BusAdmin
             var companyId = await GetCurrentCompanyIdAsync();
             if (companyId == null)
                 return Forbid();
+
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
 
             var trip = await _context.Trips.FirstOrDefaultAsync(t => t.TripID == tripId);
             if (trip == null)
@@ -101,6 +130,10 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
+
             var hasOwnership = await IsBusTypeOwnedByCompanyAsync(companyId.Value, busTypeId);
             if (!hasOwnership)
                 return Forbid();
@@ -126,6 +159,10 @@ namespace Pbl3.Controllers.BusAdmin
             var companyId = await GetCurrentCompanyIdAsync();
             if (companyId == null)
                 return Forbid();
+
+            var accessError = await EnsureCompanyAccessAsync(companyId.Value);
+            if (accessError != null)
+                return accessError;
 
             var seatLayout = await _context.SeatLayouts.FirstOrDefaultAsync(s =>
                 s.LayoutID == layoutId

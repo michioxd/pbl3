@@ -23,6 +23,10 @@ namespace Pbl3.Models
             new List<BusAdminUpgradeRequest>();
         public ICollection<BusAdminUpgradeRequest> ReviewedBusAdminUpgradeRequests { get; set; } =
             new List<BusAdminUpgradeRequest>();
+        public ICollection<CompanyProfileUpdateRequest> CompanyProfileUpdateRequests { get; set; } =
+            new List<CompanyProfileUpdateRequest>();
+        public ICollection<CompanyProfileUpdateRequest> ReviewedCompanyProfileUpdateRequests { get; set; } =
+            new List<CompanyProfileUpdateRequest>();
         public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
         public ICollection<Passenger> Passengers { get; set; } = new List<Passenger>();
         public ICollection<SeatHold> SeatHolds { get; set; } = new List<SeatHold>();

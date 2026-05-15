@@ -1,315 +1,575 @@
-import { getApiBusadminBusesTickets, type GetApiBusadminBusesTicketsData, type TicketStatus } from "@/api";
+import { getApiBusadminBusesTickets, getApiBusadminBusesStatsMonthly, type TicketStatus } from "@/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import {
+    type ColumnDef,
+    type ColumnFiltersState,
+    type PaginationState,
+    flexRender,
+    getCoreRowModel,
+    getFilteredRowModel,
+    useReactTable,
+} from "@tanstack/react-table";
+import {
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
+    RefreshCw,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-type TicketItem = {
-    ticketID?: string;
-    ticketCode?: string;
-    finalPrice?: number;
-    status?: TicketStatus;
-    bookingTime?: string;
-    passenger?: {
+const currencyFormatter = new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+});
+
+const numberFormatter = new Intl.NumberFormat("vi-VN");
+
+const monthOptions = [
+    ...Array.from({ length: 12 }).map((_, index) => ({
+        label: `Tháng ${index + 1}`,
+        value: String(index + 1),
+    })),
+];
+
+type BusAdminTicketListItem = {
+    ticketID: string;
+    ticketCode: string;
+    finalPrice: number;
+    status: number;
+    bookingTime: string;
+    passenger: {
         passengerID?: string;
-        fullName?: string;
-        phoneNumber?: string;
-        email?: string;
+        fullName?: string | null;
+        phoneNumber?: string | null;
+        email?: string | null;
     };
-    trip?: {
-        tripID?: string;
-        departureDate?: string;
-        departureTime?: string;
-        arrivalTime?: string;
-        routeName?: string;
+    trip: {
+        tripID: string;
+        departureDate: string;
+        departureTime: string;
+        arrivalTime: string;
+        routeName: string;
     };
-    seat?: {
-        layoutID?: string;
-        seatLabel?: string;
+    seat: {
+        layoutID: string;
+        seatLabel?: string | null;
         floor?: number;
     };
 };
 
-type TicketListResponse = {
-    page?: number;
-    pageSize?: number;
-    totalRecords?: number;
-    totalPages?: number;
-    records?: unknown[];
+type BusAdminTicketsResponse = {
+    page: number;
+    pageSize: number;
+    totalRecords: number;
+    totalPages: number;
+    records: BusAdminTicketListItem[];
 };
 
-const STATUS_ALL = "all";
+const statusOptions = [
+    { label: "Tất cả trạng thái", value: "all" },
+    { label: "Đã xuất vé", value: "0" },
+    { label: "Đã check-in", value: "1" },
+    { label: "Đã hủy", value: "2" },
+];
+
+const formatTicketStatus = (status: number): string => {
+    switch (status) {
+        case 0:
+            return "Đã xuất vé";
+        case 1:
+            return "Đã check-in";
+        case 2:
+            return "Đã hủy";
+        default:
+            return "Không rõ";
+    }
+};
+
+const getTicketStatusVariant = (status: number): "default" | "secondary" | "destructive" | "outline" => {
+    switch (status) {
+        case 0:
+            return "default";
+        case 1:
+            return "secondary";
+        case 2:
+            return "destructive";
+        default:
+            return "outline";
+    }
+};
+
+const formatDateTime = (value: string): string =>
+    new Date(value).toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
 
 export function PageBusAdminTickets() {
-    const [items, setItems] = useState<TicketItem[]>([]);
+    const now = useMemo(() => new Date(), []);
+    const [monthFilter, setMonthFilter] = useState(String(now.getMonth() + 1));
+    const [yearFilter, setYearFilter] = useState(String(now.getFullYear()));
+    const [stats, setStats] = useState<any>(null);
+    const [statsLoading, setStatsLoading] = useState(true);
+
+    const [tickets, setTickets] = useState<BusAdminTicketListItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [statusFilter, setStatusFilter] = useState<string>(STATUS_ALL);
-    const [page, setPage] = useState(1);
-    const [pageSize] = useState(25);
-    const [totalPages, setTotalPages] = useState(0);
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+    const [globalFilter, setGlobalFilter] = useState("");
+    const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 25 });
+    const [totalPages, setTotalPages] = useState(1);
     const [totalRecords, setTotalRecords] = useState(0);
+    const hasLoadedOnceRef = useRef(false);
 
-    useEffect(() => {
-        void load(false);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page, pageSize, statusFilter]);
+    const selectedStatus = useMemo(() => {
+        const statusValue = columnFilters.find((filter) => filter.id === "status")?.value;
+        if (Array.isArray(statusValue) && statusValue.length > 0) {
+            return String(statusValue[0]);
+        }
 
-    useEffect(() => {
-        setPage(1);
-    }, [pageSize, statusFilter]);
+        if (typeof statusValue === "string") {
+            return statusValue;
+        }
 
-    const summary = useMemo(
-        () => ({
-            total: items.length,
-            success: items.filter((item) => item.status !== 2).length,
-            cancelled: items.filter((item) => item.status === 2).length,
-        }),
-        [items],
+        return "all";
+    }, [columnFilters]);
+
+    const columns = useMemo<ColumnDef<BusAdminTicketListItem>[]>(
+        () => [
+            {
+                id: "ticketID",
+                accessorKey: "ticketID",
+                header: "ID Vé",
+                cell: ({ row }) => (
+                    <span className="font-mono text-xs text-muted-foreground" title={row.original.ticketID}>
+                        {row.original.ticketID.substring(0, 8)}...
+                    </span>
+                ),
+            },
+            {
+                id: "ticketCode",
+                accessorKey: "ticketCode",
+                header: "Mã vé",
+                cell: ({ row }) => (
+                    <div className="font-mono text-xs">{row.original.ticketCode}</div>
+                ),
+            },
+            {
+                id: "passenger",
+                accessorKey: "passenger",
+                header: "Hành khách",
+                cell: ({ row }) => (
+                    <div>
+                        <div className="font-medium">{row.original.passenger.fullName || "N/A"}</div>
+                        <div className="text-xs text-muted-foreground">{row.original.passenger.phoneNumber || "--"}</div>
+                    </div>
+                ),
+            },
+            {
+                id: "route",
+                accessorKey: "trip",
+                header: "Tuyến",
+                cell: ({ row }) => (
+                    <div>
+                        <div className="font-medium">{row.original.trip.routeName}</div>
+                        <div className="text-xs text-muted-foreground">{formatDateTime(row.original.trip.departureTime)}</div>
+                    </div>
+                ),
+            },
+            {
+                id: "seat",
+                accessorKey: "seat",
+                header: "Ghế",
+                cell: ({ row }) => (
+                    <div>
+                        <div className="font-medium">{row.original.seat.seatLabel || "--"}</div>
+                        <div className="text-xs text-muted-foreground">Tầng {row.original.seat.floor ?? "--"}</div>
+                    </div>
+                ),
+            },
+            {
+                id: "finalPrice",
+                accessorKey: "finalPrice",
+                header: "Giá vé",
+                cell: ({ row }) => (
+                    <div className="text-right font-medium">{currencyFormatter.format(row.original.finalPrice)}</div>
+                ),
+            },
+            {
+                id: "status",
+                accessorKey: "status",
+                header: "Trạng thái",
+                cell: ({ row }) => (
+                    <Badge variant={getTicketStatusVariant(row.original.status)}>
+                        {formatTicketStatus(row.original.status)}
+                    </Badge>
+                ),
+            },
+            {
+                id: "bookingTime",
+                accessorKey: "bookingTime",
+                header: "Thời gian đặt",
+                cell: ({ row }) => formatDateTime(row.original.bookingTime),
+            },
+        ],
+        [],
     );
 
-    async function load(showRefreshing: boolean) {
-        if (showRefreshing) setRefreshing(true);
-        else setLoading(true);
+    const table = useReactTable({
+        data: tickets,
+        columns,
+        pageCount: totalPages,
+        getCoreRowModel: getCoreRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        manualPagination: true,
+        state: {
+            columnFilters,
+            pagination,
+            globalFilter,
+        },
+        onColumnFiltersChange: setColumnFilters,
+        onPaginationChange: setPagination,
+        onGlobalFilterChange: setGlobalFilter,
+    });
 
+    const fetchTickets = useCallback(
+        async (showRefreshing = hasLoadedOnceRef.current) => {
+            if (!showRefreshing) {
+                setLoading(true);
+            }
+
+            if (showRefreshing) {
+                setRefreshing(true);
+            }
+
+            try {
+                const statusParam: TicketStatus | undefined =
+                    selectedStatus !== "all" ? (Number(selectedStatus) as TicketStatus) : undefined;
+
+                const response = await getApiBusadminBusesTickets({
+                    query: {
+                        ...(statusParam !== undefined ? { status: statusParam } : {}),
+                        page: pagination.pageIndex + 1,
+                        pageSize: pagination.pageSize,
+                    },
+                });
+
+                if (response.error || !response.data) {
+                    throw new Error("Không thể tải danh sách vé.");
+                }
+
+                const data = response.data as BusAdminTicketsResponse;
+                setTickets(data.records ?? []);
+                setTotalPages(Math.max(data.totalPages ?? 1, 1));
+                setTotalRecords(data.totalRecords ?? 0);
+
+                if (typeof data.page === "number" && data.page - 1 !== pagination.pageIndex) {
+                    setPagination((current) => ({ ...current, pageIndex: Math.max(data.page - 1, 0) }));
+                }
+
+                if (data.pageSize && data.pageSize !== pagination.pageSize) {
+                    setPagination((current) => ({ ...current, pageSize: data.pageSize }));
+                }
+
+                setError(null);
+                hasLoadedOnceRef.current = true;
+            } catch (error) {
+                console.error("Không thể tải danh sách vé", error);
+                setTickets([]);
+                setTotalPages(1);
+                setTotalRecords(0);
+                setError("Không thể tải danh sách vé.");
+
+                if (showRefreshing) {
+                    toast.error("Làm mới danh sách vé thất bại");
+                }
+            } finally {
+                setLoading(false);
+                setRefreshing(false);
+            }
+        },
+        [pagination.pageIndex, pagination.pageSize, selectedStatus],
+    );
+
+    useEffect(() => {
+        setPagination((current) => ({ ...current, pageIndex: 0 }));
+    }, [selectedStatus]);
+
+    const fetchStats = useCallback(async () => {
+        setStatsLoading(true);
         try {
-            const query = { page, pageSize } as unknown as GetApiBusadminBusesTicketsData["query"] & {
-                page: number;
-                pageSize: number;
-            };
-            if (statusFilter !== STATUS_ALL) {
-                query.status = Number(statusFilter) as TicketStatus;
-            }
-
-            const response = await getApiBusadminBusesTickets({
-                query: query as never,
+            const response = await getApiBusadminBusesStatsMonthly({
+                query: {
+                    year: Number(yearFilter),
+                    month: Number(monthFilter),
+                },
             });
-
-            if (response.error || !response.data) {
-                throw new Error("Không thể tải danh sách vé.");
+            if (response.data) {
+                setStats(response.data);
             }
-
-            const data = response.data as TicketListResponse;
-            setItems(normalizeRecords(data.records));
-            setTotalRecords(Number(data.totalRecords ?? 0));
-            setTotalPages(Number(data.totalPages ?? 0));
-            setError(null);
-        } catch (e) {
-            setItems([]);
-            setTotalRecords(0);
-            setTotalPages(0);
-            setError(e instanceof Error ? e.message : "Không thể tải danh sách vé.");
-            if (showRefreshing) toast.error("Làm mới danh sách vé thất bại");
+        } catch (error) {
+            console.error("Không thể tải thống kê", error);
         } finally {
-            setLoading(false);
-            setRefreshing(false);
+            setStatsLoading(false);
         }
-    }
+    }, [monthFilter, yearFilter]);
+
+    useEffect(() => {
+        void fetchStats();
+    }, [fetchStats]);
+
+    useEffect(() => {
+        void fetchTickets();
+    }, [fetchTickets]);
 
     return (
-        <>
-            <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-6">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <h1 className="text-2xl font-bold tracking-tight">Quản lý vé</h1>
-                        <Badge variant="outline">{totalRecords} vé</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">Theo dõi vé theo trạng thái và lịch sử đặt chỗ.</p>
+                    <h1 className="text-2xl font-bold tracking-tight">Quản lý vé xe</h1>
+                    <p className="text-sm text-muted-foreground">Theo dõi trạng thái vé đã bán và thông tin hành khách.</p>
                 </div>
-                <Button variant="outline" onClick={() => void load(true)} disabled={loading || refreshing}>
-                    <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-                    Làm mới
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Select value={monthFilter} onValueChange={setMonthFilter}>
+                        <SelectTrigger className="w-32">
+                            <SelectValue placeholder="Tháng" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {monthOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Input
+                        className="w-24"
+                        type="number"
+                        min={2000}
+                        max={3000}
+                        value={yearFilter}
+                        onChange={(event) => setYearFilter(event.target.value)}
+                    />
+                    <Button variant="outline" onClick={() => { fetchTickets(true); fetchStats(); }} disabled={refreshing || statsLoading}>
+                        <RefreshCw className={cn("h-4 w-4 mr-2", (refreshing || statsLoading) && "animate-spin")} />
+                        Làm mới
+                    </Button>
+                </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Doanh thu tháng</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {statsLoading ? (
+                            <Skeleton className="h-8 w-24" />
+                        ) : (
+                            <div className="text-2xl font-bold">{currencyFormatter.format(stats?.grossRevenue ?? 0)}</div>
+                        )}
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Vé bán thành công</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {statsLoading ? (
+                            <Skeleton className="h-8 w-24" />
+                        ) : (
+                            <div className="text-2xl font-bold">{numberFormatter.format(stats?.soldTickets ?? 0)}</div>
+                        )}
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Tổng chuyến xe</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {statsLoading ? (
+                            <Skeleton className="h-8 w-24" />
+                        ) : (
+                            <div className="text-2xl font-bold">{numberFormatter.format(stats?.totalTrips ?? 0)}</div>
+                        )}
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Tỉ lệ hủy vé</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {statsLoading ? (
+                            <Skeleton className="h-8 w-24" />
+                        ) : (
+                            <div className="text-2xl font-bold">{stats?.cancellationRatePercent ?? 0}%</div>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
 
             <Card>
-                <CardHeader>
-                    <CardTitle>Bộ lọc</CardTitle>
-                    <CardDescription>Chọn trạng thái vé để xem chi tiết.</CardDescription>
+                <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <CardTitle>Danh sách vé</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                            {totalRecords} vé theo bộ lọc hiện tại.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Input
+                            placeholder="Tìm kiếm ID vé, mã vé, SĐT..."
+                            value={globalFilter ?? ""}
+                            onChange={(event) => setGlobalFilter(String(event.target.value))}
+                            className="w-full md:w-64"
+                        />
+                        <Select
+                            value={selectedStatus}
+                            onValueChange={(value) =>
+                                setColumnFilters([{ id: "status", value: value === "all" ? [] : [value] }])
+                            }
+                        >
+                            <SelectTrigger className="w-52">
+                                <SelectValue placeholder="Trạng thái" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {statusOptions.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </CardHeader>
                 <CardContent>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="max-w-sm">
-                            <SelectValue placeholder="Chọn trạng thái" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value={STATUS_ALL}>Tất cả</SelectItem>
-                            <SelectItem value="0">Đã tạo</SelectItem>
-                            <SelectItem value="1">Đã soát vé</SelectItem>
-                            <SelectItem value="2">Đã hủy</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    {loading ? (
+                        <div className="space-y-3">
+                            {Array.from({ length: 6 }).map((_, index) => (
+                                <Skeleton key={index} className="h-12 w-full" />
+                            ))}
+                        </div>
+                    ) : error ? (
+                        <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
+                            {error}
+                        </div>
+                    ) : (
+                        <>
+                            <div className="overflow-hidden rounded-md border">
+                                <Table>
+                                    <TableHeader>
+                                        {table.getHeaderGroups().map((headerGroup) => (
+                                            <TableRow key={headerGroup.id}>
+                                                {headerGroup.headers.map((header) => (
+                                                    <TableHead key={header.id}>
+                                                        {header.isPlaceholder
+                                                            ? null
+                                                            : flexRender(
+                                                                  header.column.columnDef.header,
+                                                                  header.getContext(),
+                                                              )}
+                                                    </TableHead>
+                                                ))}
+                                            </TableRow>
+                                        ))}
+                                    </TableHeader>
+                                    <TableBody>
+                                        {table.getRowModel().rows.length ? (
+                                            table.getRowModel().rows.map((row) => (
+                                                <TableRow key={row.id}>
+                                                    {row.getVisibleCells().map((cell) => (
+                                                        <TableCell key={cell.id}>
+                                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                        </TableCell>
+                                                    ))}
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={columns.length} className="h-24 text-center">
+                                                    Không có vé phù hợp.
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
+
+                            <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                                <div className="text-sm text-muted-foreground">
+                                    Trang {pagination.pageIndex + 1} / {totalPages}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => table.setPageIndex(0)}
+                                        disabled={!table.getCanPreviousPage()}
+                                    >
+                                        <ChevronsLeft className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => table.previousPage()}
+                                        disabled={!table.getCanPreviousPage()}
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => table.nextPage()}
+                                        disabled={!table.getCanNextPage()}
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => table.setPageIndex(totalPages - 1)}
+                                        disabled={!table.getCanNextPage()}
+                                    >
+                                        <ChevronsRight className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-muted-foreground">Hiển thị</span>
+                                    <Select
+                                        value={String(pagination.pageSize)}
+                                        onValueChange={(value) => table.setPageSize(Number(value))}
+                                    >
+                                        <SelectTrigger className="h-8 w-24">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {[25, 50, 100, 200].map((size) => (
+                                                <SelectItem key={size} value={String(size)}>
+                                                    {size}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </CardContent>
             </Card>
-
-            <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                <StatCard title="Tổng vé hiển thị" value={summary.total} />
-                <StatCard title="Không hủy" value={summary.success} />
-                <StatCard title="Đã hủy" value={summary.cancelled} />
-            </div>
-
-            {error ? (
-                <Card className="mt-4">
-                    <CardHeader>
-                        <CardTitle>Không thể tải dữ liệu</CardTitle>
-                        <CardDescription>{error}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button onClick={() => void load(true)}>Thử lại</Button>
-                    </CardContent>
-                </Card>
-            ) : null}
-
-            <div className="mt-4 grid gap-4">
-                {loading
-                    ? Array.from({ length: 6 }, (_, index) => (
-                          <Card key={index}>
-                              <CardHeader>
-                                  <Skeleton className="h-6 w-44" />
-                                  <Skeleton className="h-4 w-64" />
-                              </CardHeader>
-                              <CardContent className="space-y-3">
-                                  <Skeleton className="h-4 w-full" />
-                                  <Skeleton className="h-4 w-5/6" />
-                              </CardContent>
-                          </Card>
-                      ))
-                    : items.map((item) => (
-                          <Card key={item.ticketID ?? item.ticketCode}>
-                              <CardHeader>
-                                  <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                                      <div>
-                                          <CardTitle className="text-base">{item.ticketCode || "Vé chưa có mã"}</CardTitle>
-                                          <CardDescription>
-                                              {item.trip?.routeName || "-"} | {item.bookingTime || "-"}
-                                          </CardDescription>
-                                      </div>
-                                      <Badge variant="outline">{formatStatusLabel(item.status)}</Badge>
-                                  </div>
-                              </CardHeader>
-                              <CardContent className="grid gap-3 text-sm text-muted-foreground md:grid-cols-2 xl:grid-cols-4">
-                                  <Meta label="Hành khách" value={item.passenger?.fullName || "-"} />
-                                  <Meta label="Điện thoại" value={item.passenger?.phoneNumber || "-"} />
-                                  <Meta label="Giá vé" value={formatCurrency(item.finalPrice ?? 0)} />
-                                  <Meta label="Ghế" value={item.seat?.seatLabel || "-"} />
-                              </CardContent>
-                          </Card>
-                      ))}
-            </div>
-
-            {!loading && items.length === 0 ? (
-                <Card className="mt-4">
-                    <CardHeader>
-                        <CardTitle>Chưa có vé</CardTitle>
-                        <CardDescription>Không có vé nào khớp bộ lọc hiện tại.</CardDescription>
-                    </CardHeader>
-                </Card>
-            ) : null}
-
-            <div className="mt-4 flex items-center justify-between gap-3">
-                <div className="text-sm text-muted-foreground">
-                    Trang {page} / {Math.max(totalPages, 1)}
-                </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" disabled={page <= 1 || loading} onClick={() => setPage((value) => Math.max(1, value - 1))}>
-                        Trước
-                    </Button>
-                    <Button variant="outline" disabled={totalPages > 0 ? page >= totalPages : loading} onClick={() => setPage((value) => value + 1)}>
-                        Sau
-                    </Button>
-                </div>
-            </div>
-        </>
-    );
-}
-
-function StatCard({ title, value }: { title: string; value: number }) {
-    return (
-        <Card>
-            <CardHeader>
-                <CardDescription>{title}</CardDescription>
-                <CardTitle className="text-2xl">{value}</CardTitle>
-            </CardHeader>
-        </Card>
-    );
-}
-
-function Meta({ label, value }: { label: string; value: string }) {
-    return (
-        <div>
-            <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">{label}</div>
-            <div className="mt-1 font-medium text-foreground">{value}</div>
         </div>
     );
-}
-
-function formatCurrency(amount: number) {
-    return new Intl.NumberFormat("vi-VN", {
-        style: "currency",
-        currency: "VND",
-        maximumFractionDigits: 0,
-    }).format(amount);
-}
-
-function normalizeRecords(records: unknown[] | undefined): TicketItem[] {
-    if (!Array.isArray(records)) return [];
-    return records.map((record) => {
-        if (!isRecord(record)) return {};
-
-        return {
-            ticketID: pickString(record.ticketID),
-            ticketCode: pickString(record.ticketCode),
-            finalPrice: pickNumber(record.finalPrice),
-            status: pickString(record.status) as TicketStatus | undefined,
-            bookingTime: pickString(record.bookingTime),
-            passenger: isRecord(record.passenger)
-                ? {
-                      passengerID: pickString(record.passenger.passengerID),
-                      fullName: pickString(record.passenger.fullName),
-                      phoneNumber: pickString(record.passenger.phoneNumber),
-                      email: pickString(record.passenger.email),
-                  }
-                : undefined,
-            trip: isRecord(record.trip)
-                ? {
-                      tripID: pickString(record.trip.tripID),
-                      departureDate: pickString(record.trip.departureDate),
-                      departureTime: pickString(record.trip.departureTime),
-                      arrivalTime: pickString(record.trip.arrivalTime),
-                      routeName: pickString(record.trip.routeName),
-                  }
-                : undefined,
-            seat: isRecord(record.seat)
-                ? {
-                      layoutID: pickString(record.seat.layoutID),
-                      seatLabel: pickString(record.seat.seatLabel),
-                      floor: pickNumber(record.seat.floor),
-                  }
-                : undefined,
-        };
-    });
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === "object" && value !== null;
-}
-
-function pickString(value: unknown): string | undefined {
-    return typeof value === "string" && value.trim() ? value : undefined;
-}
-
-function pickNumber(value: unknown): number | undefined {
-    return typeof value === "number" ? value : undefined;
-}
-
-function formatStatusLabel(status?: TicketStatus) {
-    if (status === 0) return "Đã tạo";
-    if (status === 1) return "Đã soát vé";
-    if (status === 2) return "Đã hủy";
-    return "Unknown";
 }

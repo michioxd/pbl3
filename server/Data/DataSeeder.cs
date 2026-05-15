@@ -26,34 +26,37 @@ namespace Pbl3.Data
         {
             await ImportAdministrativeLocationDataAsync();
 
-            if (!await _context.Users.AnyAsync())
+            if (await _context.Users.AnyAsync())
             {
-                _logger.LogInformation("Starting to seed full default data...");
-
-                await SeedRolesAsync();
-                await SeedUsersAsync();
-                await SeedBusCompaniesAsync();
-                await SeedBusTypesAsync();
-                await SeedSeatLayoutsAsync();
-                await SeedBusesAsync();
-                await SeedBusImagesAsync();
-                await SeedStationsAsync();
-                await SeedRoutesAsync();
-                await SeedRouteStopsAsync();
-                await SeedTripsAsync();
-                await SeedBookingsAsync();
-                await SeedPassengersAsync();
-                await SeedTicketsAsync();
-                await SeedPaymentIntentsAsync();
-                await SeedRefundsAsync();
-                await SeedReviewsAsync();
-                await SeedNotificationsAsync();
-                await SeedSeatHoldsAsync();
-
-                _logger.LogInformation("Successfully seeded comprehensive test data!");
+                _logger.LogInformation("Database already has data. Skipping seed.");
+                return;
             }
 
-            await SeedBusAdmin3SampleDataAsync();
+            _logger.LogInformation("Starting to seed data...");
+
+            await SeedRolesAsync();
+            await SeedUsersAsync();
+            await SeedBusCompaniesAsync();
+            await SeedAmenitiesAsync();
+            await SeedBusTypesAsync();
+            await SeedBusTypeAmenitiesAsync();
+            await SeedSeatLayoutsAsync();
+            await SeedBusesAsync();
+            await SeedBusImagesAsync();
+            await SeedStationsAsync();
+            await SeedRoutesAsync();
+            await SeedRouteStopsAsync();
+            await SeedTripsAsync();
+            await SeedBookingsAsync();
+            await SeedPassengersAsync();
+            await SeedTicketsAsync();
+            await SeedPaymentIntentsAsync();
+            await SeedRefundsAsync();
+            await SeedReviewsAsync();
+            await SeedNotificationsAsync();
+            await SeedSeatHoldsAsync();
+
+            _logger.LogInformation("Successfully seeded comprehensive test data!");
         }
 
         private async Task ImportAdministrativeLocationDataAsync()
@@ -311,361 +314,115 @@ namespace Pbl3.Data
             _logger.LogInformation("Seeded {Count} bus companies", companies.Count);
         }
 
-        private async Task SeedBusAdmin3SampleDataAsync()
+        private async Task SeedAmenitiesAsync()
         {
-            if (!await _context.Roles.AnyAsync())
+            var amenities = new List<Amenity>
             {
-                await SeedRolesAsync();
-            }
-
-            var busAdminRole = await _context.Roles.FirstAsync(r =>
-                r.RoleName == UserRole.BusAdmin.ToString()
-            );
-
-            const string targetEmail = "busadmin3@gmail.com";
-            var targetUserId = Guid.Parse("2a5b7937-91d1-4ca2-b447-495fe63f4e9a");
-            const string seedPassword = "1234567890";
-            var passwordHasher = new PasswordHasher<User>();
-
-            await using var transaction = await _context.Database.BeginTransactionAsync();
-
-            var user = await _context.Users.FirstOrDefaultAsync(u =>
-                u.UserID == targetUserId || u.Email == targetEmail
-            );
-
-            if (user == null)
-            {
-                user = new User
+                new Amenity
                 {
-                    UserID = targetUserId,
-                    Email = targetEmail,
-                    FullName = "BusAdmin 3",
-                    PhoneNumber = "0903003003",
-                    RoleID = busAdminRole.RoleID,
+                    AmenityID = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                    Name = "Điều hòa",
+                    Description = "Hệ thống điều hòa nhiệt độ",
+                    IconName = "AirVent",
+                    Category = "Tiện nghi",
+                    DisplayOrder = 1,
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    PasswordHash = string.Empty,
-                };
-                _context.Users.Add(user);
-            }
-
-            user.UserID = targetUserId;
-            user.Email = targetEmail;
-            user.FullName = "BusAdmin 3";
-            user.PhoneNumber = "0903003003";
-            user.RoleID = busAdminRole.RoleID;
-            user.IsActive = true;
-            user.PasswordHash = passwordHasher.HashPassword(user, seedPassword);
-
-            var company = await _context.BusCompanies.FirstOrDefaultAsync(c =>
-                c.LicenseNumber == "VN-BA-003" || c.Name == "XeNhanh BusAdmin 3"
-            );
-
-            if (company == null)
-            {
-                company = new BusCompany
+                },
+                new Amenity
                 {
-                    CompanyID = Guid.NewGuid(),
-                    Name = "XeNhanh BusAdmin 3",
-                    LicenseNumber = "VN-BA-003",
-                    Hotline = "0903003003",
-                    IsApproved = true,
-                };
-                _context.BusCompanies.Add(company);
-            }
-
-            var adminLink = await _context.BusCompanyAdmins.FirstOrDefaultAsync(x =>
-                x.UserID == targetUserId
-            );
-
-            if (adminLink == null)
-            {
-                _context.BusCompanyAdmins.Add(
-                    new BusCompanyAdmin
-                    {
-                        UserID = targetUserId,
-                        CompanyID = company.CompanyID,
-                        Roles = "O",
-                    }
-                );
-            }
-            else
-            {
-                adminLink.CompanyID = company.CompanyID;
-                adminLink.Roles = "O";
-            }
-
-            var busType = await _context.BusTypes.FirstOrDefaultAsync(bt =>
-                bt.Name == "Giường nằm 34 chỗ BusAdmin 3"
-            );
-
-            if (busType == null)
-            {
-                busType = new BusType
-                {
-                    BusTypeID = Guid.NewGuid(),
-                    Name = "Giường nằm 34 chỗ BusAdmin 3",
-                    TotalSeats = 34,
-                    Description = "Xe giường nằm cao cấp dành cho workspace BusAdmin 3",
-                };
-                _context.BusTypes.Add(busType);
-            }
-
-            var hasLayouts = await _context.SeatLayouts.AnyAsync(s => s.BusTypeID == busType.BusTypeID);
-            if (!hasLayouts)
-            {
-                _context.SeatLayouts.AddRange(
-                    new SeatLayout
-                    {
-                        LayoutID = Guid.NewGuid(),
-                        BusTypeID = busType.BusTypeID,
-                        SeatLabel = "A1",
-                        Floor = 1,
-                        SeatType = SeatType.Window,
-                        PositionX = 1,
-                        PositionY = 1,
-                    },
-                    new SeatLayout
-                    {
-                        LayoutID = Guid.NewGuid(),
-                        BusTypeID = busType.BusTypeID,
-                        SeatLabel = "A2",
-                        Floor = 1,
-                        SeatType = SeatType.Aisle,
-                        PositionX = 2,
-                        PositionY = 1,
-                    },
-                    new SeatLayout
-                    {
-                        LayoutID = Guid.NewGuid(),
-                        BusTypeID = busType.BusTypeID,
-                        SeatLabel = "B1",
-                        Floor = 1,
-                        SeatType = SeatType.Window,
-                        PositionX = 1,
-                        PositionY = 2,
-                    },
-                    new SeatLayout
-                    {
-                        LayoutID = Guid.NewGuid(),
-                        BusTypeID = busType.BusTypeID,
-                        SeatLabel = "B2",
-                        Floor = 1,
-                        SeatType = SeatType.Aisle,
-                        PositionX = 2,
-                        PositionY = 2,
-                    }
-                );
-
-                await _context.SaveChangesAsync();
-            }
-
-            var bus = await _context.Buses.FirstOrDefaultAsync(b => b.PlateNumber == "51B-30303");
-            if (bus == null)
-            {
-                bus = new Bus
-                {
-                    BusID = Guid.NewGuid(),
-                    CompanyID = company.CompanyID,
-                    BusTypeID = busType.BusTypeID,
-                    PlateNumber = "51B-30303",
+                    AmenityID = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                    Name = "Wi-Fi",
+                    Description = "Kết nối internet không dây miễn phí",
+                    IconName = "Wifi",
+                    Category = "Giải trí",
+                    DisplayOrder = 10,
                     IsActive = true,
-                };
-                _context.Buses.Add(bus);
-            }
-            else
-            {
-                bus.CompanyID = company.CompanyID;
-                bus.BusTypeID = busType.BusTypeID;
-                bus.IsActive = true;
-            }
-
-            var route = await _context.BusRoutes.FirstOrDefaultAsync(r =>
-                r.RouteName == "TP.HCM - Phan Thiết (BusAdmin 3)"
-            );
-
-            if (route == null)
-            {
-                route = new BusRoute
+                },
+                new Amenity
                 {
-                    RouteID = Guid.NewGuid(),
-                    CompanyID = company.CompanyID,
-                    RouteName = "TP.HCM - Phan Thiết (BusAdmin 3)",
-                    DistanceEstimate = 180,
-                    DurationEstimate = 4.5m,
+                    AmenityID = Guid.Parse("33333333-3333-3333-3333-333333333333"),
+                    Name = "Nước uống",
+                    Description = "Nước uống miễn phí",
+                    IconName = "Coffee",
+                    Category = "Đồ ăn & Nước uống",
+                    DisplayOrder = 20,
                     IsActive = true,
-                };
-                _context.BusRoutes.Add(route);
-            }
-            else
-            {
-                route.CompanyID = company.CompanyID;
-                route.DistanceEstimate = 180;
-                route.DurationEstimate = 4.5m;
-                route.IsActive = true;
-            }
-
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            var departureTime = DateTime.SpecifyKind(
-                new DateTime(today.Year, today.Month, today.Day, 8, 0, 0),
-                DateTimeKind.Utc
-            );
-            var arrivalTime = DateTime.SpecifyKind(
-                new DateTime(today.Year, today.Month, today.Day, 12, 30, 0),
-                DateTimeKind.Utc
-            );
-
-            var trip = await _context.Trips.FirstOrDefaultAsync(t =>
-                t.RouteID == route.RouteID && t.DepartureDate == today
-            );
-
-            if (trip == null)
-            {
-                trip = new Trip
+                },
+                new Amenity
                 {
-                    TripID = Guid.NewGuid(),
-                    RouteID = route.RouteID,
-                    BusID = bus.BusID,
-                    BusTypeID = busType.BusTypeID,
-                    DepartureDate = today,
-                    DepartureTime = departureTime,
-                    ArrivalTime = arrivalTime,
-                    Status = TripStatus.Scheduled,
-                };
-                _context.Trips.Add(trip);
-            }
-            else
-            {
-                trip.BusID = bus.BusID;
-                trip.BusTypeID = busType.BusTypeID;
-                trip.DepartureTime = departureTime;
-                trip.ArrivalTime = arrivalTime;
-                trip.Status = TripStatus.Scheduled;
-            }
-
-            var booking = await _context.Bookings.FirstOrDefaultAsync(b =>
-                b.ContactEmail == targetEmail && b.CreatedAt.Date == DateTime.UtcNow.Date
-            );
-
-            if (booking == null)
-            {
-                booking = new Booking
+                    AmenityID = Guid.Parse("44444444-4444-4444-4444-444444444444"),
+                    Name = "Chăn",
+                    Description = "Chăn ấm",
+                    IconName = "Bed",
+                    Category = "Tiện nghi",
+                    DisplayOrder = 3,
+                    IsActive = true,
+                },
+                new Amenity
                 {
-                    BookingID = Guid.NewGuid(),
-                    ContactName = "BusAdmin 3 Customer",
-                    ContactPhone = "0903003003",
-                    ContactEmail = targetEmail,
-                    TotalAmount = 360000m,
-                    Status = BookingStatus.Paid,
-                    CreatedAt = DateTime.UtcNow,
-                };
-                _context.Bookings.Add(booking);
-            }
-
-            var seatA1 = await _context.SeatLayouts.FirstAsync(s =>
-                s.BusTypeID == busType.BusTypeID && s.SeatLabel == "A1"
-            );
-            var seatA2 = await _context.SeatLayouts.FirstAsync(s =>
-                s.BusTypeID == busType.BusTypeID && s.SeatLabel == "A2"
-            );
-            var seatB1 = await _context.SeatLayouts.FirstAsync(s =>
-                s.BusTypeID == busType.BusTypeID && s.SeatLabel == "B1"
-            );
-
-            var passenger1 = await _context.Passengers.FirstOrDefaultAsync(p =>
-                p.Email == "busadmin3.passenger1@gmail.com"
-            );
-            if (passenger1 == null)
-            {
-                passenger1 = new Passenger
+                    AmenityID = Guid.Parse("55555555-5555-5555-5555-555555555555"),
+                    Name = "Gối",
+                    Description = "Gối êm ái",
+                    IconName = "Bed",
+                    Category = "Tiện nghi",
+                    DisplayOrder = 4,
+                    IsActive = true,
+                },
+                new Amenity
                 {
-                    PassengerID = Guid.NewGuid(),
-                    FullName = "BusAdmin 3 Passenger 1",
-                    PhoneNumber = "0903003004",
-                    Email = "busadmin3.passenger1@gmail.com",
-                };
-                _context.Passengers.Add(passenger1);
-            }
-
-            var passenger2 = await _context.Passengers.FirstOrDefaultAsync(p =>
-                p.Email == "busadmin3.passenger2@gmail.com"
-            );
-            if (passenger2 == null)
-            {
-                passenger2 = new Passenger
+                    AmenityID = Guid.Parse("66666666-6666-6666-6666-666666666666"),
+                    Name = "TV",
+                    Description = "Màn hình giải trí",
+                    IconName = "Tv",
+                    Category = "Giải trí",
+                    DisplayOrder = 11,
+                    IsActive = true,
+                },
+                new Amenity
                 {
-                    PassengerID = Guid.NewGuid(),
-                    FullName = "BusAdmin 3 Passenger 2",
-                    PhoneNumber = "0903003005",
-                    Email = "busadmin3.passenger2@gmail.com",
-                };
-                _context.Passengers.Add(passenger2);
-            }
-
-            var ticket1 = await _context.Tickets.FirstOrDefaultAsync(t => t.TicketCode == "BA3-001");
-            if (ticket1 == null)
-            {
-                ticket1 = new Ticket
+                    AmenityID = Guid.Parse("77777777-7777-7777-7777-777777777777"),
+                    Name = "Sạc điện thoại",
+                    Description = "Cổng sạc USB",
+                    IconName = "BatteryCharging",
+                    Category = "Giải trí",
+                    DisplayOrder = 13,
+                    IsActive = true,
+                },
+                new Amenity
                 {
-                    TicketID = Guid.NewGuid(),
-                    BookingID = booking.BookingID,
-                    TripID = trip.TripID,
-                    PassengerID = passenger1.PassengerID,
-                    SeatLayoutID = seatA1.LayoutID,
-                    FinalPrice = 180000m,
-                    Status = TicketStatus.Issued,
-                    TicketCode = "BA3-001",
-                    QrCode = "BA3-001",
-                };
-                _context.Tickets.Add(ticket1);
-            }
-
-            var ticket2 = await _context.Tickets.FirstOrDefaultAsync(t => t.TicketCode == "BA3-002");
-            if (ticket2 == null)
-            {
-                ticket2 = new Ticket
+                    AmenityID = Guid.Parse("88888888-8888-8888-8888-888888888888"),
+                    Name = "Nhà vệ sinh",
+                    Description = "Nhà vệ sinh trên xe",
+                    IconName = "Bath",
+                    Category = "Đồ ăn & Nước uống",
+                    DisplayOrder = 23,
+                    IsActive = true,
+                },
+                new Amenity
                 {
-                    TicketID = Guid.NewGuid(),
-                    BookingID = booking.BookingID,
-                    TripID = trip.TripID,
-                    PassengerID = passenger2.PassengerID,
-                    SeatLayoutID = seatA2.LayoutID,
-                    FinalPrice = 180000m,
-                    Status = TicketStatus.CheckedIn,
-                    TicketCode = "BA3-002",
-                    QrCode = "BA3-002",
-                };
-                _context.Tickets.Add(ticket2);
-            }
-
-            var ticket3 = await _context.Tickets.FirstOrDefaultAsync(t => t.TicketCode == "BA3-003");
-            if (ticket3 == null)
-            {
-                ticket3 = new Ticket
+                    AmenityID = Guid.Parse("99999999-9999-9999-9999-999999999999"),
+                    Name = "Ghế ngả",
+                    Description = "Ghế ngả tiện nghi",
+                    IconName = "Armchair",
+                    Category = "Tiện nghi",
+                    DisplayOrder = 2,
+                    IsActive = true,
+                },
+                new Amenity
                 {
-                    TicketID = Guid.NewGuid(),
-                    BookingID = booking.BookingID,
-                    TripID = trip.TripID,
-                    PassengerID = passenger1.PassengerID,
-                    SeatLayoutID = seatB1.LayoutID,
-                    FinalPrice = 0m,
-                    Status = TicketStatus.Cancelled,
-                    TicketCode = "BA3-003",
-                    QrCode = "BA3-003",
-                };
-                _context.Tickets.Add(ticket3);
-            }
+                    AmenityID = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                    Name = "Tiếp viên",
+                    Description = "Tiếp viên phục vụ",
+                    IconName = "UserCheck",
+                    Category = "Đồ ăn & Nước uống",
+                    DisplayOrder = 24,
+                    IsActive = true,
+                },
+            };
 
-            booking.TotalAmount = 360000m;
-
+            _context.Amenities.AddRange(amenities);
             await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
-
-            _logger.LogInformation(
-                "Seeded BusAdmin sample workspace for {Email} ({UserId})",
-                targetEmail,
-                targetUserId
-            );
+            _logger.LogInformation("Seeded {Count} amenities", amenities.Count);
         }
 
         private async Task SeedBusTypesAsync()
@@ -698,6 +455,101 @@ namespace Pbl3.Data
             _context.BusTypes.AddRange(busTypes);
             await _context.SaveChangesAsync();
             _logger.LogInformation("Seeded {Count} bus types", busTypes.Count);
+        }
+
+        private async Task SeedBusTypeAmenitiesAsync()
+        {
+            var busType29 = await _context.BusTypes.FirstAsync(bt =>
+                bt.Name == "Giường nằm 29 chỗ"
+            );
+            var busType40 = await _context.BusTypes.FirstAsync(bt => bt.Name == "Ghế ngồi 40 chỗ");
+            var busType45 = await _context.BusTypes.FirstAsync(bt => bt.Name == "Ghế ngồi 45 chỗ");
+
+            var amenities = new List<BusTypeAmenity>
+            {
+                // Giường nằm 29 chỗ - Premium amenities
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                }, // Điều hòa
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                }, // Wi-Fi
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("33333333-3333-3333-3333-333333333333"),
+                }, // Nước uống
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("44444444-4444-4444-4444-444444444444"),
+                }, // Chăn
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("55555555-5555-5555-5555-555555555555"),
+                }, // Gối
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("66666666-6666-6666-6666-666666666666"),
+                }, // TV
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("77777777-7777-7777-7777-777777777777"),
+                }, // Sạc điện thoại
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("88888888-8888-8888-8888-888888888888"),
+                }, // Nhà vệ sinh
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType29.BusTypeID,
+                    AmenityID = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                }, // Tiếp viên
+                // Ghế ngồi 40 chỗ - Standard amenities
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType40.BusTypeID,
+                    AmenityID = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                }, // Điều hòa
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType40.BusTypeID,
+                    AmenityID = Guid.Parse("33333333-3333-3333-3333-333333333333"),
+                }, // Nước uống
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType40.BusTypeID,
+                    AmenityID = Guid.Parse("99999999-9999-9999-9999-999999999999"),
+                }, // Ghế ngả
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType40.BusTypeID,
+                    AmenityID = Guid.Parse("77777777-7777-7777-7777-777777777777"),
+                }, // Sạc điện thoại
+                // Ghế ngồi 45 chỗ - Basic amenities
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType45.BusTypeID,
+                    AmenityID = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                }, // Điều hòa
+                new BusTypeAmenity
+                {
+                    BusTypeID = busType45.BusTypeID,
+                    AmenityID = Guid.Parse("99999999-9999-9999-9999-999999999999"),
+                }, // Ghế ngả
+            };
+
+            _context.BusTypeAmenities.AddRange(amenities);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded {Count} bus type amenities", amenities.Count);
         }
 
         private async Task SeedSeatLayoutsAsync()
@@ -1214,6 +1066,46 @@ namespace Pbl3.Data
             _context.RouteStops.AddRange(routeStops);
             await _context.SaveChangesAsync();
             _logger.LogInformation("Seeded {Count} route stops", routeStops.Count);
+
+            await UpdateRouteLocationCodesAsync();
+        }
+
+        private async Task UpdateRouteLocationCodesAsync()
+        {
+            var routes = await _context
+                .BusRoutes.Include(r => r.BusRouteStops)
+                    .ThenInclude(stop => stop.Station)
+                .ToListAsync();
+
+            foreach (var route in routes)
+            {
+                var firstPickup = route
+                    .BusRouteStops.Where(stop => stop.IsPickUp)
+                    .OrderBy(stop => stop.StopOrder)
+                    .FirstOrDefault();
+
+                var lastDropoff = route
+                    .BusRouteStops.Where(stop => stop.IsDropOff)
+                    .OrderByDescending(stop => stop.StopOrder)
+                    .FirstOrDefault();
+
+                if (firstPickup?.Station != null)
+                {
+                    route.DepartureProvinceCode = firstPickup.Station.ProvinceCode;
+                    route.DepartureDistrictCode = firstPickup.Station.DistrictCode;
+                    route.DepartureWardCode = firstPickup.Station.WardCode;
+                }
+
+                if (lastDropoff?.Station != null)
+                {
+                    route.ArrivalProvinceCode = lastDropoff.Station.ProvinceCode;
+                    route.ArrivalDistrictCode = lastDropoff.Station.DistrictCode;
+                    route.ArrivalWardCode = lastDropoff.Station.WardCode;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Updated location codes for {Count} routes", routes.Count);
         }
 
         private async Task SeedTripsAsync()
@@ -1264,6 +1156,7 @@ namespace Pbl3.Data
                     DepartureTime = today.AddDays(1).Date.AddHours(7),
                     ArrivalTime = today.AddDays(1).Date.AddHours(15),
                     Status = TripStatus.Scheduled,
+                    BasePrice = 250000,
                 },
                 new Trip
                 {
@@ -1275,6 +1168,7 @@ namespace Pbl3.Data
                     DepartureTime = today.AddDays(1).Date.AddHours(22),
                     ArrivalTime = today.AddDays(2).Date.AddHours(6),
                     Status = TripStatus.Scheduled,
+                    BasePrice = 250000,
                 },
                 new Trip
                 {
@@ -1286,6 +1180,7 @@ namespace Pbl3.Data
                     DepartureTime = today.AddDays(2).Date.AddHours(7),
                     ArrivalTime = today.AddDays(2).Date.AddHours(15),
                     Status = TripStatus.Scheduled,
+                    BasePrice = 250000,
                 },
                 // HCM - Vung Tau trips
                 new Trip
@@ -1298,6 +1193,7 @@ namespace Pbl3.Data
                     DepartureTime = today.AddDays(1).Date.AddHours(8),
                     ArrivalTime = today.AddDays(1).Date.AddHours(10).AddMinutes(30),
                     Status = TripStatus.Scheduled,
+                    BasePrice = 250000,
                 },
                 new Trip
                 {
@@ -1309,6 +1205,7 @@ namespace Pbl3.Data
                     DepartureTime = today.AddDays(1).Date.AddHours(14),
                     ArrivalTime = today.AddDays(1).Date.AddHours(16).AddMinutes(30),
                     Status = TripStatus.Scheduled,
+                    BasePrice = 250000,
                 },
                 // HCM - Can Tho trips
                 new Trip
@@ -1321,6 +1218,7 @@ namespace Pbl3.Data
                     DepartureTime = today.AddDays(1).Date.AddHours(6),
                     ArrivalTime = today.AddDays(1).Date.AddHours(10),
                     Status = TripStatus.Scheduled,
+                    BasePrice = 250000,
                 },
                 new Trip
                 {
@@ -1332,6 +1230,7 @@ namespace Pbl3.Data
                     DepartureTime = today.AddDays(2).Date.AddHours(12),
                     ArrivalTime = today.AddDays(2).Date.AddHours(16),
                     Status = TripStatus.Scheduled,
+                    BasePrice = 250000,
                 },
                 // HCM - Nha Trang trips
                 new Trip
@@ -1344,6 +1243,7 @@ namespace Pbl3.Data
                     DepartureTime = today.AddDays(1).Date.AddHours(20),
                     ArrivalTime = today.AddDays(2).Date.AddHours(6),
                     Status = TripStatus.Scheduled,
+                    BasePrice = 250000,
                 },
                 // HCM - Da Nang trips
                 new Trip
@@ -1356,6 +1256,7 @@ namespace Pbl3.Data
                     DepartureTime = today.AddDays(3).Date.AddHours(18),
                     ArrivalTime = today.AddDays(4).Date.AddHours(12),
                     Status = TripStatus.Scheduled,
+                    BasePrice = 250000,
                 },
             };
 

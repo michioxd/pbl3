@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pbl3.Data;
 using Pbl3.Dtos;
+using Pbl3.Enums;
 using Pbl3.Models;
 
 namespace Pbl3.Controllers.BusAdmin
@@ -74,7 +75,7 @@ namespace Pbl3.Controllers.BusAdmin
                 Hotline = string.IsNullOrWhiteSpace(company.Hotline)
                     ? null
                     : company.Hotline.Trim(),
-                IsApproved = true,
+                IsApproved = false,
             };
 
             var busCompanyAdmin = new BusCompanyAdmin
@@ -84,10 +85,23 @@ namespace Pbl3.Controllers.BusAdmin
                 Roles = "O",
             };
 
+            var updateRequest = new CompanyProfileUpdateRequest
+            {
+                RequestID = Guid.NewGuid(),
+                CompanyID = busCompany.CompanyID,
+                RequesterUserID = userId,
+                Name = busCompany.Name,
+                LicenseNumber = busCompany.LicenseNumber,
+                Hotline = busCompany.Hotline,
+                Status = CompanyProfileUpdateRequestStatus.Pending,
+                RequestedAt = DateTime.UtcNow,
+            };
+
             await using var transaction = await _context.Database.BeginTransactionAsync();
 
             _context.BusCompanies.Add(busCompany);
             _context.BusCompanyAdmins.Add(busCompanyAdmin);
+            _context.CompanyProfileUpdateRequests.Add(updateRequest);
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 

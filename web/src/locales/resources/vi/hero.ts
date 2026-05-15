@@ -21,6 +21,7 @@ const hero = {
         searchTrip: "Tìm chuyến xe",
         search: "Tìm",
         addReturnDate: "Thêm ngày về",
+        add: "Thêm",
     },
     promotions: {
         badge: "Khuyến mãi hôm nay",

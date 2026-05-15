@@ -4,10 +4,11 @@ using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Npgsql;
-using Pbl3.Controllers;
+using Pbl3.Configurations;
 using Pbl3.Data;
 using Pbl3.Enums;
 using Pbl3.Extensions;
@@ -30,6 +31,8 @@ namespace Pbl3
             builder.Services.AddScoped<ITripSearchService, TripSearchService>();
             builder.Services.AddScoped<ICurrentUserContext, CurrentUserContext>();
             builder.Services.AddScoped<IBusAdminOwnershipService, BusAdminOwnershipService>();
+            builder.Services.AddScoped<IBookingService, BookingService>();
+            builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy(
@@ -42,6 +45,41 @@ namespace Pbl3
                 );
             });
 
+            builder
+                .Services.AddOptions<MomoOptions>()
+                .Configure(options =>
+                {
+                    options.PartnerCode =
+                        Environment.GetEnvironmentVariable("MOMO_PARTNER_CODE") ?? string.Empty;
+                    options.AccessKey =
+                        Environment.GetEnvironmentVariable("MOMO_ACCESS_KEY") ?? string.Empty;
+                    options.SecretKey =
+                        Environment.GetEnvironmentVariable("MOMO_SECRET_KEY") ?? string.Empty;
+                    options.Endpoint =
+                        Environment.GetEnvironmentVariable("MOMO_ENDPOINT") ?? string.Empty;
+                    options.RedirectUrl =
+                        Environment.GetEnvironmentVariable("MOMO_REDIRECT_URL") ?? string.Empty;
+                    options.IpnUrl =
+                        Environment.GetEnvironmentVariable("MOMO_IPN_URL") ?? string.Empty;
+                    options.PartnerName =
+                        Environment.GetEnvironmentVariable("MOMO_PARTNER_NAME") ?? string.Empty;
+                    options.StoreId =
+                        Environment.GetEnvironmentVariable("MOMO_STORE_ID") ?? string.Empty;
+                    options.RequestType =
+                        Environment.GetEnvironmentVariable("MOMO_REQUEST_TYPE") ?? "captureWallet";
+                    options.Lang = Environment.GetEnvironmentVariable("MOMO_LANG") ?? "vi";
+                });
+            builder.Services.AddHttpClient<IPaymentService, PaymentService>(
+                (serviceProvider, client) =>
+                {
+                    var options = serviceProvider.GetRequiredService<IOptions<MomoOptions>>().Value;
+                    if (!string.IsNullOrWhiteSpace(options.Endpoint))
+                    {
+                        client.BaseAddress = new Uri(options.Endpoint.TrimEnd('/'));
+                    }
+                }
+            );
+
             var connectionString =
                 Environment.GetEnvironmentVariable("DATABASE_URL")
                 ?? builder.Configuration.GetConnectionString("DefaultConnection");
@@ -51,6 +89,7 @@ namespace Pbl3
 
             var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
             dataSourceBuilder.MapEnum<UserRole>();
+            dataSourceBuilder.MapEnum<CompanyStatus>();
             dataSourceBuilder.MapEnum<TripStatus>();
             dataSourceBuilder.MapEnum<SeatType>();
             dataSourceBuilder.MapEnum<StationType>();
@@ -71,10 +110,6 @@ namespace Pbl3
             builder.Services.AddScoped<DbInitializer>();
             builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
             builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-            builder.Services.AddScoped<
-                Pbl3.Controllers.ITripSearchService,
-                Pbl3.Controllers.TripSearchService
-            >();
 
             var jwtKey =
                 Environment.GetEnvironmentVariable("JWT_KEY") ?? builder.Configuration["Jwt:Key"];
