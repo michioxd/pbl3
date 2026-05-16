@@ -16,13 +16,7 @@ import {
     getFilteredRowModel,
     useReactTable,
 } from "@tanstack/react-table";
-import {
-    ChevronLeft,
-    ChevronRight,
-    ChevronsLeft,
-    ChevronsRight,
-    RefreshCw,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -169,9 +163,7 @@ export function PageBusAdminTickets() {
                 id: "ticketCode",
                 accessorKey: "ticketCode",
                 header: "Mã vé",
-                cell: ({ row }) => (
-                    <div className="font-mono text-xs">{row.original.ticketCode}</div>
-                ),
+                cell: ({ row }) => <div className="font-mono text-xs">{row.original.ticketCode}</div>,
             },
             {
                 id: "passenger",
@@ -180,7 +172,9 @@ export function PageBusAdminTickets() {
                 cell: ({ row }) => (
                     <div>
                         <div className="font-medium">{row.original.passenger.fullName || "N/A"}</div>
-                        <div className="text-xs text-muted-foreground">{row.original.passenger.phoneNumber || "--"}</div>
+                        <div className="text-xs text-muted-foreground">
+                            {row.original.passenger.phoneNumber || "--"}
+                        </div>
                     </div>
                 ),
             },
@@ -191,7 +185,9 @@ export function PageBusAdminTickets() {
                 cell: ({ row }) => (
                     <div>
                         <div className="font-medium">{row.original.trip.routeName}</div>
-                        <div className="text-xs text-muted-foreground">{formatDateTime(row.original.trip.departureTime)}</div>
+                        <div className="text-xs text-muted-foreground">
+                            {formatDateTime(row.original.trip.departureTime)}
+                        </div>
                     </div>
                 ),
             },
@@ -346,7 +342,9 @@ export function PageBusAdminTickets() {
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Quản lý vé xe</h1>
-                    <p className="text-sm text-muted-foreground">Theo dõi trạng thái vé đã bán và thông tin hành khách.</p>
+                    <p className="text-sm text-muted-foreground">
+                        Theo dõi trạng thái vé đã bán và thông tin hành khách.
+                    </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     <Select value={monthFilter} onValueChange={setMonthFilter}>
@@ -369,7 +367,14 @@ export function PageBusAdminTickets() {
                         value={yearFilter}
                         onChange={(event) => setYearFilter(event.target.value)}
                     />
-                    <Button variant="outline" onClick={() => { fetchTickets(true); fetchStats(); }} disabled={refreshing || statsLoading}>
+                    <Button
+                        variant="outline"
+                        onClick={() => {
+                            fetchTickets(true);
+                            fetchStats();
+                        }}
+                        disabled={refreshing || statsLoading}
+                    >
                         <RefreshCw className={cn("h-4 w-4 mr-2", (refreshing || statsLoading) && "animate-spin")} />
                         Làm mới
                     </Button>
@@ -385,7 +390,9 @@ export function PageBusAdminTickets() {
                         {statsLoading ? (
                             <Skeleton className="h-8 w-24" />
                         ) : (
-                            <div className="text-2xl font-bold">{currencyFormatter.format(stats?.grossRevenue ?? 0)}</div>
+                            <div className="text-2xl font-bold">
+                                {currencyFormatter.format(stats?.grossRevenue ?? 0)}
+                            </div>
                         )}
                     </CardContent>
                 </Card>
@@ -431,9 +438,7 @@ export function PageBusAdminTickets() {
                 <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
                         <CardTitle>Danh sách vé</CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                            {totalRecords} vé theo bộ lọc hiện tại.
-                        </p>
+                        <p className="text-sm text-muted-foreground">{totalRecords} vé theo bộ lọc hiện tại.</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <Input
@@ -469,9 +474,7 @@ export function PageBusAdminTickets() {
                             ))}
                         </div>
                     ) : error ? (
-                        <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
-                            {error}
-                        </div>
+                        <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">{error}</div>
                     ) : (
                         <>
                             <div className="overflow-hidden rounded-md border">

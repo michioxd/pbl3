@@ -86,9 +86,7 @@ namespace Pbl3.Controllers.Users
                 Completed = tickets
                     .Where(t =>
                         t.Status == nameof(TicketStatus.CheckedIn)
-                        || (
-                            t.Status == nameof(TicketStatus.Issued) && t.DepartureTime <= now
-                        )
+                        || (t.Status == nameof(TicketStatus.Issued) && t.DepartureTime <= now)
                     )
                     .OrderByDescending(t => t.DepartureTime)
                     .ToList(),

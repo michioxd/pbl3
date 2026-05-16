@@ -1,12 +1,6 @@
 import { getApiAdminSystemTransactionsByIntentId } from "@/api";
 import { Badge } from "@/components/ui/badge";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -133,7 +127,11 @@ export function TransactionDetailDialog({
                             <InfoRow label="Số tiền" value={formatCurrency(detail.amount)} />
                             <InfoRow
                                 label="Trạng thái"
-                                value={<Badge variant={getStatusBadgeVariant(detail.status)}>{formatStatus(detail.status)}</Badge>}
+                                value={
+                                    <Badge variant={getStatusBadgeVariant(detail.status)}>
+                                        {formatStatus(detail.status)}
+                                    </Badge>
+                                }
                             />
                             <InfoRow label="Ngày tạo" value={formatDateTime(detail.createdAt)} />
                         </Section>
@@ -147,7 +145,10 @@ export function TransactionDetailDialog({
                                     <InfoRow label="Email" value={detail.booking.contactEmail || "N/A"} />
                                     <InfoRow label="Điện thoại" value={detail.booking.contactPhone || "N/A"} />
                                     {detail.booking.userEmail && (
-                                        <InfoRow label="Tài khoản" value={`${detail.booking.userFullName} (${detail.booking.userEmail})`} />
+                                        <InfoRow
+                                            label="Tài khoản"
+                                            value={`${detail.booking.userFullName} (${detail.booking.userEmail})`}
+                                        />
                                     )}
                                     <InfoRow label="Tổng tiền" value={formatCurrency(detail.booking.totalAmount)} />
                                     <InfoRow
@@ -172,7 +173,9 @@ export function TransactionDetailDialog({
                                                 <div key={ticket.ticketID} className="rounded-lg border p-4">
                                                     <div className="mb-2 flex items-start justify-between">
                                                         <div>
-                                                            <div className="font-mono text-sm font-medium">{ticket.ticketCode}</div>
+                                                            <div className="font-mono text-sm font-medium">
+                                                                {ticket.ticketCode}
+                                                            </div>
                                                             <div className="text-xs text-muted-foreground">
                                                                 {ticket.tripRouteName || "N/A"}
                                                             </div>
@@ -184,7 +187,9 @@ export function TransactionDetailDialog({
                                                     <div className="grid gap-2 text-sm">
                                                         <div className="grid grid-cols-2 gap-2">
                                                             <div>
-                                                                <span className="text-muted-foreground">Hành khách:</span>{" "}
+                                                                <span className="text-muted-foreground">
+                                                                    Hành khách:
+                                                                </span>{" "}
                                                                 {ticket.passengerFullName || "N/A"}
                                                             </div>
                                                             <div>
@@ -204,7 +209,9 @@ export function TransactionDetailDialog({
                                                         </div>
                                                         {ticket.tripDepartureTime && (
                                                             <div>
-                                                                <span className="text-muted-foreground">Khởi hành:</span>{" "}
+                                                                <span className="text-muted-foreground">
+                                                                    Khởi hành:
+                                                                </span>{" "}
                                                                 {formatDateTime(ticket.tripDepartureTime)}
                                                             </div>
                                                         )}
@@ -222,7 +229,10 @@ export function TransactionDetailDialog({
                             <Section title={`Lịch sử hoàn tiền (${detail.refunds.length})`}>
                                 <div className="space-y-3">
                                     {detail.refunds.map((refund) => (
-                                        <div key={refund.refundID} className="rounded-lg border border-red-200 bg-red-50/50 p-3">
+                                        <div
+                                            key={refund.refundID}
+                                            className="rounded-lg border border-red-200 bg-red-50/50 p-3"
+                                        >
                                             <div className="mb-1 flex items-center justify-between">
                                                 <div className="font-medium">{formatCurrency(refund.amount)}</div>
                                                 <Badge variant={getRefundStatusBadgeVariant(refund.status)}>
@@ -230,7 +240,9 @@ export function TransactionDetailDialog({
                                                 </Badge>
                                             </div>
                                             {refund.reason && (
-                                                <div className="text-sm text-muted-foreground">Lý do: {refund.reason}</div>
+                                                <div className="text-sm text-muted-foreground">
+                                                    Lý do: {refund.reason}
+                                                </div>
                                             )}
                                             <div className="mt-1 text-xs text-muted-foreground">
                                                 {formatDateTime(refund.createdAt)}

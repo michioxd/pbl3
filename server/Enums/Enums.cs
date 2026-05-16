@@ -33,9 +33,9 @@ namespace Pbl3.Enums
 
     public enum CompanyStatus
     {
-        Pending, 
+        Pending,
         Approved,
-        Suspended, 
+        Suspended,
         Rejected,
     }
 

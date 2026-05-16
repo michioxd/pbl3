@@ -67,7 +67,13 @@ const PageManageOrders = observer(() => {
     }, [store.user.isAuthenticated, store.user.isLoading]);
 
     if (store.user.isLoading) {
-        return <Container size="4" px="4" py="8"><Flex justify="center" py="9"><Spinner size="3" /></Flex></Container>;
+        return (
+            <Container size="4" px="4" py="8">
+                <Flex justify="center" py="9">
+                    <Spinner size="3" />
+                </Flex>
+            </Container>
+        );
     }
 
     if (!store.user.isAuthenticated) {
