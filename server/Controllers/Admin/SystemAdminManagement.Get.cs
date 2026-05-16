@@ -651,7 +651,7 @@ namespace Pbl3.Controllers.Admin
 
             var totalTickets = await ticketsQuery.CountAsync();
             var soldTickets = await ticketsQuery.CountAsync(t =>
-                t.Status != TicketStatus.Cancelled
+                t.Status == TicketStatus.Issued || t.Status == TicketStatus.CheckedIn
             );
             var cancelledTickets = await ticketsQuery.CountAsync(t =>
                 t.Status == TicketStatus.Cancelled
@@ -662,7 +662,9 @@ namespace Pbl3.Controllers.Admin
 
             var grossRevenue =
                 await ticketsQuery
-                    .Where(t => t.Status != TicketStatus.Cancelled)
+                    .Where(t =>
+                        t.Status == TicketStatus.Issued || t.Status == TicketStatus.CheckedIn
+                    )
                     .SumAsync(t => (decimal?)t.FinalPrice)
                 ?? 0m;
 
@@ -675,7 +677,9 @@ namespace Pbl3.Controllers.Admin
 
             var topRoutes = await ticketsQuery
                 .Where(t =>
-                    t.Status != TicketStatus.Cancelled && t.Trip != null && t.Trip.Route != null
+                    (t.Status == TicketStatus.Issued || t.Status == TicketStatus.CheckedIn)
+                    && t.Trip != null
+                    && t.Trip.Route != null
                 )
                 .GroupBy(t => t.Trip!.Route!.RouteName)
                 .Select(g => new
@@ -695,9 +699,13 @@ namespace Pbl3.Controllers.Admin
                 {
                     Date = g.Key,
                     TotalTickets = g.Count(),
-                    SoldTickets = g.Count(x => x.Status != TicketStatus.Cancelled),
+                    SoldTickets = g.Count(x =>
+                        x.Status == TicketStatus.Issued || x.Status == TicketStatus.CheckedIn
+                    ),
                     CancelledTickets = g.Count(x => x.Status == TicketStatus.Cancelled),
-                    Revenue = g.Where(x => x.Status != TicketStatus.Cancelled)
+                    Revenue = g.Where(x =>
+                            x.Status == TicketStatus.Issued || x.Status == TicketStatus.CheckedIn
+                        )
                         .Sum(x => x.FinalPrice),
                 })
                 .OrderBy(x => x.Date)

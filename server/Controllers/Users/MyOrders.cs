@@ -77,17 +77,23 @@ namespace Pbl3.Controllers.Users
             var response = new MyOrdersResponseDto
             {
                 Booked = tickets
-                    //.Where(t => t.Status == "Issued" && t.DepartureTime > now)
+                    .Where(t =>
+                        t.Status == nameof(TicketStatus.PendingPayment)
+                        || t.Status == nameof(TicketStatus.Issued)
+                    )
                     .OrderByDescending(t => t.DepartureTime)
                     .ToList(),
                 Completed = tickets
                     .Where(t =>
-                        t.Status == "CheckedIn" || (t.Status == "Issued" && t.DepartureTime <= now)
+                        t.Status == nameof(TicketStatus.CheckedIn)
+                        || (
+                            t.Status == nameof(TicketStatus.Issued) && t.DepartureTime <= now
+                        )
                     )
                     .OrderByDescending(t => t.DepartureTime)
                     .ToList(),
                 Cancelled = tickets
-                    .Where(t => t.Status == "Cancelled")
+                    .Where(t => t.Status == nameof(TicketStatus.Cancelled))
                     .OrderByDescending(t => t.DepartureTime)
                     .ToList(),
             };

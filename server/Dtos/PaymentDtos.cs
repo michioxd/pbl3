@@ -42,6 +42,15 @@ namespace Pbl3.Dtos
         public DateTime? PaidAt { get; set; }
     }
 
+    public class MomoReturnResultDto
+    {
+        public string RedirectUrl { get; set; } = string.Empty;
+        public Guid? IntentId { get; set; }
+        public Guid? BookingId { get; set; }
+        public int ResultCode { get; set; }
+        public string? Message { get; set; }
+    }
+
     public class MomoIpnRequestDto
     {
         public string PartnerCode { get; set; } = string.Empty;

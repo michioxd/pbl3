@@ -7,6 +7,7 @@ import BookingPaymentStep from "./components/BookingPaymentStep";
 import BookingStepper from "./components/BookingStepper";
 import BookingSummaryCard from "./components/BookingSummaryCard";
 import BookingTripCard from "./components/BookingTripCard";
+import { clearPendingMomoPayment, savePendingMomoPayment } from "./payment-session";
 import type { BookingFormState, BookingStep, PaymentOption, StepItem, StopOption } from "./types";
 import { formatCurrency, formatDurationLabel, parseApiErrorMessage } from "./utils";
 import LoginDialog from "@/dialogs/Login";
@@ -34,18 +35,25 @@ const INITIAL_FORM: BookingFormState = {
 const MOMO_PAYMENT_PROVIDER = 0 as PaymentProvider;
 const CASH_PAYMENT_PROVIDER = 2 as PaymentProvider;
 
-function getMomoRedirectUrl(payload: unknown) {
+function readString(value: unknown) {
+    return typeof value === "string" ? value : null;
+}
+
+function parseMomoPaymentPayload(payload: unknown) {
     if (!payload || typeof payload !== "object") {
         return null;
     }
 
-    const response = payload as {
-        payUrl?: string | null;
-        deeplink?: string | null;
-        qrCodeUrl?: string | null;
-    };
+    const response = payload as Record<string, unknown>;
 
-    return response.payUrl || response.deeplink || response.qrCodeUrl || null;
+    return {
+        intentId: readString(response.intentId),
+        bookingId: readString(response.bookingId),
+        orderId: readString(response.orderId),
+        payUrl: readString(response.payUrl),
+        deeplink: readString(response.deeplink),
+        qrCodeUrl: readString(response.qrCodeUrl),
+    };
 }
 
 const PageMainBooking = observer(() => {
@@ -284,6 +292,7 @@ const PageMainBooking = observer(() => {
 
         setSubmitting(true);
         setDemoCompleted(false);
+        clearPendingMomoPayment();
 
         try {
             const bookingResponse = await postApiBookings({
@@ -317,7 +326,18 @@ const PageMainBooking = observer(() => {
                     throw momoResponse.error ?? new Error(t("payment_submit_error"));
                 }
 
-                const redirectUrl = getMomoRedirectUrl(momoResponse.data);
+                const momoPayload = parseMomoPaymentPayload(momoResponse.data);
+                const redirectUrl = momoPayload?.payUrl || momoPayload?.deeplink || momoPayload?.qrCodeUrl || null;
+
+                if (momoPayload?.intentId) {
+                    savePendingMomoPayment({
+                        intentId: momoPayload.intentId,
+                        bookingId: momoPayload.bookingId ?? bookingId,
+                        orderId: momoPayload.orderId,
+                        tripId,
+                        createdAt: new Date().toISOString(),
+                    });
+                }
 
                 if (redirectUrl) {
                     toast.success(t("payment_redirecting_momo"));

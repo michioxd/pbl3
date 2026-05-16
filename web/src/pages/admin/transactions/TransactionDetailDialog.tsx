@@ -13,7 +13,7 @@ import { toast } from "sonner";
 
 // Local types (will be replaced by OpenAPI generated types after server restart)
 type BookingStatus = 0 | 1 | 2 | 3;
-type TicketStatus = 0 | 1 | 2;
+type TicketStatus = 0 | 1 | 2 | 3;
 type RefundStatus = 0 | 1;
 type PaymentProvider = 0 | 1 | 2;
 type PaymentIntentStatus = 0 | 1 | 2;
@@ -336,10 +336,12 @@ function getBookingStatusBadgeVariant(status: BookingStatus): "default" | "secon
 function formatTicketStatus(status: TicketStatus): string {
     switch (status) {
         case 0:
-            return "Đã xuất";
+            return "Chờ thanh toán";
         case 1:
-            return "Đã sử dụng";
+            return "Đã xuất";
         case 2:
+            return "Đã sử dụng";
+        case 3:
             return "Đã hủy";
         default:
             return String(status);
@@ -349,10 +351,12 @@ function formatTicketStatus(status: TicketStatus): string {
 function getTicketStatusBadgeVariant(status: TicketStatus): "default" | "secondary" | "destructive" {
     switch (status) {
         case 0:
-            return "default";
-        case 1:
             return "secondary";
+        case 1:
+            return "default";
         case 2:
+            return "secondary";
+        case 3:
             return "destructive";
         default:
             return "secondary";

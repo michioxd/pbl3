@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Pbl3.Configurations;
@@ -16,6 +17,7 @@ namespace Pbl3.Services
         Task<CreateMomoPaymentResponseDto> CreateMomoPaymentAsync(Guid bookingId, Guid userId);
         Task<PaymentStatusDto> GetPaymentStatusAsync(Guid intentId, Guid userId);
         Task HandleMomoIpnAsync(MomoIpnRequestDto request);
+        Task<MomoReturnResultDto> HandleMomoReturnAsync(MomoIpnRequestDto request);
         Task ProcessRefundAsync(Guid refundId);
     }
 
@@ -229,6 +231,28 @@ namespace Pbl3.Services
 
         public async Task HandleMomoIpnAsync(MomoIpnRequestDto request)
         {
+            await ProcessMomoCallbackAsync(request);
+        }
+
+        public async Task<MomoReturnResultDto> HandleMomoReturnAsync(MomoIpnRequestDto request)
+        {
+            ValidateMomoOptions();
+
+            try
+            {
+                var intent = await ProcessMomoCallbackAsync(request);
+                return BuildReturnResult(intent, request.ResultCode, request.Message);
+            }
+            catch (Exception ex)
+            {
+                var intent = await FindIntentByOrderIdAsync(request.OrderId);
+                var resultCode = request.ResultCode == 0 ? -1 : request.ResultCode;
+                return BuildReturnResult(intent, resultCode, ex.Message);
+            }
+        }
+
+        private async Task<PaymentIntent?> ProcessMomoCallbackAsync(MomoIpnRequestDto request)
+        {
             ValidateMomoOptions();
 
             var rawSignature =
@@ -263,6 +287,7 @@ namespace Pbl3.Services
 
             var intent = await _context
                 .PaymentIntents.Include(pi => pi.Booking)
+                    .ThenInclude(booking => booking!.Tickets)
                 .FirstOrDefaultAsync(pi =>
                     pi.Provider == PaymentProvider.Momo && pi.ProviderOrderId == request.OrderId
                 );
@@ -296,19 +321,45 @@ namespace Pbl3.Services
             if (request.ResultCode == 0 || request.ResultCode == 9000)
             {
                 intent.Status = PaymentIntentStatus.Succeeded;
-                intent.PaidAt = DateTime.UtcNow;
+                intent.PaidAt ??= DateTime.UtcNow;
                 if (intent.Booking != null)
                 {
                     intent.Booking.Status = BookingStatus.Paid;
                     intent.Booking.ExpiresAt = null;
+
+                    foreach (var ticket in intent.Booking.Tickets)
+                    {
+                        if (ticket.Status == TicketStatus.Cancelled)
+                        {
+                            continue;
+                        }
+
+                        ticket.Status = TicketStatus.Issued;
+                    }
                 }
             }
-            else
+            else if (intent.Status != PaymentIntentStatus.Succeeded)
             {
                 intent.Status = PaymentIntentStatus.Failed;
+
+                if (intent.Booking != null && intent.Booking.Status != BookingStatus.Paid)
+                {
+                    intent.Booking.Status = BookingStatus.Pending;
+
+                    foreach (var ticket in intent.Booking.Tickets)
+                    {
+                        if (ticket.Status == TicketStatus.Cancelled)
+                        {
+                            continue;
+                        }
+
+                        ticket.Status = TicketStatus.PendingPayment;
+                    }
+                }
             }
 
             await _context.SaveChangesAsync();
+            return intent;
         }
 
         public async Task ProcessRefundAsync(Guid refundId)
@@ -415,11 +466,52 @@ namespace Pbl3.Services
                 || string.IsNullOrWhiteSpace(_momoOptions.SecretKey)
                 || string.IsNullOrWhiteSpace(_momoOptions.Endpoint)
                 || string.IsNullOrWhiteSpace(_momoOptions.RedirectUrl)
+                || string.IsNullOrWhiteSpace(_momoOptions.FrontendRedirectUrl)
                 || string.IsNullOrWhiteSpace(_momoOptions.IpnUrl)
             )
             {
                 throw new InvalidOperationException("Cấu hình MoMo chưa đầy đủ.");
             }
+        }
+
+        private async Task<PaymentIntent?> FindIntentByOrderIdAsync(string? orderId)
+        {
+            if (string.IsNullOrWhiteSpace(orderId))
+            {
+                return null;
+            }
+
+            return await _context.PaymentIntents.FirstOrDefaultAsync(pi =>
+                pi.Provider == PaymentProvider.Momo && pi.ProviderOrderId == orderId
+            );
+        }
+
+        private MomoReturnResultDto BuildReturnResult(
+            PaymentIntent? intent,
+            int resultCode,
+            string? message
+        )
+        {
+            var redirectUrl = QueryHelpers.AddQueryString(
+                _momoOptions.FrontendRedirectUrl,
+                new Dictionary<string, string?>
+                {
+                    ["intentId"] = intent?.IntentID.ToString(),
+                    ["bookingId"] = intent?.BookingID.ToString(),
+                    ["orderId"] = intent?.ProviderOrderId,
+                    ["resultCode"] = resultCode.ToString(),
+                    ["message"] = message,
+                }
+            );
+
+            return new MomoReturnResultDto
+            {
+                RedirectUrl = redirectUrl,
+                IntentId = intent?.IntentID,
+                BookingId = intent?.BookingID,
+                ResultCode = resultCode,
+                Message = message,
+            };
         }
 
         private sealed class MomoCreateResponse

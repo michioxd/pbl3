@@ -136,7 +136,10 @@ namespace Pbl3.Services
                 PassengerID = passenger.PassengerID,
                 SeatLayoutID = seat.LayoutID,
                 FinalPrice = trip.BasePrice,
-                Status = TicketStatus.Issued,
+                Status =
+                    request.PaymentProvider == PaymentProvider.Momo
+                        ? TicketStatus.PendingPayment
+                        : TicketStatus.Issued,
                 TicketCode = GenerateTicketCode(trip.DepartureDate),
             };
 

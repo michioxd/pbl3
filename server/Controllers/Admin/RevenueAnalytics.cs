@@ -130,7 +130,8 @@ namespace Pbl3.Controllers.Admin
             var ticketsWithRoutes = payments
                 .SelectMany(p =>
                     (p.Booking?.Tickets ?? new List<Models.Ticket>()).Where(t =>
-                        t.Status != TicketStatus.Cancelled && t.Trip?.Route != null
+                        (t.Status == TicketStatus.Issued || t.Status == TicketStatus.CheckedIn)
+                        && t.Trip?.Route != null
                     )
                 )
                 .ToList();

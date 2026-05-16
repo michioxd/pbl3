@@ -71,5 +71,13 @@ namespace Pbl3.Controllers.Payments
                 return NoContent();
             }
         }
+
+        [HttpGet("return")]
+        [AllowAnonymous]
+        public async Task<IActionResult> HandleReturn([FromQuery] MomoIpnRequestDto dto)
+        {
+            var result = await _paymentService.HandleMomoReturnAsync(dto);
+            return Redirect(result.RedirectUrl);
+        }
     }
 }

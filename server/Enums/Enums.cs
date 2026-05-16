@@ -74,6 +74,7 @@ namespace Pbl3.Enums
 
     public enum TicketStatus
     {
+        PendingPayment,
         Issued,
         CheckedIn,
         Cancelled,

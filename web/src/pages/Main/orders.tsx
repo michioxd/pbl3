@@ -5,6 +5,34 @@ import { useState, useEffect } from "react";
 import { useStore } from "@/stores";
 import LoginDialog from "@/dialogs/Login";
 
+function getTicketStatusLabel(status: unknown) {
+    switch (status) {
+        case 0:
+            return "Chờ thanh toán";
+        case 1:
+            return "Đã xác nhận";
+        case 2:
+            return "Đã sử dụng";
+        case 3:
+            return "Đã hủy";
+        default:
+            return String(status ?? "N/A");
+    }
+}
+
+function getTicketStatusColor(status: unknown): "gray" | "amber" | "green" | "red" {
+    switch (status) {
+        case 0:
+            return "amber";
+        case 1:
+            return "green";
+        case 3:
+            return "red";
+        default:
+            return "gray";
+    }
+}
+
 const PageManageOrders = observer(() => {
     const store = useStore();
     const [authDialogOpen, setAuthDialogOpen] = useState(false);
@@ -105,8 +133,8 @@ const PageManageOrders = observer(() => {
                                 <Table.Cell>{ticket.seatPosition || "N/A"}</Table.Cell>
                                 <Table.Cell>{ticket.price ? `${ticket.price} VND` : "N/A"}</Table.Cell>
                                 <Table.Cell>
-                                    <Badge color={ticket.status === 0 ? "green" : "gray"}>
-                                        {ticket.status === 0 ? "Đã xác nhận" : ticket.status}
+                                    <Badge color={getTicketStatusColor(ticket.status)}>
+                                        {getTicketStatusLabel(ticket.status)}
                                     </Badge>
                                 </Table.Cell>
                             </Table.Row>

@@ -77,18 +77,21 @@ type BusAdminTicketsResponse = {
 
 const statusOptions = [
     { label: "Tất cả trạng thái", value: "all" },
-    { label: "Đã xuất vé", value: "0" },
-    { label: "Đã check-in", value: "1" },
-    { label: "Đã hủy", value: "2" },
+    { label: "Chờ thanh toán", value: "0" },
+    { label: "Đã xuất vé", value: "1" },
+    { label: "Đã check-in", value: "2" },
+    { label: "Đã hủy", value: "3" },
 ];
 
 const formatTicketStatus = (status: number): string => {
     switch (status) {
         case 0:
-            return "Đã xuất vé";
+            return "Chờ thanh toán";
         case 1:
-            return "Đã check-in";
+            return "Đã xuất vé";
         case 2:
+            return "Đã check-in";
+        case 3:
             return "Đã hủy";
         default:
             return "Không rõ";
@@ -98,10 +101,12 @@ const formatTicketStatus = (status: number): string => {
 const getTicketStatusVariant = (status: number): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
         case 0:
-            return "default";
-        case 1:
             return "secondary";
+        case 1:
+            return "default";
         case 2:
+            return "secondary";
+        case 3:
             return "destructive";
         default:
             return "outline";
