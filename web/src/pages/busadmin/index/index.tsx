@@ -33,23 +33,23 @@ type BusAdminCompanyUpdateRequest = {
 };
 
 type BusAdminMonthlyStats = {
-    Year: number;
-    Month: number;
-    TotalTickets: number;
-    SoldTickets: number;
-    CancelledTickets: number;
-    CancellationRatePercent: number;
-    GrossRevenue: number;
-    AverageTicketPrice: number;
-    TotalTrips: number;
-    AverageSoldTicketsPerTrip: number;
-    TopRoutes: Array<{ RouteName: string; TicketsSold: number; Revenue: number }>;
-    DailyStats: Array<{
-        Date: string;
-        TotalTickets: number;
-        SoldTickets: number;
-        CancelledTickets: number;
-        Revenue: number;
+    year: number;
+    month: number;
+    totalTickets: number;
+    soldTickets: number;
+    cancelledTickets: number;
+    cancellationRatePercent: number;
+    grossRevenue: number;
+    averageTicketPrice: number;
+    totalTrips: number;
+    averageSoldTicketsPerTrip: number;
+    topRoutes: Array<{ routeName: string; ticketsSold: number; revenue: number }>;
+    dailyStats: Array<{
+        date: string;
+        totalTickets: number;
+        soldTickets: number;
+        cancelledTickets: number;
+        revenue: number;
     }>;
 };
 
@@ -322,23 +322,23 @@ export default function PageBusAdminIndex() {
                 {[
                     {
                         title: "Doanh thu tháng",
-                        value: currencyFormatter.format(stats?.GrossRevenue ?? 0),
-                        helper: `TB ${currencyFormatter.format(stats?.AverageTicketPrice ?? 0)} / vé`,
+                        value: currencyFormatter.format(stats?.grossRevenue ?? 0),
+                        helper: `TB ${currencyFormatter.format(stats?.averageTicketPrice ?? 0)} / vé`,
                     },
                     {
                         title: "Vé đã bán",
-                        value: numberFormatter.format(stats?.SoldTickets ?? 0),
-                        helper: `Tổng ${numberFormatter.format(stats?.TotalTickets ?? 0)} vé`,
+                        value: numberFormatter.format(stats?.soldTickets ?? 0),
+                        helper: `Tổng ${numberFormatter.format(stats?.totalTickets ?? 0)} vé`,
                     },
                     {
                         title: "Vé đã hủy",
-                        value: numberFormatter.format(stats?.CancelledTickets ?? 0),
-                        helper: `Tỷ lệ ${stats?.CancellationRatePercent ?? 0}%`,
+                        value: numberFormatter.format(stats?.cancelledTickets ?? 0),
+                        helper: `Tỷ lệ ${stats?.cancellationRatePercent ?? 0}%`,
                     },
                     {
                         title: "Chuyến xe",
-                        value: numberFormatter.format(stats?.TotalTrips ?? 0),
-                        helper: `TB ${stats?.AverageSoldTicketsPerTrip ?? 0} vé/chuyến`,
+                        value: numberFormatter.format(stats?.totalTrips ?? 0),
+                        helper: `TB ${stats?.averageSoldTicketsPerTrip ?? 0} vé/chuyến`,
                     },
                 ].map((item) => (
                     <Card key={item.title}>
@@ -364,15 +364,15 @@ export default function PageBusAdminIndex() {
                     <CardContent>
                         {loadingStats ? (
                             <Skeleton className="h-40 w-full" />
-                        ) : stats?.TopRoutes?.length ? (
+                        ) : stats?.topRoutes?.length ? (
                             <div className="space-y-3">
-                                {stats.TopRoutes.map((route) => (
-                                    <div key={route.RouteName} className="flex items-center justify-between">
+                                {stats.topRoutes.map((route) => (
+                                    <div key={route.routeName} className="flex items-center justify-between">
                                         <div>
-                                            <div className="font-medium">{route.RouteName}</div>
-                                            <div className="text-xs text-muted-foreground">{route.TicketsSold} vé</div>
+                                            <div className="font-medium">{route.routeName}</div>
+                                            <div className="text-xs text-muted-foreground">{route.ticketsSold} vé</div>
                                         </div>
-                                        <div className="font-medium">{currencyFormatter.format(route.Revenue)}</div>
+                                        <div className="font-medium">{currencyFormatter.format(route.revenue)}</div>
                                     </div>
                                 ))}
                             </div>

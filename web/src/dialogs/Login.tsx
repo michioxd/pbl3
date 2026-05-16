@@ -274,7 +274,7 @@ export default function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
 
     return (
         <Dialog.Root open={open} onOpenChange={handleOpenChange}>
-            <Dialog.Content maxWidth="520px" className="overflow-hidden p-0!">
+            <Dialog.Content maxWidth="520px" aria-describedby={undefined} className="overflow-hidden p-0!">
                 <Box className="bg-linear-to-br px-6 py-6 bg-gray-400/5 border-b border-gray-400/5">
                     <IconButton
                         size="2"
@@ -399,7 +399,6 @@ function LoginForm({
                     }}
                     theme={mode === 1 ? "filled_black" : "filled_blue"}
                     size="large"
-                    width="100%"
                     useOneTap
                     text={"signin_with"}
                     logo_alignment="center"
@@ -536,7 +535,6 @@ function RegisterForm({
                     }}
                     theme={mode === 1 ? "filled_black" : "filled_blue"}
                     size="large"
-                    width="100%"
                     useOneTap
                     text={"signup_with"}
                     logo_alignment="center"

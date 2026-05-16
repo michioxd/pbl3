@@ -450,13 +450,13 @@ function TicketCard({
                             </Text>
                             {ticket.amenities?.length ? (
                                 <Flex gap="2" wrap="wrap" mb="3">
-                                    {ticket.amenities.slice(0, 5).map((amenity) => {
+                                    {ticket.amenities.slice(0, 5).map((amenity, index) => {
                                         const isObj = typeof amenity !== "string";
                                         const displayName = isObj ? (amenity as any).displayName : amenity;
                                         const iconName = isObj ? (amenity as any).iconName : "";
 
                                         return (
-                                            <Badge key={displayName} variant="soft" color="gray">
+                                            <Badge key={`${displayName}-${index}`} variant="soft" color="gray">
                                                 {iconName && (
                                                     <AmenityIcon
                                                         iconName={iconName}
