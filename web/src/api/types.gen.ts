@@ -1131,6 +1131,22 @@ export type GetApiPassengerTicketsResponses = {
     200: unknown;
 };
 
+export type PostApiPassengerTicketsByTicketIdRefundData = {
+    body?: CreateRefundRequestDto;
+    path: {
+        ticketId: string;
+    };
+    query?: never;
+    url: '/api/passenger/tickets/{ticketId}/refund';
+};
+
+export type PostApiPassengerTicketsByTicketIdRefundResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type GetApiPingData = {
     body?: never;
     path?: never;

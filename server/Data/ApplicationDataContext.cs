@@ -119,7 +119,12 @@ namespace Pbl3.Data
 
             modelBuilder
                 .Entity<CompanyProfileUpdateRequest>()
-                .HasIndex(r => new { r.CompanyID, r.Status, r.RequestedAt });
+                .HasIndex(r => new
+                {
+                    r.CompanyID,
+                    r.Status,
+                    r.RequestedAt,
+                });
 
             modelBuilder
                 .Entity<BusAdminUpgradeRequest>()
@@ -363,7 +368,7 @@ namespace Pbl3.Data
             modelBuilder
                 .Entity<RefundRequest>()
                 .HasOne(rr => rr.Booking)
-                .WithMany()
+                .WithMany(b => b.RefundRequests)
                 .HasForeignKey(rr => rr.BookingID)
                 .OnDelete(DeleteBehavior.Restrict);
 
