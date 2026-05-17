@@ -12,7 +12,7 @@ export type ICurrentUser = {
     email: string;
     role: MeUserRoleDto;
     currentUser: MeUserInfoDto;
-    currentPassenger: MePassengerDto;
+    currentPassenger?: MePassengerDto | null;
 };
 
 export class UserStore {
@@ -59,8 +59,8 @@ export class UserStore {
         try {
             const f = await getApiUserMe();
 
-            if (!f.data?.user || !f.data?.passenger) {
-                console.error("[user.checkAuth] check failed: No user or passenger data", f.data);
+            if (!f.data?.user) {
+                console.error("[user.checkAuth] check failed: No user data", f.data);
                 this.user = null;
                 this.error = "common:unauthorized";
                 runInAction(() => this.logout());
@@ -69,7 +69,7 @@ export class UserStore {
 
             return (
                 runInAction(() => {
-                    if (!f.data?.user || !f.data?.passenger) return;
+                    if (!f.data?.user) return;
                     this.user = {
                         id: f.data.user.userID || "",
                         email: f.data.user.email || "",

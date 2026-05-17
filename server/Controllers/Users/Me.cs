@@ -52,9 +52,6 @@ namespace Pbl3.Controllers.Users
                 })
                 .FirstOrDefaultAsync();
 
-            if (passenger == null)
-                return NotFound(new { message = "common:internal_server_error" });
-
             var userData = await _context
                 .Users.AsNoTracking()
                 .Include(u => u.Role)

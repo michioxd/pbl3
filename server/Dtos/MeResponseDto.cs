@@ -2,7 +2,7 @@ namespace Pbl3.Dtos
 {
     public class MeResponseDto
     {
-        public MePassengerDto Passenger { get; set; } = new();
+        public MePassengerDto? Passenger { get; set; }
         public MeUserInfoDto? User { get; set; }
     }
 

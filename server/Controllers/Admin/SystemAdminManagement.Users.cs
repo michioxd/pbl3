@@ -168,19 +168,19 @@ namespace Pbl3.Controllers.Admin
 
             var userIds = filteredUsers.Select(u => u.UserID).ToList();
 
-            var passengerRows =
-                userIds.Count == 0
-                    ? new List<dynamic>()
-                    : await _context
-                        .Passengers.AsNoTracking()
-                        .Where(p => p.UserID.HasValue && userIds.Contains(p.UserID.Value))
-                        .Select(p => new { UserId = p.UserID!.Value, p.PassengerID })
-                        .ToListAsync<dynamic>();
+            var passengerMap = new Dictionary<Guid, Guid>();
+            if (userIds.Count > 0)
+            {
+                var passengers = await _context
+                    .Passengers.AsNoTracking()
+                    .Where(p => p.UserID.HasValue && userIds.Contains(p.UserID.Value))
+                    .Select(p => new { UserId = p.UserID!.Value, p.PassengerID })
+                    .ToListAsync();
 
-            var passengerMap = passengerRows.ToDictionary(
-                x => (Guid)x.UserId,
-                x => (Guid)x.PassengerID
-            );
+                passengerMap = passengers
+                    .GroupBy(p => p.UserId)
+                    .ToDictionary(g => g.Key, g => g.First().PassengerID);
+            }
 
             var bookingCounts = await _context
                 .Bookings.AsNoTracking()
