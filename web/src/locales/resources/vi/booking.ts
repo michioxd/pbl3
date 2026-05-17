@@ -12,6 +12,7 @@ export default {
 
     step_label: "Bước {{value}}",
     step_address: "Nhập địa chỉ",
+    step_seat: "Chọn ghế",
     step_payment: "Chọn thanh toán",
     step_confirm: "Thanh toán",
 
@@ -32,6 +33,13 @@ export default {
     note_placeholder: "Ví dụ: đón ở cổng chính, gọi trước 10 phút...",
     stop_not_available: "Chưa có điểm dừng",
 
+    seat_title: "Chọn ghế ngồi",
+    seat_desc: "Chọn một ghế còn trống trên sơ đồ xe trước khi thanh toán.",
+    seat_available: "Còn trống",
+    seat_selected: "Đang chọn",
+    seat_booked: "Đã đặt",
+    seat_empty: "Chưa có sơ đồ ghế cho chuyến này.",
+
     payment_title: "Chọn phương thức thanh toán",
     payment_desc: "Chọn phương thức thanh toán phù hợp trước khi tạo đơn vé.",
     payment_option_vnpay_title: "VNPay",
@@ -40,6 +48,7 @@ export default {
     payment_option_momo_desc: "Thanh toán nhanh qua ví điện tử trên điện thoại.",
     payment_option_counter_title: "Thanh toán tại quầy",
     payment_option_counter_desc: "Giữ chỗ trước, thanh toán khi ra bến hoặc lên xe.",
+    payment_option_counter_disabled: "Nhà xe chưa hỗ trợ thanh toán khi lên xe.",
     payment_badge_recommended: "Khuyên dùng",
     payment_badge_fast: "Nhanh",
     payment_badge_flexible: "Linh hoạt",
@@ -61,6 +70,7 @@ export default {
     summary_total: "Tổng thanh toán",
 
     validation_address: "Vui lòng nhập đầy đủ thông tin hành khách và chọn điểm đón, trả.",
+    validation_seat: "Vui lòng chọn ghế trước khi tiếp tục.",
     validation_payment: "Vui lòng chọn phương thức thanh toán.",
 
     action_back: "Quay lại",

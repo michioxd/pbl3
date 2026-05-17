@@ -7,6 +7,7 @@ namespace Pbl3.Dtos
         public string Name { get; set; } = null!;
         public string? LicenseNumber { get; set; }
         public string? Hotline { get; set; }
+        public bool AllowPayOnBoard { get; set; } = true;
     }
 
     public class CreateTripDto

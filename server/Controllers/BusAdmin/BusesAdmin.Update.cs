@@ -65,6 +65,7 @@ namespace Pbl3.Controllers.BusAdmin
                     ? null
                     : dto.LicenseNumber.Trim(),
                 Hotline = string.IsNullOrWhiteSpace(dto.Hotline) ? null : dto.Hotline.Trim(),
+                AllowPayOnBoard = dto.AllowPayOnBoard,
                 Status = CompanyProfileUpdateRequestStatus.Pending,
                 RequestedAt = DateTime.UtcNow,
             };

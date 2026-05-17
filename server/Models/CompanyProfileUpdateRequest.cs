@@ -20,6 +20,7 @@ namespace Pbl3.Models
         public required string Name { get; set; }
         public string? LicenseNumber { get; set; }
         public string? Hotline { get; set; }
+        public bool AllowPayOnBoard { get; set; } = true;
 
         public CompanyProfileUpdateRequestStatus Status { get; set; } =
             CompanyProfileUpdateRequestStatus.Pending;

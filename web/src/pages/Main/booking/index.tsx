@@ -4,11 +4,12 @@ import BookingAddressStep from "./components/BookingAddressStep";
 import BookingConfirmStep from "./components/BookingConfirmStep";
 import BookingLoginPrompt from "./components/BookingLoginPrompt";
 import BookingPaymentStep from "./components/BookingPaymentStep";
+import BookingSeatStep from "./components/BookingSeatStep";
 import BookingStepper from "./components/BookingStepper";
 import BookingSummaryCard from "./components/BookingSummaryCard";
 import BookingTripCard from "./components/BookingTripCard";
 import { clearPendingMomoPayment, savePendingMomoPayment } from "./payment-session";
-import type { BookingFormState, BookingStep, PaymentOption, StepItem, StopOption } from "./types";
+import type { BookingFormState, BookingStep, PaymentOption, SeatOption, StepItem, StopOption } from "./types";
 import { formatCurrency, formatDurationLabel, parseApiErrorMessage } from "./utils";
 import LoginDialog from "@/dialogs/Login";
 import { useStore } from "@/stores";
@@ -29,6 +30,7 @@ const INITIAL_FORM: BookingFormState = {
     pickupStopId: "",
     dropoffStopId: "",
     addressNote: "",
+    selectedSeatLayoutId: "",
     paymentProvider: 0,
 };
 
@@ -74,8 +76,9 @@ const PageMainBooking = observer(() => {
     const stepItems = useMemo<StepItem[]>(
         () => [
             { value: 0 as BookingStep, label: t("step_address") },
-            { value: 1 as BookingStep, label: t("step_payment") },
-            { value: 2 as BookingStep, label: t("step_confirm") },
+            { value: 1 as BookingStep, label: t("step_seat") },
+            { value: 2 as BookingStep, label: t("step_payment") },
+            { value: 3 as BookingStep, label: t("step_confirm") },
         ],
         [t],
     );
@@ -95,9 +98,11 @@ const PageMainBooking = observer(() => {
                 description: t("payment_option_counter_desc"),
                 badge: t("payment_badge_flexible"),
                 Icon: Building2,
+                disabled: trip?.allowPayOnBoard === false,
+                disabledReason: t("payment_option_counter_disabled"),
             },
         ],
-        [t],
+        [t, trip?.allowPayOnBoard],
     );
 
     const pickupOptions = useMemo<StopOption[]>(() => {
@@ -121,11 +126,31 @@ const PageMainBooking = observer(() => {
     const selectedPickup = pickupOptions.find((option) => option.value === form.pickupStopId);
     const selectedDropoff = dropoffOptions.find((option) => option.value === form.dropoffStopId);
     const selectedPayment = paymentOptions.find((option) => option.value === form.paymentProvider);
+    const seatOptions = useMemo<SeatOption[]>(() => {
+        return (trip?.seats ?? []).map((seat) => ({
+            layoutId: seat.layoutId ?? "",
+            seatLabel: seat.seatLabel?.trim() || "--",
+            floor: seat.floor || 1,
+            seatType: seat.seatType,
+            positionX: seat.positionX || 1,
+            positionY: seat.positionY || 1,
+            isAvailable: Boolean(seat.isAvailable),
+        }));
+    }, [trip?.seats]);
+    const selectedSeat = seatOptions.find((seat) => seat.layoutId === form.selectedSeatLayoutId);
     const totalPrice = trip?.basePrice ?? trip?.lowestPrice;
     const routeFallbackLabel = [trip?.pickupStops?.[0]?.stationName, trip?.dropoffStops?.at(-1)?.stationName]
         .filter(Boolean)
         .join(" → ");
     const routeLabel = trip?.routeName ?? (routeFallbackLabel || "--");
+
+    useEffect(() => {
+        const selectedOption = paymentOptions.find((option) => option.value === form.paymentProvider);
+
+        if (selectedOption?.disabled) {
+            updateField("paymentProvider", MOMO_PAYMENT_PROVIDER);
+        }
+    }, [form.paymentProvider, paymentOptions]);
 
     useEffect(() => {
         if (!tripId) {
@@ -199,6 +224,22 @@ const PageMainBooking = observer(() => {
     }, [dropoffOptions, pickupOptions, store.user]);
 
     useEffect(() => {
+        setForm((current) => {
+            if (
+                current.selectedSeatLayoutId &&
+                seatOptions.some((seat) => seat.layoutId === current.selectedSeatLayoutId)
+            ) {
+                return current;
+            }
+
+            return {
+                ...current,
+                selectedSeatLayoutId: seatOptions.find((seat) => seat.isAvailable)?.layoutId || "",
+            };
+        });
+    }, [seatOptions]);
+
+    useEffect(() => {
         if (!hasPromptedLogin && !store.user.isLoading && !store.user.isAuthenticated) {
             setAuthDialogOpen(true);
             setHasPromptedLogin(true);
@@ -254,8 +295,18 @@ const PageMainBooking = observer(() => {
             }
         }
 
-        if (step === 1 && form.paymentProvider === undefined) {
+        if (step === 1 && !form.selectedSeatLayoutId) {
+            toast.error(t("validation_seat"));
+            return false;
+        }
+
+        if (step === 2 && form.paymentProvider === undefined) {
             toast.error(t("validation_payment"));
+            return false;
+        }
+
+        if (step === 2 && paymentOptions.find((option) => option.value === form.paymentProvider)?.disabled) {
+            toast.error(t("payment_option_counter_disabled"));
             return false;
         }
 
@@ -276,12 +327,16 @@ const PageMainBooking = observer(() => {
                 return 2;
             }
 
-            return 2;
+            if (current === 2) {
+                return 3;
+            }
+
+            return 3;
         });
     };
 
     const handleSubmit = async () => {
-        if (!validateStep(0) || !validateStep(1)) {
+        if (!validateStep(0) || !validateStep(1) || !validateStep(2)) {
             return;
         }
 
@@ -304,6 +359,7 @@ const PageMainBooking = observer(() => {
                     pickupStopId: form.pickupStopId,
                     dropoffStopId: form.dropoffStopId,
                     addressNote: form.addressNote.trim() || null,
+                    seatLayoutId: form.selectedSeatLayoutId,
                     paymentProvider: form.paymentProvider,
                 },
             });
@@ -386,6 +442,24 @@ const PageMainBooking = observer(() => {
         if (currentStep === 1) {
             return (
                 <Flex direction="column" gap="4">
+                    <BookingSeatStep
+                        seats={seatOptions}
+                        selectedSeatLayoutId={form.selectedSeatLayoutId}
+                        updateField={updateField}
+                        title={t("seat_title")}
+                        description={t("seat_desc")}
+                        availableLabel={t("seat_available")}
+                        bookedLabel={t("seat_booked")}
+                        selectedLabel={t("seat_selected")}
+                        emptyLabel={t("seat_empty")}
+                    />
+                </Flex>
+            );
+        }
+
+        if (currentStep === 2) {
+            return (
+                <Flex direction="column" gap="4">
                     <BookingPaymentStep
                         paymentOptions={paymentOptions}
                         paymentProvider={form.paymentProvider}
@@ -405,6 +479,7 @@ const PageMainBooking = observer(() => {
                     form={form}
                     selectedPickup={selectedPickup}
                     selectedDropoff={selectedDropoff}
+                    selectedSeat={selectedSeat}
                     selectedPayment={selectedPayment}
                     demoCompleted={demoCompleted}
                     title={t("confirm_title")}
@@ -503,6 +578,10 @@ const PageMainBooking = observer(() => {
                                                 disabled={submitting || currentStep === 0}
                                                 onClick={() =>
                                                     setCurrentStep((current) => {
+                                                        if (current === 3) {
+                                                            return 2;
+                                                        }
+
                                                         if (current === 2) {
                                                             return 1;
                                                         }
@@ -518,7 +597,7 @@ const PageMainBooking = observer(() => {
                                                 {t("action_back")}
                                             </Button>
 
-                                            {currentStep < 2 ? (
+                                            {currentStep < 3 ? (
                                                 <Button color="blue" onClick={handleNext} disabled={submitting}>
                                                     {t("action_continue")}
                                                 </Button>
@@ -549,6 +628,7 @@ const PageMainBooking = observer(() => {
                                 form={form}
                                 selectedPickup={selectedPickup}
                                 selectedDropoff={selectedDropoff}
+                                selectedSeat={selectedSeat}
                                 selectedPayment={selectedPayment}
                             />
                         </Grid>

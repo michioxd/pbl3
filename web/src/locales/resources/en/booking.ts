@@ -12,6 +12,7 @@ export default {
 
     step_label: "Step {{value}}",
     step_address: "Enter address",
+    step_seat: "Choose seat",
     step_payment: "Choose payment",
     step_confirm: "Pay",
 
@@ -32,6 +33,13 @@ export default {
     note_placeholder: "Example: pick me up at the main gate, call me 10 minutes before...",
     stop_not_available: "No stop available",
 
+    seat_title: "Choose your seat",
+    seat_desc: "Pick one available seat on the bus map before moving to payment.",
+    seat_available: "Available",
+    seat_selected: "Selected",
+    seat_booked: "Booked",
+    seat_empty: "No seat map is available for this trip.",
+
     payment_title: "Choose payment method",
     payment_desc: "Choose the payment method before creating your booking.",
     payment_option_vnpay_title: "VNPay",
@@ -40,6 +48,7 @@ export default {
     payment_option_momo_desc: "Fast payment through the e-wallet app.",
     payment_option_counter_title: "Pay at counter",
     payment_option_counter_desc: "Reserve first and pay later at the station or on boarding.",
+    payment_option_counter_disabled: "This operator does not support pay-on-board yet.",
     payment_badge_recommended: "Recommended",
     payment_badge_fast: "Fast",
     payment_badge_flexible: "Flexible",
@@ -61,6 +70,7 @@ export default {
     summary_total: "Total",
 
     validation_address: "Please complete passenger details and select pickup/dropoff points.",
+    validation_seat: "Please select a seat before continuing.",
     validation_payment: "Please select a payment method.",
 
     action_back: "Back",

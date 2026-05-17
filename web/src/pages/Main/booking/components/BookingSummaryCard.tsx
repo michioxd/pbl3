@@ -1,6 +1,6 @@
-import type { BookingFormState, PaymentOption, StopOption } from "../types";
+import type { BookingFormState, PaymentOption, SeatOption, StopOption } from "../types";
 import { Box, Card, Flex, Heading, Text } from "@radix-ui/themes";
-import { CreditCard, MapPin } from "lucide-react";
+import { Armchair, CreditCard, MapPin } from "lucide-react";
 
 type BookingSummaryCardProps = {
     title: string;
@@ -15,6 +15,7 @@ type BookingSummaryCardProps = {
     form: BookingFormState;
     selectedPickup?: StopOption;
     selectedDropoff?: StopOption;
+    selectedSeat?: SeatOption;
     selectedPayment?: PaymentOption;
 };
 
@@ -31,6 +32,7 @@ export default function BookingSummaryCard({
     form,
     selectedPickup,
     selectedDropoff,
+    selectedSeat,
     selectedPayment,
 }: BookingSummaryCardProps) {
     return (
@@ -82,6 +84,12 @@ export default function BookingSummaryCard({
                         <MapPin size={16} className="text-(--blue-9)" />
                         <Text as="div" size="2">
                             {selectedDropoff?.label || "--"}
+                        </Text>
+                    </Flex>
+                    <Flex align="center" gap="2" mb="2">
+                        <Armchair size={16} className="text-(--blue-9)" />
+                        <Text as="div" size="2">
+                            {selectedSeat?.seatLabel || "--"}
                         </Text>
                     </Flex>
                     <Flex align="center" gap="2">

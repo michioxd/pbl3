@@ -87,6 +87,7 @@ namespace Pbl3.Controllers.BusAdmin
                     c.Name,
                     c.LicenseNumber,
                     c.Hotline,
+                    c.AllowPayOnBoard,
                     c.IsApproved,
                 })
                 .FirstOrDefaultAsync();

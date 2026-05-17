@@ -34,6 +34,7 @@ namespace Pbl3.Controllers
                 {
                     t.TripID,
                     t.RouteID,
+                    t.BusTypeID,
                     t.DepartureDate,
                     t.DepartureTime,
                     t.ArrivalTime,
@@ -43,6 +44,7 @@ namespace Pbl3.Controllers
                     t.Notes,
                     CompanyId = t.Route!.CompanyID,
                     BusCompanyName = t.Route.BusCompany!.Name,
+                    AllowPayOnBoard = t.Route.BusCompany.AllowPayOnBoard,
                     BusTypeName = t.BusType!.Name,
                     BusTypeDescription = t.BusType.Description,
                     BusTypeAmenityIds = t
@@ -50,11 +52,17 @@ namespace Pbl3.Controllers
                         .ToList(),
                     RouteName = t.Route.RouteName,
                     TotalSeats = t.BusType.TotalSeats,
-                    SoldSeats = t.Tickets.Count(ticket => ticket.Status != TicketStatus.Cancelled),
+                    SoldSeats = t.Tickets.Count(ticket =>
+                        ticket.Status == TicketStatus.Issued
+                        || ticket.Status == TicketStatus.CheckedIn
+                    ),
                     HeldSeats = t.SeatHolds.Count(hold =>
                         hold.Status == SeatHoldStatus.Held && hold.ExpiresAt > utcNow
                     ),
-                    LowestPrice = t.Tickets.Where(ticket => ticket.Status != TicketStatus.Cancelled)
+                    LowestPrice = t.Tickets.Where(ticket =>
+                            ticket.Status == TicketStatus.Issued
+                            || ticket.Status == TicketStatus.CheckedIn
+                        )
                         .Select(ticket => (decimal?)ticket.FinalPrice)
                         .Min()
                         ?? 0,
@@ -108,6 +116,8 @@ namespace Pbl3.Controllers
                 })
                 .ToListAsync();
 
+            var seats = await BuildTripSeatsAsync(trip.TripID, trip.BusTypeID, utcNow);
+
             var pickupStops = trip
                 .RouteStops.Where(stop => stop.IsPickUp)
                 .OrderBy(stop => stop.StopOrder)
@@ -150,6 +160,7 @@ namespace Pbl3.Controllers
                 RouteId = trip.RouteID,
                 CompanyId = trip.CompanyId,
                 BusCompanyName = trip.BusCompanyName,
+                AllowPayOnBoard = trip.AllowPayOnBoard,
                 BusTypeName = trip.BusTypeName,
                 BusTypeDescription = trip.BusTypeDescription,
                 RouteName = trip.RouteName,
@@ -168,6 +179,7 @@ namespace Pbl3.Controllers
                 ReviewCount = trip.ReviewCount,
                 Amenities = amenities,
                 Images = trip.Images,
+                Seats = seats,
                 PickupStops = pickupStops,
                 DropoffStops = dropoffStops,
                 CancellationPolicy = trip.CancellationPolicy,
@@ -175,6 +187,84 @@ namespace Pbl3.Controllers
             };
 
             return Ok(result);
+        }
+
+        [HttpGet("{tripId:guid}/seats")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(List<TripSeatDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetTripSeats(Guid tripId)
+        {
+            var trip = await _context
+                .Trips.AsNoTracking()
+                .Where(t => t.TripID == tripId)
+                .Select(t => new
+                {
+                    t.TripID,
+                    t.BusTypeID,
+                    t.Status,
+                })
+                .FirstOrDefaultAsync();
+
+            if (trip == null)
+            {
+                return NotFound(new { message = "Trip not found" });
+            }
+
+            if (trip.Status != TripStatus.Scheduled)
+            {
+                return NotFound(new { message = "Trip is not available" });
+            }
+
+            return Ok(await BuildTripSeatsAsync(trip.TripID, trip.BusTypeID, DateTime.UtcNow));
+        }
+
+        private async Task<List<TripSeatDto>> BuildTripSeatsAsync(
+            Guid tripId,
+            Guid busTypeId,
+            DateTime utcNow
+        )
+        {
+            var unavailableSeatIds = await _context
+                .Tickets.AsNoTracking()
+                .Where(ticket =>
+                    ticket.TripID == tripId
+                    && (
+                        ticket.Status == TicketStatus.Issued
+                        || ticket.Status == TicketStatus.CheckedIn
+                    )
+                )
+                .Select(ticket => ticket.SeatLayoutID)
+                .Concat(
+                    _context
+                        .SeatHolds.AsNoTracking()
+                        .Where(hold =>
+                            hold.TripID == tripId
+                            && hold.Status == SeatHoldStatus.Held
+                            && hold.ExpiresAt > utcNow
+                        )
+                        .Select(hold => hold.SeatLayoutID)
+                )
+                .Distinct()
+                .ToListAsync();
+
+            return await _context
+                .SeatLayouts.AsNoTracking()
+                .Where(layout => layout.BusTypeID == busTypeId)
+                .OrderBy(layout => layout.Floor)
+                .ThenBy(layout => layout.PositionY)
+                .ThenBy(layout => layout.PositionX)
+                .Select(layout => new TripSeatDto
+                {
+                    LayoutId = layout.LayoutID,
+                    SeatLabel = layout.SeatLabel,
+                    Floor = layout.Floor,
+                    SeatType = layout.SeatType,
+                    PositionX = layout.PositionX,
+                    PositionY = layout.PositionY,
+                    IsAvailable = !unavailableSeatIds.Contains(layout.LayoutID),
+                })
+                .ToListAsync();
         }
     }
 }

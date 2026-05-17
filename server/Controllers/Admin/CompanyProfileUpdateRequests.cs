@@ -71,6 +71,7 @@ namespace Pbl3.Controllers.Admin
                     Name = r.Name,
                     LicenseNumber = r.LicenseNumber,
                     Hotline = r.Hotline,
+                    AllowPayOnBoard = r.AllowPayOnBoard,
                     RequestedAt = r.RequestedAt,
                     ReviewedAt = r.ReviewedAt,
                     ReviewNote = r.ReviewNote,
@@ -130,6 +131,7 @@ namespace Pbl3.Controllers.Admin
                 company.Name = request.Name;
                 company.LicenseNumber = request.LicenseNumber;
                 company.Hotline = request.Hotline;
+                company.AllowPayOnBoard = request.AllowPayOnBoard;
                 company.IsApproved = true;
             }
 
