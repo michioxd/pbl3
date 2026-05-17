@@ -1,4 +1,4 @@
-import { getApiPaymentsMomoIntentsByIntentId } from "@/api";
+import { postApiPaymentsMomoReturnVerify } from "@/api";
 import LoginDialog from "@/dialogs/Login";
 import { useStore } from "@/stores";
 import { Badge, Box, Button, Card, Container, Flex, Heading, Spinner, Text } from "@radix-ui/themes";
@@ -26,6 +26,22 @@ type PaymentStatusPayload = {
     currency?: string | null;
     message?: string | null;
     paidAt?: string | null;
+};
+
+type MomoReturnVerifyPayload = {
+    partnerCode: string;
+    orderId: string;
+    requestId: string;
+    amount: number;
+    orderInfo: string;
+    orderType: string;
+    transId: number;
+    resultCode: number;
+    message: string;
+    payType: string;
+    responseTime: number;
+    extraData: string;
+    signature: string;
 };
 
 function readString(value: unknown) {
@@ -57,6 +73,39 @@ function parsePaymentStatusPayload(payload: unknown): PaymentStatusPayload | nul
         currency: readString(response.currency),
         message: readString(response.message),
         paidAt: readString(response.paidAt),
+    };
+}
+
+function readRequiredParam(searchParams: URLSearchParams, key: string) {
+    const value = searchParams.get(key);
+    return value ?? "";
+}
+
+function readRequiredNumberParam(searchParams: URLSearchParams, key: string) {
+    const value = searchParams.get(key);
+    if (!value) {
+        return 0;
+    }
+
+    const parsedValue = Number(value);
+    return Number.isFinite(parsedValue) ? parsedValue : 0;
+}
+
+function buildMomoReturnVerifyPayload(searchParams: URLSearchParams): MomoReturnVerifyPayload {
+    return {
+        partnerCode: readRequiredParam(searchParams, "partnerCode"),
+        orderId: readRequiredParam(searchParams, "orderId"),
+        requestId: readRequiredParam(searchParams, "requestId"),
+        amount: readRequiredNumberParam(searchParams, "amount"),
+        orderInfo: readRequiredParam(searchParams, "orderInfo"),
+        orderType: readRequiredParam(searchParams, "orderType"),
+        transId: readRequiredNumberParam(searchParams, "transId"),
+        resultCode: readRequiredNumberParam(searchParams, "resultCode"),
+        message: readRequiredParam(searchParams, "message"),
+        payType: readRequiredParam(searchParams, "payType"),
+        responseTime: readRequiredNumberParam(searchParams, "responseTime"),
+        extraData: readRequiredParam(searchParams, "extraData"),
+        signature: readRequiredParam(searchParams, "signature"),
     };
 }
 
@@ -118,8 +167,8 @@ const PageBookingPaymentResult = observer(() => {
             setViewState("loading");
 
             try {
-                const response = await getApiPaymentsMomoIntentsByIntentId({
-                    path: { intentId: resolvedIntentId },
+                const response = await postApiPaymentsMomoReturnVerify({
+                    body: buildMomoReturnVerifyPayload(searchParams),
                 });
 
                 if (!active) {
@@ -180,6 +229,7 @@ const PageBookingPaymentResult = observer(() => {
         resultCode,
         resolvedBookingId,
         resolvedIntentId,
+        searchParams,
         store.user.isAuthenticated,
         store.user.isLoading,
         t,

@@ -1061,6 +1061,20 @@ export type GetApiPaymentsMomoReturnResponses = {
     200: unknown;
 };
 
+export type PostApiPaymentsMomoReturnVerifyData = {
+    body?: MomoIpnRequestDto;
+    path?: never;
+    query?: never;
+    url: '/api/payments/momo/return/verify';
+};
+
+export type PostApiPaymentsMomoReturnVerifyResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type PostApiPassengerUpgradeRequestsBusadminData = {
     body?: CreateBusAdminUpgradeRequestDto;
     path?: never;

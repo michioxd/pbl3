@@ -74,10 +74,34 @@ namespace Pbl3.Controllers.Payments
 
         [HttpGet("return")]
         [AllowAnonymous]
-        public async Task<IActionResult> HandleReturn([FromQuery] MomoIpnRequestDto dto)
+        public IActionResult HandleReturn([FromQuery] MomoIpnRequestDto dto)
         {
-            var result = await _paymentService.HandleMomoReturnAsync(dto);
+            var result = _paymentService.BuildMomoReturnRedirect(dto);
             return Redirect(result.RedirectUrl);
+        }
+
+        [HttpPost("return/verify")]
+        [Authorize(Policy = "UserOnly")]
+        public async Task<IActionResult> VerifyReturn([FromBody] MomoIpnRequestDto dto)
+        {
+            try
+            {
+                var userId = _currentUserContext.GetRequiredUserId();
+                var result = await _paymentService.VerifyMomoReturnAsync(dto, userId);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

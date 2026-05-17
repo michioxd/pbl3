@@ -17,7 +17,8 @@ namespace Pbl3.Services
         Task<CreateMomoPaymentResponseDto> CreateMomoPaymentAsync(Guid bookingId, Guid userId);
         Task<PaymentStatusDto> GetPaymentStatusAsync(Guid intentId, Guid userId);
         Task HandleMomoIpnAsync(MomoIpnRequestDto request);
-        Task<MomoReturnResultDto> HandleMomoReturnAsync(MomoIpnRequestDto request);
+        MomoReturnResultDto BuildMomoReturnRedirect(MomoIpnRequestDto request);
+        Task<MomoReturnResultDto> VerifyMomoReturnAsync(MomoIpnRequestDto request, Guid userId);
         Task ProcessRefundAsync(Guid refundId);
     }
 
@@ -86,6 +87,7 @@ namespace Pbl3.Services
                 ?? $"{booking.BookingID:N}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
             var orderInfo = $"Thanh toan booking {booking.BookingID}";
             var extraData = string.Empty;
+            var momoRedirectUrl = GetMomoRedirectUrl();
             var rawSignature =
                 $"accessKey={_momoOptions.AccessKey}"
                 + $"&amount={amount:0}"
@@ -94,7 +96,7 @@ namespace Pbl3.Services
                 + $"&orderId={orderId}"
                 + $"&orderInfo={orderInfo}"
                 + $"&partnerCode={_momoOptions.PartnerCode}"
-                + $"&redirectUrl={_momoOptions.RedirectUrl}"
+                + $"&redirectUrl={momoRedirectUrl}"
                 + $"&requestId={requestId}"
                 + $"&requestType={_momoOptions.RequestType}";
 
@@ -112,7 +114,7 @@ namespace Pbl3.Services
                 amount = ((long)amount).ToString(),
                 orderId,
                 orderInfo,
-                redirectUrl = _momoOptions.RedirectUrl,
+                redirectUrl = momoRedirectUrl,
                 ipnUrl = _momoOptions.IpnUrl,
                 lang = _momoOptions.Lang,
                 requestType = _momoOptions.RequestType,
@@ -234,20 +236,40 @@ namespace Pbl3.Services
             await ProcessMomoCallbackAsync(request);
         }
 
-        public async Task<MomoReturnResultDto> HandleMomoReturnAsync(MomoIpnRequestDto request)
+        public MomoReturnResultDto BuildMomoReturnRedirect(MomoIpnRequestDto request)
+        {
+            ValidateMomoOptions();
+            return BuildReturnResult(null, request, request.ResultCode, request.Message);
+        }
+
+        public async Task<MomoReturnResultDto> VerifyMomoReturnAsync(
+            MomoIpnRequestDto request,
+            Guid userId
+        )
         {
             ValidateMomoOptions();
 
+            PaymentIntent? intent = null;
             try
             {
-                var intent = await ProcessMomoCallbackAsync(request);
-                return BuildReturnResult(intent, request.ResultCode, request.Message);
+                intent = await ProcessMomoCallbackAsync(request);
+                if (intent.Booking?.UserID != userId)
+                {
+                    throw new UnauthorizedAccessException("Không có quyền xem giao dịch này.");
+                }
+
+                return BuildReturnResult(intent, request, request.ResultCode, request.Message);
             }
             catch (Exception ex)
             {
-                var intent = await FindIntentByOrderIdAsync(request.OrderId);
+                intent ??= await FindIntentByOrderIdAsync(request.OrderId);
+                if (intent?.Booking?.UserID != userId)
+                {
+                    throw;
+                }
+
                 var resultCode = request.ResultCode == 0 ? -1 : request.ResultCode;
-                return BuildReturnResult(intent, resultCode, ex.Message);
+                return BuildReturnResult(intent, request, resultCode, ex.Message);
             }
         }
 
@@ -344,16 +366,12 @@ namespace Pbl3.Services
 
                 if (intent.Booking != null && intent.Booking.Status != BookingStatus.Paid)
                 {
-                    intent.Booking.Status = BookingStatus.Pending;
+                    intent.Booking.Status = BookingStatus.Cancelled;
+                    intent.Booking.ExpiresAt = null;
 
                     foreach (var ticket in intent.Booking.Tickets)
                     {
-                        if (ticket.Status == TicketStatus.Cancelled)
-                        {
-                            continue;
-                        }
-
-                        ticket.Status = TicketStatus.PendingPayment;
+                        ticket.Status = TicketStatus.Cancelled;
                     }
                 }
             }
@@ -474,6 +492,13 @@ namespace Pbl3.Services
             }
         }
 
+        private string GetMomoRedirectUrl()
+        {
+            return string.IsNullOrWhiteSpace(_momoOptions.FrontendRedirectUrl)
+                ? _momoOptions.RedirectUrl
+                : _momoOptions.FrontendRedirectUrl;
+        }
+
         private async Task<PaymentIntent?> FindIntentByOrderIdAsync(string? orderId)
         {
             if (string.IsNullOrWhiteSpace(orderId))
@@ -481,13 +506,16 @@ namespace Pbl3.Services
                 return null;
             }
 
-            return await _context.PaymentIntents.FirstOrDefaultAsync(pi =>
-                pi.Provider == PaymentProvider.Momo && pi.ProviderOrderId == orderId
-            );
+            return await _context
+                .PaymentIntents.Include(pi => pi.Booking)
+                .FirstOrDefaultAsync(pi =>
+                    pi.Provider == PaymentProvider.Momo && pi.ProviderOrderId == orderId
+                );
         }
 
         private MomoReturnResultDto BuildReturnResult(
             PaymentIntent? intent,
+            MomoIpnRequestDto request,
             int resultCode,
             string? message
         )
@@ -498,7 +526,17 @@ namespace Pbl3.Services
                 {
                     ["intentId"] = intent?.IntentID.ToString(),
                     ["bookingId"] = intent?.BookingID.ToString(),
-                    ["orderId"] = intent?.ProviderOrderId,
+                    ["orderId"] = request.OrderId,
+                    ["requestId"] = request.RequestId,
+                    ["amount"] = request.Amount.ToString(),
+                    ["orderInfo"] = request.OrderInfo,
+                    ["orderType"] = request.OrderType,
+                    ["transId"] = request.TransId.ToString(),
+                    ["payType"] = request.PayType,
+                    ["responseTime"] = request.ResponseTime.ToString(),
+                    ["extraData"] = request.ExtraData,
+                    ["signature"] = request.Signature,
+                    ["partnerCode"] = request.PartnerCode,
                     ["resultCode"] = resultCode.ToString(),
                     ["message"] = message,
                 }
