@@ -11,140 +11,25 @@ namespace Pbl3.Controllers.Users
         [HttpGet("profile")]
         public async Task<IActionResult> GetProfile()
         {
-            var userId = GetCurrentUserId();
+            var userId = _currentUserContext.GetRequiredUserId();
+            var result = await _passengerService.GetProfileAsync(userId);
 
-            var passenger = await _context
-                .Passengers.Include(p => p.User)
-                .Where(p => p.UserID == userId)
-                .Select(p => new
-                {
-                    p.PassengerID,
-                    p.FullName,
-                    p.Email,
-                    p.PhoneNumber,
-                    p.IdentityCard,
-                })
-                .FirstOrDefaultAsync();
+            if (result.StatusCode == 200)
+                return Ok(result.Data);
 
-            if (passenger == null)
-                return NotFound(new { message = "Không tìm thấy hồ sơ hành khách." });
-
-            return Ok(passenger);
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
         }
 
         [HttpGet("tickets")]
         public async Task<IActionResult> GetMyTickets()
         {
-            var userId = GetCurrentUserId();
+            var userId = _currentUserContext.GetRequiredUserId();
+            var result = await _passengerService.GetMyTicketsAsync(userId);
 
-            var passenger = await _context.Passengers.FirstOrDefaultAsync(p => p.UserID == userId);
-            if (passenger == null)
-                return NotFound(new { message = "Hành khách không tồn tại." });
+            if (result.StatusCode == 200)
+                return Ok(result.Data);
 
-            var tickets = await _context
-                .Tickets.Include(t => t.Trip)
-                    .ThenInclude(tr => tr!.Route)
-                        .ThenInclude(r => r!.BusCompany)
-                .Include(t => t.Trip)
-                    .ThenInclude(tr => tr!.Bus)
-                        .ThenInclude(b => b!.BusType)
-                .Include(t => t.Trip)
-                    .ThenInclude(tr => tr!.BusType)
-                .Include(t => t.Booking)
-                    .ThenInclude(b => b!.PaymentIntents)
-                .Include(t => t.Booking)
-                    .ThenInclude(b => b!.RefundRequests)
-                .Include(t => t.SeatLayout)
-                .Where(t => t.PassengerID == passenger.PassengerID)
-                .Select(t => new
-                {
-                    t.TicketID,
-                    t.BookingID,
-                    TripID = t.TripID,
-                    t.TicketCode,
-                    SeatLabel = t.SeatLayout != null ? t.SeatLayout.SeatLabel : null,
-                    SeatFloor = t.SeatLayout != null ? t.SeatLayout.Floor : (int?)null,
-                    SeatType = t.SeatLayout != null ? t.SeatLayout.SeatType.ToString() : null,
-                    Price = t.FinalPrice,
-                    t.Status,
-                    RouteName = t.Trip != null && t.Trip.Route != null
-                        ? t.Trip.Route.RouteName
-                        : null,
-                    CompanyName = t.Trip != null
-                    && t.Trip.Route != null
-                    && t.Trip.Route.BusCompany != null
-                        ? t.Trip.Route.BusCompany.Name
-                        : null,
-                    DistanceEstimate = t.Trip != null && t.Trip.Route != null
-                        ? t.Trip.Route.DistanceEstimate
-                        : (decimal?)null,
-                    DurationEstimate = t.Trip != null && t.Trip.Route != null
-                        ? t.Trip.Route.DurationEstimate
-                        : (decimal?)null,
-                    DepartureDate = t.Trip != null ? t.Trip.DepartureDate : default,
-                    DepartureTime = t.Trip != null ? t.Trip.DepartureTime : default,
-                    ArrivalTime = t.Trip != null ? t.Trip.ArrivalTime : default,
-                    TripStatus = t.Trip != null ? t.Trip.Status.ToString() : null,
-                    CancellationPolicy = t.Trip != null ? t.Trip.CancellationPolicy : null,
-                    TripNotes = t.Trip != null ? t.Trip.Notes : null,
-                    PlateNumber = t.Trip != null && t.Trip.Bus != null
-                        ? t.Trip.Bus.PlateNumber
-                        : null,
-                    BusTypeName = t.Trip != null && t.Trip.Bus != null && t.Trip.Bus.BusType != null
-                        ? t.Trip.Bus.BusType.Name
-                    : t.Trip != null && t.Trip.BusType != null ? t.Trip.BusType.Name
-                    : null,
-                    ContactName = t.Booking != null ? t.Booking.ContactName : null,
-                    ContactPhone = t.Booking != null ? t.Booking.ContactPhone : null,
-                    ContactEmail = t.Booking != null ? t.Booking.ContactEmail : null,
-                    BookingStatus = t.Booking != null ? t.Booking.Status.ToString() : null,
-                    BookingCreatedAt = t.Booking != null ? t.Booking.CreatedAt : default,
-                    PaymentStatus = t.Booking != null
-                        ? t
-                            .Booking.PaymentIntents.Where(pi =>
-                                pi.Status == PaymentIntentStatus.Succeeded
-                            )
-                            .Select(pi => pi.Status.ToString())
-                            .FirstOrDefault()
-                        : null,
-                    PaymentProvider = t.Booking != null
-                        ? t
-                            .Booking.PaymentIntents.Where(pi =>
-                                pi.Status == PaymentIntentStatus.Succeeded
-                            )
-                            .Select(pi => pi.Provider.ToString())
-                            .FirstOrDefault()
-                        : null,
-                    PaidAt = t.Booking != null
-                        ? t
-                            .Booking.PaymentIntents.Where(pi =>
-                                pi.Status == PaymentIntentStatus.Succeeded
-                            )
-                            .Select(pi => pi.PaidAt)
-                            .FirstOrDefault()
-                        : null,
-                    CanRefund = t.Status == TicketStatus.Issued
-                        && t.Booking != null
-                        && t.Booking.Status == BookingStatus.Paid
-                        && t.Trip != null
-                        && t.Trip.DepartureTime > DateTime.UtcNow
-                        && !t.Booking.RefundRequests.Any(rr =>
-                            rr.Status == RefundStatus.Pending
-                            || rr.Status == RefundStatus.Approved
-                            || rr.Status == RefundStatus.Processing
-                            || rr.Status == RefundStatus.Completed
-                        ),
-                    RefundStatus = t.Booking != null
-                        ? t
-                            .Booking.RefundRequests.OrderByDescending(rr => rr.RequestedAt)
-                            .Select(rr => rr.Status.ToString())
-                            .FirstOrDefault()
-                        : null,
-                })
-                .OrderByDescending(t => t.DepartureTime)
-                .ToListAsync();
-
-            return Ok(tickets);
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
         }
 
         [HttpPost("tickets/{ticketId:guid}/refund")]

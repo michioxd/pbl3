@@ -33,6 +33,17 @@ namespace Pbl3
             builder.Services.AddScoped<IBusAdminOwnershipService, BusAdminOwnershipService>();
             builder.Services.AddScoped<IBookingService, BookingService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
+            builder.Services.AddScoped<IProvinceSearchService, ProvinceSearchService>();
+            builder.Services.AddScoped<ITripDetailService, TripDetailService>();
+            builder.Services.AddScoped<IMyOrdersService, MyOrdersService>();
+            builder.Services.AddScoped<IMeService, MeService>();
+            builder.Services.AddScoped<IBusesAdminService, BusesAdminService>();
+            builder.Services.AddScoped<IBusesAdminCommandService, BusesAdminCommandService>();
+            builder.Services.AddScoped<IBusCompanyRegistrationService, BusCompanyRegistrationService>();
+            builder.Services.AddScoped<ICompanyProfileUpdateRequestsService, CompanyProfileUpdateRequestsService>();
+            builder.Services.AddScoped<IRevenueAnalyticsService, RevenueAnalyticsService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IPassengerService, PassengerService>();
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy(

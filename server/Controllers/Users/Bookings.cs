@@ -23,24 +23,17 @@ namespace Pbl3.Controllers.Users
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequestDto dto)
         {
-            try
-            {
-                var userId = _currentUserContext.GetRequiredUserId();
-                var result = await _bookingService.CreateBookingAsync(dto, userId);
+            var userId = _currentUserContext.GetRequiredUserId();
+            var result = await _bookingService.CreateBookingAsync(dto, userId);
+
+            if (result.StatusCode == 200 || result.StatusCode == 201)
                 return CreatedAtAction(
                     nameof(GetBooking),
-                    new { bookingId = result.BookingId },
-                    result
+                    new { bookingId = result.Data!.BookingId },
+                    result.Data
                 );
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
         }
 
         [HttpGet("{bookingId:guid}")]
@@ -48,16 +41,13 @@ namespace Pbl3.Controllers.Users
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetBooking(Guid bookingId)
         {
-            try
-            {
-                var userId = _currentUserContext.GetRequiredUserId();
-                var result = await _bookingService.GetBookingAsync(bookingId, userId);
-                return Ok(result);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
+            var userId = _currentUserContext.GetRequiredUserId();
+            var result = await _bookingService.GetBookingAsync(bookingId, userId);
+
+            if (result.StatusCode == 200)
+                return Ok(result.Data);
+
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
         }
 
         [HttpPut("{bookingId:guid}/cancel")]
@@ -66,20 +56,13 @@ namespace Pbl3.Controllers.Users
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> CancelBooking(Guid bookingId)
         {
-            try
-            {
-                var userId = _currentUserContext.GetRequiredUserId();
-                var result = await _bookingService.CancelBookingAsync(bookingId, userId);
-                return Ok(result);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var userId = _currentUserContext.GetRequiredUserId();
+            var result = await _bookingService.CancelBookingAsync(bookingId, userId);
+
+            if (result.StatusCode == 200)
+                return Ok(result.Data);
+
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
         }
     }
 }

@@ -1,50 +1,37 @@
 using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
+using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Pbl3.Services;
+using Microsoft.EntityFrameworkCore;
+using Pbl3.Data;
+using Pbl3.Dtos;
 
-namespace Pbl3.Controllers.Users
+namespace Pbl3.Services
 {
-    [ApiController]
-    [Route("api/user/me/orders")]
-    [Authorize(Policy = "UserOnly")]
-    [Tags("User")]
-    public class UserMyOrdersController : ControllerBase
+    public interface IMyOrdersService
     {
-        private readonly IMyOrdersService _myOrdersService;
+        Task<MyOrdersResponseDto?> GetMyOrdersAsync(Guid userId);
+    }
 
-        public UserMyOrdersController(IMyOrdersService myOrdersService)
+    public class MyOrdersService : IMyOrdersService
+    {
+        private readonly ApplicationDbContext _context;
+
+        public MyOrdersService(ApplicationDbContext context)
         {
-            _myOrdersService = myOrdersService;
+            _context = context;
         }
 
-        private Guid GetCurrentUserId()
+        public async Task<MyOrdersResponseDto?> GetMyOrdersAsync(Guid userId)
         {
-            var userIdString =
-                User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
-                ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var passengerId = await _context
+                .Passengers.AsNoTracking()
+                .Where(p => p.UserID == userId)
+                .Select(p => p.PassengerID)
+                .FirstOrDefaultAsync();
 
-            if (Guid.TryParse(userIdString, out Guid userId))
+            if (passengerId == Guid.Empty)
             {
-                return userId;
-            }
-
-            throw new UnauthorizedAccessException("common:internal_server_error");
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetMyOrders()
-        {
-            var userId = GetCurrentUserId();
-
-            var response = await _myOrdersService.GetMyOrdersAsync(userId);
-
-            if (response == null)
-            {
-                return NotFound(new { message = "common:internal_server_error" });
+                return null;
             }
 
             var now = DateTime.UtcNow;
@@ -83,7 +70,7 @@ namespace Pbl3.Controllers.Users
                     .ToList(),
             };
 
-            return Ok(response);
+            return response;
         }
     }
 }
