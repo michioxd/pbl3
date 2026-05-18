@@ -52,6 +52,7 @@ namespace Pbl3.Data
             await SeedTicketsAsync();
             await SeedPaymentIntentsAsync();
             await SeedRefundsAsync();
+            await SeedRefundRequestsAsync();
             await SeedReviewsAsync();
             await SeedNotificationsAsync();
             await SeedSeatHoldsAsync();
@@ -1429,22 +1430,69 @@ namespace Pbl3.Data
                 pi.Status == PaymentIntentStatus.Succeeded
             );
 
-            var refunds = new List<Refund>
+            var paidBooking = await _context.Bookings.FirstAsync(b =>
+                b.ContactEmail == "nguyenvana@gmail.com" && b.Status == BookingStatus.Paid
+            );
+
+            // Simulate a completed refund: RefundRequest (Approved) + linked Refund (Completed)
+            var completedRefund = new Refund
             {
-                new Refund
+                RefundID = Guid.NewGuid(),
+                IntentID = succeededIntent.IntentID,
+                Amount = 50000,
+                Reason = "Hoàn phí khuyến mại do đổi lịch",
+                Status = RefundStatus.Completed,
+                CreatedAt = DateTime.UtcNow.AddDays(-3),
+                ProcessedAt = DateTime.UtcNow.AddDays(-3).AddMinutes(5),
+            };
+            _context.Refunds.Add(completedRefund);
+
+            var approvedRequest = new RefundRequest
+            {
+                RefundRequestID = Guid.NewGuid(),
+                BookingID = paidBooking.BookingID,
+                PaymentIntentID = succeededIntent.IntentID,
+                RequestedAmount = 50000,
+                Reason = "Hoàn phí khuyến mại do đổi lịch",
+                Status = RefundStatus.Approved,
+                RequestedAt = DateTime.UtcNow.AddDays(-4),
+                ProcessedAt = DateTime.UtcNow.AddDays(-3),
+                RefundID = completedRefund.RefundID,
+            };
+            _context.RefundRequests.Add(approvedRequest);
+
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded 1 completed refund with linked RefundRequest");
+        }
+
+        private async Task SeedRefundRequestsAsync()
+        {
+            var succeededIntent = await _context.PaymentIntents.FirstAsync(pi =>
+                pi.Status == PaymentIntentStatus.Succeeded
+            );
+
+            var paidBooking = await _context.Bookings.FirstAsync(b =>
+                b.ContactEmail == "nguyenvana@gmail.com" && b.Status == BookingStatus.Paid
+            );
+
+            // A second RefundRequest still pending admin approval
+            var refundRequests = new List<RefundRequest>
+            {
+                new RefundRequest
                 {
-                    RefundID = Guid.NewGuid(),
-                    IntentID = succeededIntent.IntentID,
-                    Amount = 50000,
-                    Reason = "Hoàn phí khuyến mại do đổi lịch",
-                    Status = RefundStatus.Processed,
-                    CreatedAt = DateTime.UtcNow.AddDays(-1),
+                    RefundRequestID = Guid.NewGuid(),
+                    BookingID = paidBooking.BookingID,
+                    PaymentIntentID = succeededIntent.IntentID,
+                    RequestedAmount = 50000,
+                    Reason = "Hủy vé do thay đổi lịch trình cá nhân",
+                    Status = RefundStatus.Pending,
+                    RequestedAt = DateTime.UtcNow.AddDays(-1),
                 },
             };
 
-            _context.Refunds.AddRange(refunds);
+            _context.RefundRequests.AddRange(refundRequests);
             await _context.SaveChangesAsync();
-            _logger.LogInformation("Seeded {Count} refunds", refunds.Count);
+            _logger.LogInformation("Seeded {Count} pending refund requests", refundRequests.Count);
         }
 
         private async Task SeedReviewsAsync()

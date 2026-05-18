@@ -17,16 +17,19 @@ namespace Pbl3.Controllers.Admin
         private readonly ApplicationDbContext _context;
         private readonly ICurrentUserContext _currentUserContext;
         private readonly IPaymentService _paymentService;
+        private readonly ILogger<RefundManagementController> _logger;
 
         public RefundManagementController(
             ApplicationDbContext context,
             ICurrentUserContext currentUserContext,
-            IPaymentService paymentService
+            IPaymentService paymentService,
+            ILogger<RefundManagementController> logger
         )
         {
             _context = context;
             _currentUserContext = currentUserContext;
             _paymentService = paymentService;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -201,7 +204,7 @@ namespace Pbl3.Controllers.Admin
 
             var userId = _currentUserContext.GetRequiredUserId();
 
-            // Create actual refund
+            // Create actual refund record
             var refund = new Refund
             {
                 IntentID = request.PaymentIntentID,
@@ -213,7 +216,7 @@ namespace Pbl3.Controllers.Admin
 
             _context.Refunds.Add(refund);
 
-            // Update request
+            // Persist approval — this must always succeed
             request.Status = RefundStatus.Approved;
             request.ProcessedAt = DateTime.UtcNow;
             request.ProcessedByUserID = userId;
@@ -222,10 +225,34 @@ namespace Pbl3.Controllers.Admin
 
             await _context.SaveChangesAsync();
 
-            await _paymentService.ProcessRefundAsync(refund.RefundID);
+            // Attempt to trigger payment provider refund — failures are non-fatal
+            string? paymentProcessingWarning = null;
+            try
+            {
+                await _paymentService.ProcessRefundAsync(refund.RefundID);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Payment provider refund processing failed for RefundID {RefundId}. Approval is saved; manual processing may be required.",
+                    refund.RefundID
+                );
+                paymentProcessingWarning = $"Duyệt thành công nhưng không thể xử lý hoàn tiền tự động: {ex.Message}";
+            }
+
+            if (paymentProcessingWarning != null)
+            {
+                return Ok(new
+                {
+                    message = "Đã duyệt yêu cầu hoàn tiền.",
+                    paymentProcessingWarning,
+                });
+            }
 
             return Ok(new { message = "Đã duyệt yêu cầu hoàn tiền." });
         }
+
 
         [HttpPost("{refundRequestId:guid}/reject")]
         public async Task<IActionResult> RejectRefund(
