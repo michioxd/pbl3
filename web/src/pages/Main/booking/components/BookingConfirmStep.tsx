@@ -1,10 +1,11 @@
-import type { BookingFormState, PaymentOption, StopOption } from "../types";
+import type { BookingFormState, PaymentOption, SeatOption, StopOption } from "../types";
 import { Badge, Card, Grid, Heading, Text } from "@radix-ui/themes";
 
 type BookingConfirmStepProps = {
     form: BookingFormState;
     selectedPickup?: StopOption;
     selectedDropoff?: StopOption;
+    selectedSeat?: SeatOption;
     selectedPayment?: PaymentOption;
     demoCompleted: boolean;
     title: string;
@@ -22,6 +23,7 @@ export default function BookingConfirmStep({
     form,
     selectedPickup,
     selectedDropoff,
+    selectedSeat,
     selectedPayment,
     demoCompleted,
     title,
@@ -68,6 +70,9 @@ export default function BookingConfirmStep({
                     </Text>
                     <Text as="div" size="2" color="gray">
                         {selectedDropoff?.label || "--"}
+                    </Text>
+                    <Text as="div" size="2" color="gray">
+                        {selectedSeat?.seatLabel || "--"}
                     </Text>
                     <Text as="div" size="2" color="gray">
                         {selectedPayment?.title || "--"}

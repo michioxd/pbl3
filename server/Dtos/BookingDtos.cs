@@ -30,6 +30,9 @@ namespace Pbl3.Dtos
         [MaxLength(1000)]
         public string? AddressNote { get; set; }
 
+        [Required]
+        public Guid SeatLayoutId { get; set; }
+
         public PaymentProvider PaymentProvider { get; set; }
     }
 

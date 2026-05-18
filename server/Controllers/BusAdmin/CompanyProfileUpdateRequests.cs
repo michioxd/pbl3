@@ -39,10 +39,12 @@ namespace Pbl3.Controllers.BusAdmin
 
             var result = await _requestsService.GetCurrentRequestAsync(companyId.Value);
 
-            if (result.StatusCode == 200)
-                return Ok(result.Data);
+            if (result.StatusCode != 200 && result.ErrorMessage != null)
+            {
+                return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
+            }
 
-            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
+            return Ok(result.Data);
         }
 
         [HttpPost]
@@ -57,10 +59,12 @@ namespace Pbl3.Controllers.BusAdmin
 
             var result = await _requestsService.CreateRequestAsync(companyId.Value, userId, dto);
 
-            if (result.StatusCode == 201)
-                return StatusCode(result.StatusCode, result.Data);
+            if (result.StatusCode != 201 && result.ErrorMessage != null)
+            {
+                return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
+            }
 
-            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
+            return StatusCode(result.StatusCode, result.Data);
         }
     }
 }

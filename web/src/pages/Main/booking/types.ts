@@ -1,7 +1,7 @@
-import type { PaymentProvider, TripDetailRouteStopDto } from "@/api";
+import type { PaymentProvider, SeatType, TripDetailRouteStopDto } from "@/api";
 import type { LucideIcon } from "lucide-react";
 
-export type BookingStep = 0 | 1 | 2;
+export type BookingStep = 0 | 1 | 2 | 3;
 
 export type BookingFormState = {
     fullName: string;
@@ -10,7 +10,18 @@ export type BookingFormState = {
     pickupStopId: string;
     dropoffStopId: string;
     addressNote: string;
+    selectedSeatLayoutId: string;
     paymentProvider: PaymentProvider;
+};
+
+export type SeatOption = {
+    layoutId: string;
+    seatLabel: string;
+    floor: number;
+    seatType?: SeatType;
+    positionX: number;
+    positionY: number;
+    isAvailable: boolean;
 };
 
 export type StopOption = {
@@ -26,6 +37,8 @@ export type PaymentOption = {
     description: string;
     badge: string;
     Icon: LucideIcon;
+    disabled?: boolean;
+    disabledReason?: string;
 };
 
 export type StepItem = {

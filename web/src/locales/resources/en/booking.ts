@@ -12,6 +12,7 @@ export default {
 
     step_label: "Step {{value}}",
     step_address: "Enter address",
+    step_seat: "Choose seat",
     step_payment: "Choose payment",
     step_confirm: "Pay",
 
@@ -32,6 +33,13 @@ export default {
     note_placeholder: "Example: pick me up at the main gate, call me 10 minutes before...",
     stop_not_available: "No stop available",
 
+    seat_title: "Choose your seat",
+    seat_desc: "Pick one available seat on the bus map before moving to payment.",
+    seat_available: "Available",
+    seat_selected: "Selected",
+    seat_booked: "Booked",
+    seat_empty: "No seat map is available for this trip.",
+
     payment_title: "Choose payment method",
     payment_desc: "Choose the payment method before creating your booking.",
     payment_option_vnpay_title: "VNPay",
@@ -40,6 +48,7 @@ export default {
     payment_option_momo_desc: "Fast payment through the e-wallet app.",
     payment_option_counter_title: "Pay at counter",
     payment_option_counter_desc: "Reserve first and pay later at the station or on boarding.",
+    payment_option_counter_disabled: "This operator does not support pay-on-board yet.",
     payment_badge_recommended: "Recommended",
     payment_badge_fast: "Fast",
     payment_badge_flexible: "Flexible",
@@ -61,6 +70,7 @@ export default {
     summary_total: "Total",
 
     validation_address: "Please complete passenger details and select pickup/dropoff points.",
+    validation_seat: "Please select a seat before continuing.",
     validation_payment: "Please select a payment method.",
 
     action_back: "Back",
@@ -75,4 +85,31 @@ export default {
     payment_cash_success: "Booking created successfully. Please pay at the counter before the hold expires.",
     payment_created_check_orders: "Your booking was created. Please check your orders page to continue payment.",
     payment_submit_error: "Unable to create the booking. Please try again.",
+
+    payment_result_page_title: "MoMo payment result",
+    payment_result_loading_title: "Checking payment status",
+    payment_result_loading_desc: "Please wait while we sync the final result from MoMo.",
+    payment_result_success_badge: "Payment successful",
+    payment_result_success_title: "MoMo confirmed your payment.",
+    payment_result_success_desc: "Your booking has been paid. You can review it anytime on the orders page.",
+    payment_result_pending_badge: "Awaiting confirmation",
+    payment_result_pending_title: "This payment is still being processed.",
+    payment_result_pending_desc:
+        "We received your return from MoMo but are still waiting for the final payment status update.",
+    payment_result_failed_badge: "Payment not completed",
+    payment_result_failed_title: "MoMo did not complete this transaction.",
+    payment_result_failed_desc: "You can retry the payment or check your orders page to continue later.",
+    payment_result_missing_title: "Unable to find a payment to verify",
+    payment_result_missing_desc:
+        "There is not enough information to verify this MoMo payment result. Please return from the booking flow again or check your orders.",
+    payment_result_login_title: "You need to sign in to view the payment result",
+    payment_result_login_desc: "Sign in again so we can verify your MoMo payment status.",
+    payment_result_message_label: "Payment gateway message",
+    payment_result_booking_id_label: "Booking id",
+    payment_result_intent_id_label: "Transaction id",
+    payment_result_amount_label: "Amount",
+    payment_result_paid_at_label: "Confirmed at",
+    payment_result_action_orders: "View orders",
+    payment_result_action_refresh: "Refresh status",
+    payment_result_action_retry: "Back to booking",
 } as const;

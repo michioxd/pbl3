@@ -33,9 +33,9 @@ namespace Pbl3.Enums
 
     public enum CompanyStatus
     {
-        Pending, 
+        Pending,
         Approved,
-        Suspended, 
+        Suspended,
         Rejected,
     }
 
@@ -74,6 +74,7 @@ namespace Pbl3.Enums
 
     public enum TicketStatus
     {
+        PendingPayment,
         Issued,
         CheckedIn,
         Cancelled,

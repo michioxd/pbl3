@@ -47,23 +47,27 @@ namespace Pbl3.Controllers.Admin
             var currentRevenue =
                 (
                     await currentMonthTickets
-                        .Where(t => t.Status != TicketStatus.Cancelled)
+                        .Where(t =>
+                            t.Status == TicketStatus.Issued || t.Status == TicketStatus.CheckedIn
+                        )
                         .SumAsync(t => (decimal?)t.FinalPrice)
                 ) ?? 0m;
 
             var previousRevenue =
                 (
                     await previousMonthTickets
-                        .Where(t => t.Status != TicketStatus.Cancelled)
+                        .Where(t =>
+                            t.Status == TicketStatus.Issued || t.Status == TicketStatus.CheckedIn
+                        )
                         .SumAsync(t => (decimal?)t.FinalPrice)
                 ) ?? 0m;
 
             var currentSoldTickets = await currentMonthTickets.CountAsync(t =>
-                t.Status != TicketStatus.Cancelled
+                t.Status == TicketStatus.Issued || t.Status == TicketStatus.CheckedIn
             );
 
             var previousSoldTickets = await previousMonthTickets.CountAsync(t =>
-                t.Status != TicketStatus.Cancelled
+                t.Status == TicketStatus.Issued || t.Status == TicketStatus.CheckedIn
             );
 
             var currentTrips = await _context
@@ -123,9 +127,13 @@ namespace Pbl3.Controllers.Admin
                 {
                     g.Key.Year,
                     g.Key.Month,
-                    Revenue = g.Where(x => x.Status != TicketStatus.Cancelled)
+                    Revenue = g.Where(x =>
+                            x.Status == TicketStatus.Issued || x.Status == TicketStatus.CheckedIn
+                        )
                         .Sum(x => x.FinalPrice),
-                    SoldTickets = g.Count(x => x.Status != TicketStatus.Cancelled),
+                    SoldTickets = g.Count(x =>
+                        x.Status == TicketStatus.Issued || x.Status == TicketStatus.CheckedIn
+                    ),
                 })
                 .ToListAsync();
 
@@ -157,9 +165,13 @@ namespace Pbl3.Controllers.Admin
                 .Select(g => new
                 {
                     Date = g.Key,
-                    SoldTickets = g.Count(x => x.Status != TicketStatus.Cancelled),
+                    SoldTickets = g.Count(x =>
+                        x.Status == TicketStatus.Issued || x.Status == TicketStatus.CheckedIn
+                    ),
                     CancelledTickets = g.Count(x => x.Status == TicketStatus.Cancelled),
-                    Revenue = g.Where(x => x.Status != TicketStatus.Cancelled)
+                    Revenue = g.Where(x =>
+                            x.Status == TicketStatus.Issued || x.Status == TicketStatus.CheckedIn
+                        )
                         .Sum(x => x.FinalPrice),
                 })
                 .ToListAsync();

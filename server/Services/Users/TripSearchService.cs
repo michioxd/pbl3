@@ -81,12 +81,17 @@ namespace Pbl3.Services
                 ArrivalTime = t.ArrivalTime,
                 BasePrice = t.BasePrice,
                 TotalSeats = t.BusType.TotalSeats,
-                SoldSeats = t.Tickets.Count(ticket => ticket.Status != TicketStatus.Cancelled),
+                SoldSeats = t.Tickets.Count(ticket =>
+                    ticket.Status == TicketStatus.Issued || ticket.Status == TicketStatus.CheckedIn
+                ),
                 HeldSeats = t.SeatHolds.Count(hold =>
                     hold.Status == SeatHoldStatus.Held && hold.ExpiresAt > utcNow
                 ),
                 LowestPrice =
-                    t.Tickets.Where(ticket => ticket.Status != TicketStatus.Cancelled)
+                    t.Tickets.Where(ticket =>
+                            ticket.Status == TicketStatus.Issued
+                            || ticket.Status == TicketStatus.CheckedIn
+                        )
                         .Select(ticket => (decimal?)ticket.FinalPrice)
                         .Min()
                     ?? 0,

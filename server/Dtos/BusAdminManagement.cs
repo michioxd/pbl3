@@ -7,6 +7,7 @@ namespace Pbl3.Dtos
         public string Name { get; set; } = null!;
         public string? LicenseNumber { get; set; }
         public string? Hotline { get; set; }
+        public bool AllowPayOnBoard { get; set; } = true;
     }
 
     public class CreateTripDto
@@ -15,6 +16,7 @@ namespace Pbl3.Dtos
         public Guid? BusID { get; set; }
         public Guid BusTypeID { get; set; }
         public DateOnly DepartureDate { get; set; }
+        public List<DateOnly>? DepartureDates { get; set; }
         public DateTime DepartureTime { get; set; }
         public DateTime ArrivalTime { get; set; }
         public TripStatus Status { get; set; } = TripStatus.Scheduled;

@@ -12,7 +12,7 @@ export type ICurrentUser = {
     email: string;
     role: MeUserRoleDto;
     currentUser: MeUserInfoDto;
-    currentPassenger: MePassengerDto;
+    currentPassenger?: MePassengerDto | null;
 };
 
 export class UserStore {

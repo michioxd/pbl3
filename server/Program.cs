@@ -70,6 +70,9 @@ namespace Pbl3
                         Environment.GetEnvironmentVariable("MOMO_ENDPOINT") ?? string.Empty;
                     options.RedirectUrl =
                         Environment.GetEnvironmentVariable("MOMO_REDIRECT_URL") ?? string.Empty;
+                    options.FrontendRedirectUrl =
+                        Environment.GetEnvironmentVariable("MOMO_FRONTEND_REDIRECT_URL")
+                        ?? string.Empty;
                     options.IpnUrl =
                         Environment.GetEnvironmentVariable("MOMO_IPN_URL") ?? string.Empty;
                     options.PartnerName =

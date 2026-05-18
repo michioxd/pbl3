@@ -1,5 +1,22 @@
 namespace Pbl3.Dtos
 {
+    public class TripSeatDto
+    {
+        public Guid LayoutId { get; set; }
+
+        public string SeatLabel { get; set; } = default!;
+
+        public int Floor { get; set; }
+
+        public Pbl3.Enums.SeatType SeatType { get; set; }
+
+        public int PositionX { get; set; }
+
+        public int PositionY { get; set; }
+
+        public bool IsAvailable { get; set; }
+    }
+
     public class TripDetailRouteStopDto
     {
         public Guid StationId { get; set; }
@@ -33,6 +50,8 @@ namespace Pbl3.Dtos
 
         public string BusCompanyName { get; set; } = default!;
 
+        public bool AllowPayOnBoard { get; set; }
+
         public string BusTypeName { get; set; } = default!;
 
         public string? BusTypeDescription { get; set; }
@@ -62,6 +81,8 @@ namespace Pbl3.Dtos
         public List<AmenityDto> Amenities { get; set; } = [];
 
         public List<string> Images { get; set; } = [];
+
+        public List<TripSeatDto> Seats { get; set; } = [];
 
         public List<TripDetailRouteStopDto> PickupStops { get; set; } = [];
 

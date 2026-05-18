@@ -21,6 +21,7 @@ namespace Pbl3.Models
 
         public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
         public ICollection<PaymentIntent> PaymentIntents { get; set; } = new List<PaymentIntent>();
+        public ICollection<RefundRequest> RefundRequests { get; set; } = new List<RefundRequest>();
         public ICollection<Review> Reviews { get; set; } = new List<Review>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }

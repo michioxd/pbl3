@@ -24,6 +24,7 @@ namespace Pbl3.Services
         {
             var trip = await _context
                 .Trips.Include(t => t.Route)
+                    .ThenInclude(route => route!.BusCompany)
                 .Include(t => t.BusType)
                 .FirstOrDefaultAsync(t => t.TripID == request.TripId);
 
@@ -35,6 +36,14 @@ namespace Pbl3.Services
             if (trip.Status != TripStatus.Scheduled)
             {
                 return (400, "Chuyến xe hiện không khả dụng.", null);
+            }
+
+            if (
+                request.PaymentProvider == PaymentProvider.Cash
+                && trip.Route?.BusCompany?.AllowPayOnBoard == false
+            )
+            {
+                throw new InvalidOperationException("Nhà xe chưa hỗ trợ thanh toán khi lên xe.");
             }
 
             var routeStops = await _context
@@ -80,7 +89,10 @@ namespace Pbl3.Services
             var utcNow = DateTime.UtcNow;
             var unavailableSeatIds = await _context
                 .Tickets.AsNoTracking()
-                .Where(t => t.TripID == request.TripId && t.Status != TicketStatus.Cancelled)
+                .Where(t =>
+                    t.TripID == request.TripId
+                    && (t.Status == TicketStatus.Issued || t.Status == TicketStatus.CheckedIn)
+                )
                 .Select(t => t.SeatLayoutID)
                 .Concat(
                     _context
@@ -97,12 +109,9 @@ namespace Pbl3.Services
 
             var seat = await _context
                 .SeatLayouts.AsNoTracking()
-                .Where(layout => layout.BusTypeID == trip.BusTypeID)
-                .Where(layout => !unavailableSeatIds.Contains(layout.LayoutID))
-                .OrderBy(layout => layout.Floor)
-                .ThenBy(layout => layout.PositionY)
-                .ThenBy(layout => layout.PositionX)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(layout =>
+                    layout.LayoutID == request.SeatLayoutId && layout.BusTypeID == trip.BusTypeID
+                );
 
             if (seat == null)
             {
@@ -136,7 +145,7 @@ namespace Pbl3.Services
                 PassengerID = passenger.PassengerID,
                 SeatLayoutID = seat.LayoutID,
                 FinalPrice = trip.BasePrice,
-                Status = TicketStatus.Issued,
+                Status = TicketStatus.PendingPayment,
                 TicketCode = GenerateTicketCode(trip.DepartureDate),
             };
 

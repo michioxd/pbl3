@@ -71,6 +71,7 @@ const POPULAR_ROUTES = [
 function HeroSearch() {
     const { t } = useTranslation("hero");
     const navigate = useNavigate();
+    const today = useMemo(() => new Date(), []);
     const [withReturnDate, setWithReturnDate] = useState(false);
     const [fromTxt, setFromTxt] = useState("");
     const [toTxt, setToTxt] = useState("");
@@ -147,6 +148,7 @@ function HeroSearch() {
                                     }}
                                     date={dateDeparture || undefined}
                                     setDate={setDateDeparture}
+                                    minDate={today}
                                 />
                             </Box>
                             <Box>
@@ -160,6 +162,7 @@ function HeroSearch() {
                                         }}
                                         date={dateReturn || undefined}
                                         setDate={setDateReturn}
+                                        minDate={dateDeparture ?? today}
                                     />
                                 ) : (
                                     <Button

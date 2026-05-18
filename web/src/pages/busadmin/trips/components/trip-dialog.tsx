@@ -1,18 +1,38 @@
 import { postApiBusadminBusesTrips, putApiBusadminBusesTripsByTripId } from "@/api";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { Calendar } from "@/components/ui/calendar";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { useEffect, useState } from "react";
+import { X } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
+
+const toDateInputValue = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+};
+
+const todayInputValue = () => toDateInputValue(new Date());
+
+const fromDateInputValue = (value: string) => {
+    const [year, month, day] = value.split("-").map(Number);
+
+    return new Date(year, month - 1, day);
+};
+
+const formatSelectedDate = (value: string) =>
+    fromDateInputValue(value).toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+    });
 
 export type BusAdminTripListItem = {
     tripID: string;
@@ -41,6 +61,32 @@ type TripDialogProps = {
     buses?: SuggestionItem[];
 };
 
+const createInitialForm = (trip: BusAdminTripListItem | null) => {
+    if (trip) {
+        return {
+            routeID: trip.routeID,
+            busTypeID: trip.busTypeID,
+            busID: trip.busID ?? "",
+            departureDate: trip.departureDate.split("T")[0],
+            departureDates: [] as string[],
+            departureTime: new Date(trip.departureTime).toISOString().substring(11, 16),
+            arrivalTime: new Date(trip.arrivalTime).toISOString().substring(11, 16),
+            status: trip.status,
+        };
+    }
+
+    return {
+        routeID: "",
+        busTypeID: "",
+        busID: "",
+        departureDate: todayInputValue(),
+        departureDates: [todayInputValue()],
+        departureTime: "08:00",
+        arrivalTime: "10:00",
+        status: 0,
+    };
+};
+
 export function TripDialog({
     open,
     onOpenChange,
@@ -50,40 +96,27 @@ export function TripDialog({
     busTypes = [],
     buses = [],
 }: TripDialogProps) {
-    const [form, setForm] = useState({
-        routeID: "",
-        busTypeID: "",
-        busID: "",
-        departureDate: "",
-        departureTime: "",
-        arrivalTime: "",
-        status: 0,
-    });
+    const formKey = `${open ? "open" : "closed"}-${trip?.tripID ?? "new"}`;
+    const [loadedFormKey, setLoadedFormKey] = useState(formKey);
+    const [form, setForm] = useState(() => createInitialForm(trip));
     const [saving, setSaving] = useState(false);
 
-    useEffect(() => {
-        if (trip) {
-            setForm({
-                routeID: trip.routeID,
-                busTypeID: trip.busTypeID,
-                busID: trip.busID ?? "",
-                departureDate: trip.departureDate.split("T")[0],
-                departureTime: new Date(trip.departureTime).toISOString().substring(11, 16),
-                arrivalTime: new Date(trip.arrivalTime).toISOString().substring(11, 16),
-                status: trip.status,
-            });
-        } else {
-            setForm({
-                routeID: "",
-                busTypeID: "",
-                busID: "",
-                departureDate: new Date().toISOString().split("T")[0],
-                departureTime: "08:00",
-                arrivalTime: "10:00",
-                status: 0,
-            });
-        }
-    }, [trip, open]);
+    if (loadedFormKey !== formKey) {
+        setLoadedFormKey(formKey);
+        setForm(createInitialForm(trip));
+    }
+
+    const selectedDates = form.departureDates.map(fromDateInputValue);
+
+    const handleCalendarSelect = (dates: Date[] | undefined) => {
+        setForm({
+            ...form,
+            departureDates: (dates ?? [])
+                .map(toDateInputValue)
+                .filter((date) => date >= todayInputValue())
+                .sort(),
+        });
+    };
 
     const handleSave = async () => {
         if (!form.routeID.trim()) {
@@ -94,8 +127,13 @@ export function TripDialog({
             toast.error("ID Loại xe không được để trống");
             return;
         }
-        if (!form.departureDate) {
+        const departureDates = trip ? [form.departureDate] : form.departureDates;
+        if (departureDates.length === 0 || departureDates.some((date) => !date)) {
             toast.error("Ngày khởi hành không được để trống");
+            return;
+        }
+        if (departureDates.some((date) => date < todayInputValue())) {
+            toast.error("Ngày khởi hành phải từ hôm nay trở đi");
             return;
         }
 
@@ -107,7 +145,8 @@ export function TripDialog({
                 routeID: form.routeID.trim(),
                 busTypeID: form.busTypeID.trim(),
                 busID: form.busID.trim() || undefined,
-                departureDate: form.departureDate,
+                departureDate: departureDates[0],
+                departureDates: trip ? undefined : departureDates,
                 departureTime: form.departureTime + ":00", // ensure TimeSpan format HH:mm:ss
                 arrivalTime: form.arrivalTime + ":00",
                 status: form.status as 0 | 1 | 2 | 3,
@@ -183,15 +222,75 @@ export function TripDialog({
                         />
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="departureDate">Ngày khởi hành *</Label>
-                        <Input
-                            id="departureDate"
-                            type="date"
-                            value={form.departureDate}
-                            onChange={(e) => setForm({ ...form, departureDate: e.target.value })}
-                        />
-                    </div>
+                    {trip ? (
+                        <div className="space-y-2">
+                            <Label htmlFor="departureDate">Ngày khởi hành *</Label>
+                            <Input
+                                id="departureDate"
+                                type="date"
+                                min={todayInputValue()}
+                                value={form.departureDate}
+                                onChange={(e) => setForm({ ...form, departureDate: e.target.value })}
+                            />
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            <Label>Lịch chạy *</Label>
+                            <div className="rounded-md border p-2">
+                                <Calendar
+                                    mode="multiple"
+                                    selected={selectedDates}
+                                    disabled={{ before: fromDateInputValue(todayInputValue()) }}
+                                    onSelect={handleCalendarSelect}
+                                />
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                                <p className="text-xs text-muted-foreground">
+                                    Đã chọn {form.departureDates.length} ngày chạy.
+                                </p>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    disabled={form.departureDates.length === 0}
+                                    onClick={() => setForm({ ...form, departureDates: [] })}
+                                >
+                                    Xóa tất cả
+                                </Button>
+                            </div>
+                            <div className="flex max-h-24 flex-wrap gap-2 overflow-y-auto rounded-md bg-muted/40 p-2">
+                                {form.departureDates.map((date) => (
+                                    <Badge
+                                        key={date}
+                                        variant="secondary"
+                                        className="h-7 cursor-pointer gap-1 pr-1"
+                                        title="Bấm để bỏ ngày này"
+                                    >
+                                        {formatSelectedDate(date)}
+                                        <button
+                                            type="button"
+                                            className="rounded-full p-0.5 hover:bg-background/80"
+                                            onClick={() =>
+                                                setForm({
+                                                    ...form,
+                                                    departureDates: form.departureDates.filter((item) => item !== date),
+                                                })
+                                            }
+                                        >
+                                            <X className="h-3 w-3" />
+                                            <span className="sr-only">Bỏ ngày {formatSelectedDate(date)}</span>
+                                        </button>
+                                    </Badge>
+                                ))}
+                                {form.departureDates.length === 0 && (
+                                    <span className="text-xs text-muted-foreground">Chưa chọn ngày chạy nào.</span>
+                                )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Bấm trực tiếp trên lịch để chọn nhiều ngày cho cùng tuyến, xe, loại xe và khung giờ.
+                            </p>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">

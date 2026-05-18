@@ -39,10 +39,15 @@ type DatePickerInputProps = {
     date?: Date;
     setDate?: React.Dispatch<React.SetStateAction<Date | undefined>>;
     onDateChange?: (date: Date | undefined) => void;
+    minDate?: Date;
     inputProps?: TextField.RootProps;
 };
 
-export function DatePickerInput({ date, setDate, onDateChange, inputProps }: DatePickerInputProps) {
+function startOfDay(date: Date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+export function DatePickerInput({ date, setDate, onDateChange, minDate, inputProps }: DatePickerInputProps) {
     const [open, setOpen] = React.useState(false);
     const [internalDate, setInternalDate] = React.useState<Date | undefined>(date ?? new Date());
     const currentDate = date ?? internalDate;
@@ -66,6 +71,10 @@ export function DatePickerInput({ date, setDate, onDateChange, inputProps }: Dat
 
     const updateDate = React.useCallback(
         (nextDate: Date | undefined) => {
+            if (nextDate && minDate && startOfDay(nextDate) < startOfDay(minDate)) {
+                return;
+            }
+
             if (setDate) {
                 setDate(nextDate);
             } else {
@@ -74,7 +83,7 @@ export function DatePickerInput({ date, setDate, onDateChange, inputProps }: Dat
 
             onDateChange?.(nextDate);
         },
-        [onDateChange, setDate],
+        [minDate, onDateChange, setDate],
     );
 
     React.useEffect(() => {
@@ -150,6 +159,7 @@ export function DatePickerInput({ date, setDate, onDateChange, inputProps }: Dat
                     mode="single"
                     selected={currentDate}
                     month={month}
+                    disabled={minDate ? { before: startOfDay(minDate) } : undefined}
                     onMonthChange={setMonth}
                     onSelect={(date) => {
                         updateDate(date);

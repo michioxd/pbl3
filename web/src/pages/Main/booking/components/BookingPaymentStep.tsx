@@ -32,14 +32,22 @@ export default function BookingPaymentStep({
             <Grid columns={{ initial: "1", sm: "3" }} gap="4">
                 {paymentOptions.map((option) => {
                     const isSelected = paymentProvider === option.value;
+                    const isDisabled = Boolean(option.disabled);
                     const Icon = option.Icon;
 
                     return (
                         <button
                             key={option.value}
                             type="button"
-                            onClick={() => updateField("paymentProvider", option.value)}
+                            disabled={isDisabled}
+                            onClick={() => {
+                                if (!isDisabled) {
+                                    updateField("paymentProvider", option.value);
+                                }
+                            }}
                             className={`rounded-2xl border p-4 text-left transition ${
+                                isDisabled ? "cursor-not-allowed border-(--gray-a4) bg-(--gray-a2) opacity-55" : ""
+                            } ${
                                 isSelected
                                     ? "border-(--blue-8) bg-(--blue-3) shadow-sm"
                                     : "border-(--gray-a5) bg-(--color-panel-solid) hover:border-(--blue-a7)"
@@ -59,6 +67,11 @@ export default function BookingPaymentStep({
                             <Text as="div" size="2" color="gray">
                                 {option.description}
                             </Text>
+                            {isDisabled && option.disabledReason ? (
+                                <Text as="div" size="1" color="red" mt="2">
+                                    {option.disabledReason}
+                                </Text>
+                            ) : null}
                         </button>
                     );
                 })}

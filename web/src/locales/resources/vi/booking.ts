@@ -12,6 +12,7 @@ export default {
 
     step_label: "Bước {{value}}",
     step_address: "Nhập địa chỉ",
+    step_seat: "Chọn ghế",
     step_payment: "Chọn thanh toán",
     step_confirm: "Thanh toán",
 
@@ -32,6 +33,13 @@ export default {
     note_placeholder: "Ví dụ: đón ở cổng chính, gọi trước 10 phút...",
     stop_not_available: "Chưa có điểm dừng",
 
+    seat_title: "Chọn ghế ngồi",
+    seat_desc: "Chọn một ghế còn trống trên sơ đồ xe trước khi thanh toán.",
+    seat_available: "Còn trống",
+    seat_selected: "Đang chọn",
+    seat_booked: "Đã đặt",
+    seat_empty: "Chưa có sơ đồ ghế cho chuyến này.",
+
     payment_title: "Chọn phương thức thanh toán",
     payment_desc: "Chọn phương thức thanh toán phù hợp trước khi tạo đơn vé.",
     payment_option_vnpay_title: "VNPay",
@@ -40,6 +48,7 @@ export default {
     payment_option_momo_desc: "Thanh toán nhanh qua ví điện tử trên điện thoại.",
     payment_option_counter_title: "Thanh toán tại quầy",
     payment_option_counter_desc: "Giữ chỗ trước, thanh toán khi ra bến hoặc lên xe.",
+    payment_option_counter_disabled: "Nhà xe chưa hỗ trợ thanh toán khi lên xe.",
     payment_badge_recommended: "Khuyên dùng",
     payment_badge_fast: "Nhanh",
     payment_badge_flexible: "Linh hoạt",
@@ -61,6 +70,7 @@ export default {
     summary_total: "Tổng thanh toán",
 
     validation_address: "Vui lòng nhập đầy đủ thông tin hành khách và chọn điểm đón, trả.",
+    validation_seat: "Vui lòng chọn ghế trước khi tiếp tục.",
     validation_payment: "Vui lòng chọn phương thức thanh toán.",
 
     action_back: "Quay lại",
@@ -75,4 +85,31 @@ export default {
     payment_cash_success: "Đặt vé thành công. Vui lòng thanh toán tại quầy theo thời gian giữ chỗ.",
     payment_created_check_orders: "Đơn vé đã được tạo. Vui lòng kiểm tra trong mục đơn hàng để tiếp tục thanh toán.",
     payment_submit_error: "Không thể tạo đơn vé. Vui lòng thử lại.",
+
+    payment_result_page_title: "Kết quả thanh toán MoMo",
+    payment_result_loading_title: "Đang kiểm tra trạng thái thanh toán",
+    payment_result_loading_desc: "Vui lòng đợi trong giây lát để hệ thống đồng bộ kết quả từ MoMo.",
+    payment_result_success_badge: "Thanh toán thành công",
+    payment_result_success_title: "MoMo đã xác nhận thanh toán của bạn.",
+    payment_result_success_desc: "Đơn vé đã được thanh toán. Bạn có thể xem lại trong mục quản lý đơn hàng.",
+    payment_result_pending_badge: "Đang chờ xác nhận",
+    payment_result_pending_title: "Giao dịch đang được xử lý.",
+    payment_result_pending_desc:
+        "Chúng tôi đã nhận được lượt quay về từ MoMo nhưng đang chờ cập nhật trạng thái cuối cùng.",
+    payment_result_failed_badge: "Thanh toán chưa thành công",
+    payment_result_failed_title: "MoMo chưa hoàn tất giao dịch này.",
+    payment_result_failed_desc: "Bạn có thể thử thanh toán lại hoặc kiểm tra đơn hàng để tiếp tục sau.",
+    payment_result_missing_title: "Không tìm thấy giao dịch để đối soát",
+    payment_result_missing_desc:
+        "Không có đủ thông tin để kiểm tra kết quả thanh toán MoMo. Vui lòng mở lại từ luồng đặt vé hoặc xem đơn hàng của bạn.",
+    payment_result_login_title: "Bạn cần đăng nhập để xem kết quả thanh toán",
+    payment_result_login_desc: "Đăng nhập lại để hệ thống kiểm tra trạng thái thanh toán MoMo của bạn.",
+    payment_result_message_label: "Thông báo từ cổng thanh toán",
+    payment_result_booking_id_label: "Mã đơn vé",
+    payment_result_intent_id_label: "Mã giao dịch",
+    payment_result_amount_label: "Số tiền",
+    payment_result_paid_at_label: "Thời gian xác nhận",
+    payment_result_action_orders: "Xem đơn hàng",
+    payment_result_action_refresh: "Kiểm tra lại",
+    payment_result_action_retry: "Quay lại đặt vé",
 } as const;

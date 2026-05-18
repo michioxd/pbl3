@@ -1,5 +1,6 @@
 import PageMainIndex from "@/pages/Main";
 import PageMainBooking from "@/pages/Main/booking";
+import PageBookingPaymentResult from "@/pages/Main/booking/payment-result";
 import PageMainSearch from "@/pages/Main/search";
 import PageManageOrders from "@/pages/Main/orders";
 import PagePartnerRegistration from "@/pages/Main/partner-registration";
@@ -12,6 +13,7 @@ export default function RouterMain() {
             <Routes>
                 <Route index element={<PageMainIndex />} />
                 <Route path="search" element={<PageMainSearch />} />
+                <Route path="booking/payment-result" element={<PageBookingPaymentResult />} />
                 <Route path="booking/:tripId" element={<PageMainBooking />} />
                 <Route path="orders" element={<PageManageOrders />} />
                 <Route path="partner-registration" element={<PagePartnerRegistration />} />

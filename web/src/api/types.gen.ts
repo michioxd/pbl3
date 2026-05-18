@@ -155,6 +155,7 @@ export type CreateBookingRequestDto = {
     pickupStopId: string;
     dropoffStopId: string;
     addressNote?: string | null;
+    seatLayoutId: string;
     paymentProvider?: PaymentProvider;
 };
 
@@ -175,6 +176,7 @@ export type CreateCompanyProfileUpdateRequestDto = {
     name?: string | null;
     licenseNumber?: string | null;
     hotline?: string | null;
+    allowPayOnBoard?: boolean;
 };
 
 export type CreateMomoPaymentRequestDto = {
@@ -200,6 +202,7 @@ export type CreateTripDto = {
     busID?: string | null;
     busTypeID?: string;
     departureDate?: string;
+    departureDates?: Array<string> | null;
     departureTime?: string;
     arrivalTime?: string;
     status?: TripStatus;
@@ -318,7 +321,7 @@ export type ReviewCompanyProfileUpdateRequestDto = {
 
 export type SeatType = 0 | 1 | 2 | 3 | 4 | 5;
 
-export type TicketStatus = 0 | 1 | 2;
+export type TicketStatus = 0 | 1 | 2 | 3;
 
 export type TimeRangeFilter = 1 | 2 | 3 | 4;
 
@@ -327,6 +330,7 @@ export type TripDetailDto = {
     routeId?: string;
     companyId?: string;
     busCompanyName?: string | null;
+    allowPayOnBoard?: boolean;
     busTypeName?: string | null;
     busTypeDescription?: string | null;
     routeName?: string | null;
@@ -342,6 +346,7 @@ export type TripDetailDto = {
     reviewCount?: number;
     amenities?: Array<AmenityDto> | null;
     images?: Array<string> | null;
+    seats?: Array<TripSeatDto> | null;
     pickupStops?: Array<TripDetailRouteStopDto> | null;
     dropoffStops?: Array<TripDetailRouteStopDto> | null;
     cancellationPolicy?: string | null;
@@ -443,6 +448,16 @@ export type TripSearchTimeRangeFilterOptionDto = {
     count?: number;
 };
 
+export type TripSeatDto = {
+    layoutId?: string;
+    seatLabel?: string | null;
+    floor?: number;
+    seatType?: SeatType;
+    positionX?: number;
+    positionY?: number;
+    isAvailable?: boolean;
+};
+
 export type TripSortBy = 0 | 1 | 2 | 3 | 4 | 5;
 
 export type TripStatus = 0 | 1 | 2 | 3;
@@ -461,6 +476,7 @@ export type UpdateCompanyProfileDto = {
     name?: string | null;
     licenseNumber?: string | null;
     hotline?: string | null;
+    allowPayOnBoard?: boolean;
 };
 
 export type UpdateCompanyStatusDto = {
@@ -1018,6 +1034,48 @@ export type PostApiPaymentsMomoIpnResponses = {
     200: unknown;
 };
 
+export type GetApiPaymentsMomoReturnData = {
+    body?: never;
+    path?: never;
+    query?: {
+        PartnerCode?: string;
+        OrderId?: string;
+        RequestId?: string;
+        Amount?: number;
+        OrderInfo?: string;
+        OrderType?: string;
+        TransId?: number;
+        ResultCode?: number;
+        Message?: string;
+        PayType?: string;
+        ResponseTime?: number;
+        ExtraData?: string;
+        Signature?: string;
+    };
+    url: '/api/payments/momo/return';
+};
+
+export type GetApiPaymentsMomoReturnResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiPaymentsMomoReturnVerifyData = {
+    body?: MomoIpnRequestDto;
+    path?: never;
+    query?: never;
+    url: '/api/payments/momo/return/verify';
+};
+
+export type PostApiPaymentsMomoReturnVerifyResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type PostApiPassengerUpgradeRequestsBusadminData = {
     body?: CreateBusAdminUpgradeRequestDto;
     path?: never;
@@ -1068,6 +1126,22 @@ export type GetApiPassengerTicketsData = {
 };
 
 export type GetApiPassengerTicketsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PostApiPassengerTicketsByTicketIdRefundData = {
+    body?: CreateRefundRequestDto;
+    path: {
+        ticketId: string;
+    };
+    query?: never;
+    url: '/api/passenger/tickets/{ticketId}/refund';
+};
+
+export type PostApiPassengerTicketsByTicketIdRefundResponses = {
     /**
      * OK
      */
@@ -2111,6 +2185,33 @@ export type GetApiTripsByTripIdResponses = {
 };
 
 export type GetApiTripsByTripIdResponse = GetApiTripsByTripIdResponses[keyof GetApiTripsByTripIdResponses];
+
+export type GetApiTripsByTripIdSeatsData = {
+    body?: never;
+    path: {
+        tripId: string;
+    };
+    query?: never;
+    url: '/api/trips/{tripId}/seats';
+};
+
+export type GetApiTripsByTripIdSeatsErrors = {
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+};
+
+export type GetApiTripsByTripIdSeatsError = GetApiTripsByTripIdSeatsErrors[keyof GetApiTripsByTripIdSeatsErrors];
+
+export type GetApiTripsByTripIdSeatsResponses = {
+    /**
+     * OK
+     */
+    200: Array<TripSeatDto>;
+};
+
+export type GetApiTripsByTripIdSeatsResponse = GetApiTripsByTripIdSeatsResponses[keyof GetApiTripsByTripIdSeatsResponses];
 
 export type GetApiUserMeData = {
     body?: never;
