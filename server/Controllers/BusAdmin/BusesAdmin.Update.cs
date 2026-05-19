@@ -1,9 +1,8 @@
+using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Pbl3.Dtos;
-using Pbl3.Enums;
-using Pbl3.Models;
 
 namespace Pbl3.Controllers.BusAdmin
 {
@@ -21,19 +20,8 @@ namespace Pbl3.Controllers.BusAdmin
             if (accessError != null)
                 return accessError;
 
-            var bus = await _context.Buses.FirstOrDefaultAsync(b => b.BusID == id);
-            if (bus == null)
-                return NotFound(new { message = "Không tìm thấy xe." });
-
-            if (bus.CompanyID != companyId.Value)
-                return Forbid();
-
-            bus.PlateNumber = dto.PlateNumber;
-            bus.IsActive = dto.IsActive;
-            bus.BusTypeID = dto.BusTypeID;
-
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Cập nhật xe thành công." });
+            var result = await _commandService.UpdateBusAsync(companyId.Value, id, dto);
+            return HandleCommandResult(result);
         }
 
         [HttpPut("company/profile")]
@@ -45,38 +33,9 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
-            var hasPendingRequest = await _context.CompanyProfileUpdateRequests.AnyAsync(r =>
-                r.CompanyID == companyId.Value
-                && r.Status == CompanyProfileUpdateRequestStatus.Pending
-            );
-
-            if (hasPendingRequest)
-            {
-                return Conflict(new { message = "Bạn đã có yêu cầu cập nhật đang chờ duyệt." });
-            }
-
-            var request = new CompanyProfileUpdateRequest
-            {
-                RequestID = Guid.NewGuid(),
-                CompanyID = companyId.Value,
-                RequesterUserID = _currentUserContext.GetRequiredUserId(),
-                Name = dto.Name.Trim(),
-                LicenseNumber = string.IsNullOrWhiteSpace(dto.LicenseNumber)
-                    ? null
-                    : dto.LicenseNumber.Trim(),
-                Hotline = string.IsNullOrWhiteSpace(dto.Hotline) ? null : dto.Hotline.Trim(),
-                AllowPayOnBoard = dto.AllowPayOnBoard,
-                Status = CompanyProfileUpdateRequestStatus.Pending,
-                RequestedAt = DateTime.UtcNow,
-            };
-
-            _context.CompanyProfileUpdateRequests.Add(request);
-            await _context.SaveChangesAsync();
-
-            return StatusCode(
-                StatusCodes.Status201Created,
-                new { message = "Đã gửi yêu cầu cập nhật hồ sơ nhà xe." }
-            );
+            var userId = _currentUserContext.GetRequiredUserId();
+            var result = await _commandService.UpdateCompanyProfileAsync(companyId.Value, userId, dto);
+            return HandleCommandResult(result);
         }
 
         [HttpPut("trips/{tripId:guid}")]
@@ -109,11 +68,6 @@ namespace Pbl3.Controllers.BusAdmin
                     return BadRequest(new { message = "Xe không thuộc nhà xe của bạn." });
             }
 
-            if (dto.DepartureDate < DateOnly.FromDateTime(DateTime.Today))
-            {
-                return BadRequest(new { message = "Ngày khởi hành phải từ hôm nay trở đi." });
-            }
-
             trip.RouteID = dto.RouteID;
             trip.BusID = dto.BusID;
             trip.BusTypeID = dto.BusTypeID;
@@ -140,20 +94,8 @@ namespace Pbl3.Controllers.BusAdmin
             if (accessError != null)
                 return accessError;
 
-            var hasOwnership = await IsBusTypeOwnedByCompanyAsync(companyId.Value, busTypeId);
-            if (!hasOwnership)
-                return Forbid();
-
-            var busType = await _context.BusTypes.FirstOrDefaultAsync(b =>
-                b.BusTypeID == busTypeId
-            );
-            if (busType == null)
-                return NotFound(new { message = "Không tìm thấy loại xe." });
-
-            busType.Description = dto.Amenities;
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Cập nhật tiện ích thành công." });
+            var result = await _commandService.UpdateBusTypeAmenitiesAsync(companyId.Value, busTypeId, dto);
+            return HandleCommandResult(result);
         }
 
         [HttpPut("seat-layouts/{layoutId:guid}")]
@@ -170,27 +112,8 @@ namespace Pbl3.Controllers.BusAdmin
             if (accessError != null)
                 return accessError;
 
-            var seatLayout = await _context.SeatLayouts.FirstOrDefaultAsync(s =>
-                s.LayoutID == layoutId
-            );
-            if (seatLayout == null)
-                return NotFound(new { message = "Không tìm thấy sơ đồ ghế." });
-
-            var hasOwnership = await IsBusTypeOwnedByCompanyAsync(
-                companyId.Value,
-                seatLayout.BusTypeID
-            );
-            if (!hasOwnership)
-                return Forbid();
-
-            seatLayout.SeatLabel = dto.SeatLabel;
-            seatLayout.Floor = dto.Floor;
-            seatLayout.SeatType = dto.SeatType;
-            seatLayout.PositionX = dto.PositionX;
-            seatLayout.PositionY = dto.PositionY;
-
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Cập nhật sơ đồ ghế thành công." });
+            var result = await _commandService.UpdateSeatLayoutAsync(companyId.Value, layoutId, dto);
+            return HandleCommandResult(result);
         }
     }
 }

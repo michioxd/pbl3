@@ -739,5 +739,102 @@ namespace Pbl3.Controllers.Admin
                 }
             );
         }
+
+        [HttpGet("transactions")]
+        public async Task<IActionResult> GetTransactions(
+            [FromQuery] PaymentIntentStatus? status,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 25
+        )
+        {
+            if (page < 1)
+            {
+                return BadRequest(new { message = "page phải lớn hơn hoặc bằng 1." });
+            }
+
+            if (pageSize != 25 && pageSize != 50 && pageSize != 100 && pageSize != 200)
+            {
+                return BadRequest(new { message = "pageSize chỉ chấp nhận: 25, 50, 100, 200." });
+            }
+
+            var query = _context.PaymentIntents.AsNoTracking().AsQueryable();
+
+            if (status.HasValue)
+            {
+                query = query.Where(pi => pi.Status == status.Value);
+            }
+
+            var totalRecords = await query.CountAsync();
+            var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+
+            var paymentIntents = await query
+                .OrderByDescending(pi => pi.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(pi => new
+                {
+                    pi.IntentID,
+                    pi.BookingID,
+                    pi.Provider,
+                    pi.Amount,
+                    pi.Currency,
+                    pi.Status,
+                    pi.CreatedAt,
+                    BookingInfo = pi.Booking,
+                    RefundCount = pi.Refunds.Count,
+                    RefundAmount = pi.Refunds.Sum(r => r.Amount),
+                })
+                .ToListAsync();
+
+            var transactions = paymentIntents.Select(pi => new
+            {
+                pi.IntentID,
+                pi.BookingID,
+                pi.Provider,
+                pi.Amount,
+                pi.Currency,
+                Status = pi.Status.ToString(),
+                pi.CreatedAt,
+                Booking = pi.BookingInfo == null
+                    ? null
+                    : new
+                    {
+                        pi.BookingInfo.BookingID,
+                        pi.BookingInfo.ContactName,
+                        pi.BookingInfo.ContactEmail,
+                        pi.BookingInfo.ContactPhone,
+                        pi.BookingInfo.TotalAmount,
+                        pi.BookingInfo.Status,
+                    },
+                User = pi.BookingInfo == null || pi.BookingInfo.User == null
+                    ? null
+                    : new
+                    {
+                        pi.BookingInfo.User.UserID,
+                        pi.BookingInfo.User.Email,
+                        pi.BookingInfo.User.FullName,
+                    },
+                Company = pi.BookingInfo?.Tickets.FirstOrDefault()?.Trip?.Route?.BusCompany == null
+                    ? null
+                    : new
+                    {
+                        pi.BookingInfo.Tickets.First().Trip!.Route!.BusCompany!.CompanyID,
+                        CompanyName = pi.BookingInfo.Tickets.First().Trip!.Route!.BusCompany!.Name,
+                    },
+                pi.RefundCount,
+                pi.RefundAmount,
+            }).ToList();
+
+            return Ok(
+                new
+                {
+                    page,
+                    pageSize,
+                    totalRecords,
+                    totalPages,
+                    records = transactions,
+                }
+            );
+        }
     }
 }

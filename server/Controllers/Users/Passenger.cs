@@ -13,24 +13,16 @@ namespace Pbl3.Controllers.Users
     [Tags("Passenger")]
     public partial class PassengersController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IPassengerService _passengerService;
+        private readonly ICurrentUserContext _currentUserContext;
 
-        public PassengersController(ApplicationDbContext context)
+        public PassengersController(
+            IPassengerService passengerService,
+            ICurrentUserContext currentUserContext
+        )
         {
-            _context = context;
-        }
-
-        private Guid GetCurrentUserId()
-        {
-            var userIdString =
-                User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
-                ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (Guid.TryParse(userIdString, out Guid userId))
-            {
-                return userId;
-            }
-            throw new UnauthorizedAccessException("Không tìm thấy UserID trong token.");
+            _passengerService = passengerService;
+            _currentUserContext = currentUserContext;
         }
     }
 }

@@ -16,107 +16,26 @@ namespace Pbl3.Controllers.BusAdmin
     [Tags("BusAdmin")]
     public partial class CreateBusAdmin : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IBusCompanyRegistrationService _registrationService;
+        private readonly ICurrentUserContext _currentUserContext;
 
-        public CreateBusAdmin(ApplicationDbContext context)
+        public CreateBusAdmin(IBusCompanyRegistrationService registrationService, ICurrentUserContext currentUserContext)
         {
-            _context = context;
+            _registrationService = registrationService;
+            _currentUserContext = currentUserContext;
         }
 
-        private Guid GetCurrentUserId()
-        {
-            var userIdString =
-                User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
-                ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (Guid.TryParse(userIdString, out Guid userId))
-            {
-                return userId;
-            }
-
-            throw new UnauthorizedAccessException("Không tìm thấy UserID trong token.");
-        }
 
         [HttpPost("addBusCompany")]
         public async Task<IActionResult> AddBusCompany([FromBody] Infor_BusCompany company)
         {
-            var userId = GetCurrentUserId();
+            var userId = _currentUserContext.GetRequiredUserId();
+            var result = await _registrationService.RegisterCompanyAsync(userId, company);
 
-            var alreadyCompanyAdmin = await _context.BusCompanyAdmins.AnyAsync(x =>
-                x.UserID == userId
-            );
-            if (alreadyCompanyAdmin)
-            {
-                return Conflict(new { message = "Tài khoản đã thuộc một nhà xe." });
-            }
+            if (result.StatusCode == 200 || result.StatusCode == 201)
+                return StatusCode(result.StatusCode, result.Data);
 
-            var normalizedLicense = string.IsNullOrWhiteSpace(company.LicenseNumber)
-                ? null
-                : company.LicenseNumber.Trim();
-
-            if (normalizedLicense != null)
-            {
-                var duplicatedLicense = await _context.BusCompanies.AnyAsync(c =>
-                    c.LicenseNumber != null
-                    && c.LicenseNumber.ToLower() == normalizedLicense.ToLower()
-                );
-
-                if (duplicatedLicense)
-                {
-                    return Conflict(new { message = "LicenseNumber đã tồn tại." });
-                }
-            }
-
-            var busCompany = new BusCompany
-            {
-                CompanyID = Guid.NewGuid(),
-                Name = company.Name.Trim(),
-                LicenseNumber = normalizedLicense,
-                Hotline = string.IsNullOrWhiteSpace(company.Hotline)
-                    ? null
-                    : company.Hotline.Trim(),
-                IsApproved = false,
-            };
-
-            var busCompanyAdmin = new BusCompanyAdmin
-            {
-                UserID = userId,
-                CompanyID = busCompany.CompanyID,
-                Roles = "O",
-            };
-
-            var updateRequest = new CompanyProfileUpdateRequest
-            {
-                RequestID = Guid.NewGuid(),
-                CompanyID = busCompany.CompanyID,
-                RequesterUserID = userId,
-                Name = busCompany.Name,
-                LicenseNumber = busCompany.LicenseNumber,
-                Hotline = busCompany.Hotline,
-                Status = CompanyProfileUpdateRequestStatus.Pending,
-                RequestedAt = DateTime.UtcNow,
-            };
-
-            await using var transaction = await _context.Database.BeginTransactionAsync();
-
-            _context.BusCompanies.Add(busCompany);
-            _context.BusCompanyAdmins.Add(busCompanyAdmin);
-            _context.CompanyProfileUpdateRequests.Add(updateRequest);
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
-
-            return StatusCode(
-                StatusCodes.Status201Created,
-                new
-                {
-                    message = "Đăng ký nhà xe thành công.",
-                    busCompany.CompanyID,
-                    busCompany.Name,
-                    busCompany.LicenseNumber,
-                    busCompany.Hotline,
-                    busCompany.IsApproved,
-                }
-            );
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
         }
     }
 }

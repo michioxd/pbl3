@@ -67,6 +67,17 @@ export class UserStore {
                 return false;
             }
 
+            const roleName = String(f.data.user.role?.roleName || "").toLowerCase();
+            const requiresPassengerProfile = roleName === "passenger";
+
+            if (requiresPassengerProfile && !f.data.passenger) {
+                console.error("[user.checkAuth] check failed: Missing passenger profile", f.data);
+                this.user = null;
+                this.error = "common:unauthorized";
+                runInAction(() => this.logout());
+                return false;
+            }
+
             return (
                 runInAction(() => {
                     if (!f.data?.user) return;
@@ -75,7 +86,7 @@ export class UserStore {
                         email: f.data.user.email || "",
                         role: f.data.user.role || { roleID: "", roleName: "" },
                         currentUser: f.data.user,
-                        currentPassenger: f.data.passenger,
+                        currentPassenger: f.data.passenger || ({} as MePassengerDto),
                     };
                     this.error = null;
                     this.userToken = localStorage.getItem("auth_token");

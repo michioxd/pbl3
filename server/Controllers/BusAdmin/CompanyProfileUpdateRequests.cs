@@ -14,17 +14,17 @@ namespace Pbl3.Controllers.BusAdmin
     [Tags("BusAdmin")]
     public class CompanyProfileUpdateRequestsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ICompanyProfileUpdateRequestsService _requestsService;
         private readonly ICurrentUserContext _currentUserContext;
         private readonly IBusAdminOwnershipService _ownershipService;
 
         public CompanyProfileUpdateRequestsController(
-            ApplicationDbContext context,
+            ICompanyProfileUpdateRequestsService requestsService,
             ICurrentUserContext currentUserContext,
             IBusAdminOwnershipService ownershipService
         )
         {
-            _context = context;
+            _requestsService = requestsService;
             _currentUserContext = currentUserContext;
             _ownershipService = ownershipService;
         }
@@ -37,31 +37,14 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
-            var request = await _context
-                .CompanyProfileUpdateRequests.AsNoTracking()
-                .Where(r => r.CompanyID == companyId.Value)
-                .OrderByDescending(r => r.RequestedAt)
-                .Select(r => new CompanyProfileUpdateRequestDto
-                {
-                    RequestID = r.RequestID,
-                    CompanyID = r.CompanyID,
-                    Status = r.Status,
-                    Name = r.Name,
-                    LicenseNumber = r.LicenseNumber,
-                    Hotline = r.Hotline,
-                    AllowPayOnBoard = r.AllowPayOnBoard,
-                    RequestedAt = r.RequestedAt,
-                    ReviewedAt = r.ReviewedAt,
-                    ReviewNote = r.ReviewNote,
-                })
-                .FirstOrDefaultAsync();
+            var result = await _requestsService.GetCurrentRequestAsync(companyId.Value);
 
-            if (request == null)
+            if (result.StatusCode != 200 && result.ErrorMessage != null)
             {
-                return NotFound(new { message = "Chưa có yêu cầu cập nhật hồ sơ." });
+                return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
             }
 
-            return Ok(request);
+            return Ok(result.Data);
         }
 
         [HttpPost]
@@ -74,44 +57,14 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
-            var hasPendingRequest = await _context.CompanyProfileUpdateRequests.AnyAsync(r =>
-                r.CompanyID == companyId.Value
-                && r.Status == CompanyProfileUpdateRequestStatus.Pending
-            );
+            var result = await _requestsService.CreateRequestAsync(companyId.Value, userId, dto);
 
-            if (hasPendingRequest)
+            if (result.StatusCode != 201 && result.ErrorMessage != null)
             {
-                return Conflict(new { message = "Bạn đã có yêu cầu cập nhật đang chờ duyệt." });
+                return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
             }
 
-            var request = new Models.CompanyProfileUpdateRequest
-            {
-                RequestID = Guid.NewGuid(),
-                CompanyID = companyId.Value,
-                RequesterUserID = userId,
-                Name = dto.Name.Trim(),
-                LicenseNumber = string.IsNullOrWhiteSpace(dto.LicenseNumber)
-                    ? null
-                    : dto.LicenseNumber.Trim(),
-                Hotline = string.IsNullOrWhiteSpace(dto.Hotline) ? null : dto.Hotline.Trim(),
-                AllowPayOnBoard = dto.AllowPayOnBoard,
-                Status = CompanyProfileUpdateRequestStatus.Pending,
-                RequestedAt = DateTime.UtcNow,
-            };
-
-            _context.CompanyProfileUpdateRequests.Add(request);
-            await _context.SaveChangesAsync();
-
-            return StatusCode(
-                StatusCodes.Status201Created,
-                new
-                {
-                    message = "Đã gửi yêu cầu cập nhật hồ sơ nhà xe.",
-                    requestId = request.RequestID,
-                    request.Status,
-                    request.RequestedAt,
-                }
-            );
+            return StatusCode(result.StatusCode, result.Data);
         }
     }
 }

@@ -9,21 +9,13 @@ namespace Pbl3.Controllers.Users
         [HttpPut("profile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdatePassengerDto dto)
         {
-            var userId = GetCurrentUserId();
+            var userId = _currentUserContext.GetRequiredUserId();
+            var result = await _passengerService.UpdateProfileAsync(userId, dto);
 
-            var passenger = await _context
-                .Passengers.Include(p => p.User)
-                .FirstOrDefaultAsync(p => p.UserID == userId);
+            if (result.StatusCode == 200)
+                return Ok(result.Data);
 
-            if (passenger == null)
-                return NotFound();
-
-            passenger.FullName = dto.FullName;
-            passenger.PhoneNumber = dto.PhoneNumber;
-            passenger.IdentityCard = dto.IdentityCard;
-
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Cập nhật thành công." });
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
         }
     }
 }

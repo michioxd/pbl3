@@ -1,13 +1,21 @@
+using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Pbl3.Dtos;
-using Pbl3.Models;
 
 namespace Pbl3.Controllers.BusAdmin
 {
     public partial class BusesController
     {
+        private IActionResult HandleCommandResult((int StatusCode, string? ErrorMessage, object? Data) result)
+        {
+            if (result.StatusCode == 200 || result.StatusCode == 201)
+                return StatusCode(result.StatusCode, result.Data);
+
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
+        }
+
         [HttpPost]
         [Authorize(Policy = "BusAdmin")]
         public async Task<IActionResult> CreateBus([FromBody] CreateBusDto dto)
@@ -20,23 +28,8 @@ namespace Pbl3.Controllers.BusAdmin
             if (accessError != null)
                 return accessError;
 
-            var isBusTypeExists = await IsBusTypeExistsAsync(dto.BusTypeID);
-            if (!isBusTypeExists)
-                return BadRequest(new { message = "Loại xe không tồn tại." });
-
-            var newBus = new Bus
-            {
-                BusID = Guid.NewGuid(),
-                CompanyID = companyId.Value,
-                BusTypeID = dto.BusTypeID,
-                PlateNumber = dto.PlateNumber,
-                IsActive = dto.IsActive,
-            };
-
-            _context.Buses.Add(newBus);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Tạo xe thành công." });
+            var result = await _commandService.CreateBusAsync(companyId.Value, dto);
+            return HandleCommandResult(result);
         }
 
         [HttpDelete("{id:guid}")]
@@ -50,28 +43,8 @@ namespace Pbl3.Controllers.BusAdmin
             if (accessError != null)
                 return accessError;
 
-            var bus = await _context.Buses.FirstOrDefaultAsync(b => b.BusID == id);
-            if (bus == null)
-                return NotFound(new { message = "Không tìm thấy xe." });
-
-            var hasTripsUsingBus = await _context.Trips.AnyAsync(t => t.BusID == id);
-            if (hasTripsUsingBus)
-            {
-                return BadRequest(new { message = "Xe đã được gán cho chuyến xe, không thể xóa." });
-            }
-
-            if (bus.CompanyID != companyId.Value)
-                return Forbid();
-
-            if (bus.IsActive)
-            {
-                return BadRequest(new { message = "Xe đang hoạt động, không thể xóa." });
-            }
-
-            _context.Buses.Remove(bus);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Xóa xe thành công." });
+            var result = await _commandService.DeleteBusAsync(companyId.Value, id);
+            return HandleCommandResult(result);
         }
 
         [HttpPost("trips")]
@@ -85,56 +58,8 @@ namespace Pbl3.Controllers.BusAdmin
             if (accessError != null)
                 return accessError;
 
-            var isRouteOwned = await IsRouteOwnedByCompanyAsync(companyId.Value, dto.RouteID);
-            if (!isRouteOwned)
-                return BadRequest(new { message = "Tuyến đường không thuộc nhà xe của bạn." });
-
-            if (dto.BusID.HasValue)
-            {
-                var isBusOwned = await IsBusOwnedByCompanyAsync(companyId.Value, dto.BusID.Value);
-                if (!isBusOwned)
-                    return BadRequest(new { message = "Xe không thuộc nhà xe của bạn." });
-            }
-
-            var departureDates = (
-                dto.DepartureDates != null && dto.DepartureDates.Count > 0
-                    ? dto.DepartureDates
-                    : [dto.DepartureDate]
-            )
-                .Distinct()
-                .OrderBy(date => date)
-                .ToList();
-
-            var today = DateOnly.FromDateTime(DateTime.Today);
-            if (departureDates.Any(date => date < today))
-            {
-                return BadRequest(new { message = "Ngày khởi hành phải từ hôm nay trở đi." });
-            }
-
-            var trips = departureDates
-                .Select(departureDate => new Trip
-                {
-                    TripID = Guid.NewGuid(),
-                    RouteID = dto.RouteID,
-                    BusID = dto.BusID,
-                    BusTypeID = dto.BusTypeID,
-                    DepartureDate = departureDate,
-                    DepartureTime = dto.DepartureTime,
-                    ArrivalTime = dto.ArrivalTime,
-                    Status = dto.Status,
-                })
-                .ToList();
-
-            _context.Trips.AddRange(trips);
-            await _context.SaveChangesAsync();
-
-            return Ok(
-                new
-                {
-                    message = "Tạo chuyến xe thành công.",
-                    tripIds = trips.Select(trip => trip.TripID),
-                }
-            );
+            var result = await _commandService.CreateTripAsync(companyId.Value, dto);
+            return HandleCommandResult(result);
         }
 
         [HttpDelete("trips/{tripId:guid}")]
@@ -148,26 +73,8 @@ namespace Pbl3.Controllers.BusAdmin
             if (accessError != null)
                 return accessError;
 
-            var trip = await _context
-                .Trips.Include(t => t.Tickets)
-                .FirstOrDefaultAsync(t => t.TripID == tripId);
-
-            if (trip == null)
-                return NotFound(new { message = "Không tìm thấy chuyến xe." });
-
-            var isTripOwned = await IsTripOwnedByCompanyAsync(companyId.Value, tripId);
-            if (!isTripOwned)
-                return Forbid();
-
-            if (trip.Tickets.Any())
-            {
-                return BadRequest(new { message = "Chuyến xe đã có vé, không thể xóa." });
-            }
-
-            _context.Trips.Remove(trip);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Xóa chuyến xe thành công." });
+            var result = await _commandService.DeleteTripAsync(companyId.Value, tripId);
+            return HandleCommandResult(result);
         }
 
         [HttpPost("bus-types/{busTypeId:guid}/seat-layouts")]
@@ -184,27 +91,8 @@ namespace Pbl3.Controllers.BusAdmin
             if (accessError != null)
                 return accessError;
 
-            var hasOwnership = await IsBusTypeOwnedByCompanyAsync(companyId.Value, busTypeId);
-            if (!hasOwnership)
-                return Forbid();
-
-            var seatLayout = new SeatLayout
-            {
-                LayoutID = Guid.NewGuid(),
-                BusTypeID = busTypeId,
-                SeatLabel = dto.SeatLabel,
-                Floor = dto.Floor,
-                SeatType = dto.SeatType,
-                PositionX = dto.PositionX,
-                PositionY = dto.PositionY,
-            };
-
-            _context.SeatLayouts.Add(seatLayout);
-            await _context.SaveChangesAsync();
-
-            return Ok(
-                new { message = "Tạo sơ đồ ghế thành công.", layoutId = seatLayout.LayoutID }
-            );
+            var result = await _commandService.CreateSeatLayoutAsync(companyId.Value, busTypeId, dto);
+            return HandleCommandResult(result);
         }
 
         [HttpDelete("seat-layouts/{layoutId:guid}")]
@@ -218,23 +106,8 @@ namespace Pbl3.Controllers.BusAdmin
             if (accessError != null)
                 return accessError;
 
-            var seatLayout = await _context.SeatLayouts.FirstOrDefaultAsync(s =>
-                s.LayoutID == layoutId
-            );
-            if (seatLayout == null)
-                return NotFound(new { message = "Không tìm thấy sơ đồ ghế." });
-
-            var hasOwnership = await IsBusTypeOwnedByCompanyAsync(
-                companyId.Value,
-                seatLayout.BusTypeID
-            );
-            if (!hasOwnership)
-                return Forbid();
-
-            _context.SeatLayouts.Remove(seatLayout);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Xóa sơ đồ ghế thành công." });
+            var result = await _commandService.DeleteSeatLayoutAsync(companyId.Value, layoutId);
+            return HandleCommandResult(result);
         }
     }
 }

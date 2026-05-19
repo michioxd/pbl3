@@ -1,9 +1,10 @@
+using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Pbl3.Data;
 using Pbl3.Dtos;
-using Pbl3.Enums;
+using Pbl3.Services;
 
 namespace Pbl3.Controllers
 {
@@ -12,11 +13,11 @@ namespace Pbl3.Controllers
     [Tags("Trips")]
     public class TripDetailController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ITripDetailService _tripDetailService;
 
-        public TripDetailController(ApplicationDbContext context)
+        public TripDetailController(ITripDetailService tripDetailService)
         {
-            _context = context;
+            _tripDetailService = tripDetailService;
         }
 
         [HttpGet("{tripId:guid}")]
@@ -25,81 +26,11 @@ namespace Pbl3.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetTripDetail(Guid tripId)
         {
-            var utcNow = DateTime.UtcNow;
+            var result = await _tripDetailService.GetTripDetailAsync(tripId);
 
-            var trip = await _context
-                .Trips.AsNoTracking()
-                .Where(t => t.TripID == tripId)
-                .Select(t => new
-                {
-                    t.TripID,
-                    t.RouteID,
-                    t.BusTypeID,
-                    t.DepartureDate,
-                    t.DepartureTime,
-                    t.ArrivalTime,
-                    t.Status,
-                    t.BasePrice,
-                    t.CancellationPolicy,
-                    t.Notes,
-                    CompanyId = t.Route!.CompanyID,
-                    BusCompanyName = t.Route.BusCompany!.Name,
-                    AllowPayOnBoard = t.Route.BusCompany.AllowPayOnBoard,
-                    BusTypeName = t.BusType!.Name,
-                    BusTypeDescription = t.BusType.Description,
-                    BusTypeAmenityIds = t
-                        .BusType.BusTypeAmenities.Select(bta => bta.AmenityID)
-                        .ToList(),
-                    RouteName = t.Route.RouteName,
-                    TotalSeats = t.BusType.TotalSeats,
-                    SoldSeats = t.Tickets.Count(ticket =>
-                        ticket.Status == TicketStatus.Issued
-                        || ticket.Status == TicketStatus.CheckedIn
-                    ),
-                    HeldSeats = t.SeatHolds.Count(hold =>
-                        hold.Status == SeatHoldStatus.Held && hold.ExpiresAt > utcNow
-                    ),
-                    LowestPrice = t.Tickets.Where(ticket =>
-                            ticket.Status == TicketStatus.Issued
-                            || ticket.Status == TicketStatus.CheckedIn
-                        )
-                        .Select(ticket => (decimal?)ticket.FinalPrice)
-                        .Min()
-                        ?? 0,
-                    Rating = t.Reviews.Select(review => (double?)review.RatingScore).Average() ?? 0,
-                    ReviewCount = t.Reviews.Count(),
-                    Images = t.Bus != null
-                        ? t
-                            .Bus.BusImages.OrderBy(img => img.ImageID)
-                            .Select(img => img.ImageURL)
-                            .ToList()
-                        : new List<string>(),
-                    RouteStops = t
-                        .Route.BusRouteStops.Select(stop => new
-                        {
-                            stop.StationID,
-                            StationName = stop.Station!.Name,
-                            stop.Station.ProvinceCode,
-                            stop.Station.DistrictCode,
-                            stop.Station.WardCode,
-                            stop.Station.AddressDetail,
-                            stop.StopOrder,
-                            stop.IsPickUp,
-                            stop.IsDropOff,
-                            stop.DurationFromStart,
-                        })
-                        .ToList(),
-                })
-                .FirstOrDefaultAsync();
-
-            if (trip == null)
+            if (result == null)
             {
-                return NotFound(new { message = "Trip not found" });
-            }
-
-            if (trip.Status != TripStatus.Scheduled)
-            {
-                return NotFound(new { message = "Trip is not available" });
+                return NotFound(new { message = "Trip not found or not available" });
             }
 
             var amenities = await _context
@@ -115,8 +46,6 @@ namespace Pbl3.Controllers
                     Category = a.Category,
                 })
                 .ToListAsync();
-
-            var seats = await BuildTripSeatsAsync(trip.TripID, trip.BusTypeID, utcNow);
 
             var pickupStops = trip
                 .RouteStops.Where(stop => stop.IsPickUp)
@@ -160,7 +89,6 @@ namespace Pbl3.Controllers
                 RouteId = trip.RouteID,
                 CompanyId = trip.CompanyId,
                 BusCompanyName = trip.BusCompanyName,
-                AllowPayOnBoard = trip.AllowPayOnBoard,
                 BusTypeName = trip.BusTypeName,
                 BusTypeDescription = trip.BusTypeDescription,
                 RouteName = trip.RouteName,
@@ -179,7 +107,6 @@ namespace Pbl3.Controllers
                 ReviewCount = trip.ReviewCount,
                 Amenities = amenities,
                 Images = trip.Images,
-                Seats = seats,
                 PickupStops = pickupStops,
                 DropoffStops = dropoffStops,
                 CancellationPolicy = trip.CancellationPolicy,

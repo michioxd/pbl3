@@ -13,13 +13,9 @@ namespace Pbl3.Controllers.Auth
 {
     [ApiController]
     [Route("api/auth/oauth/google")]
-    public class AuthGoogleController(
-        ApplicationDbContext context,
-        IJwtTokenService jwtTokenService
-    ) : ControllerBase
+    public class AuthGoogleController(IAuthService authService) : ControllerBase
     {
-        private readonly ApplicationDbContext _context = context;
-        private readonly IJwtTokenService _jwtTokenService = jwtTokenService;
+        private readonly IAuthService _authService = authService;
 
         [AllowAnonymous]
         [HttpPost]
@@ -27,88 +23,24 @@ namespace Pbl3.Controllers.Auth
             [FromBody] OAuthGoogleRequestDto request
         )
         {
-            if (string.IsNullOrEmpty(request.IdToken))
-                return BadRequest(new { message = "IdToken is required." });
+            var result = await _authService.GoogleLoginAsync(request);
 
-            var googleClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
+            if (result.StatusCode == 200)
+                return Ok(result.Data);
 
-            if (string.IsNullOrEmpty(googleClientId))
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    new { message = "common:internal_server_error" }
-                );
+            if (result.StatusCode == 201)
+                return StatusCode(201, result.Data);
 
-            try
-            {
-                var settings = new GoogleJsonWebSignature.ValidationSettings()
-                {
-                    Audience = new List<string>() { googleClientId },
-                };
+            if (result.StatusCode == 400)
+                return BadRequest(new { message = result.ErrorMessage });
 
-                var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, settings);
+            if (result.StatusCode == 401)
+                return Unauthorized(new { message = result.ErrorMessage });
 
-                string email = payload.Email;
-                string name = payload.Name;
+            if (result.StatusCode == 500)
+                return StatusCode(500, new { message = result.ErrorMessage });
 
-                var user = await _context
-                    .Users.Include(u => u.Role)
-                    .FirstOrDefaultAsync(u => u.Email.ToLower() == email);
-
-                if (user == null)
-                {
-                    var passengerRole = await _context.Roles.FirstOrDefaultAsync(r =>
-                        r.RoleName == UserRole.Passenger.ToString()
-                    );
-                    if (passengerRole == null)
-                        return Problem("common:internal_server_error");
-
-                    var newUser = new User
-                    {
-                        UserID = Guid.NewGuid(),
-                        RoleID = passengerRole.RoleID,
-                        Role = passengerRole,
-                        PasswordHash = string.Empty,
-                        Email = email,
-                        FullName = name,
-                        PhoneNumber = string.Empty,
-                        IsActive = true,
-                        CreatedAt = DateTime.UtcNow,
-                    };
-
-                    newUser.PasswordHash = "";
-
-                    var passenger = new Passenger
-                    {
-                        PassengerID = Guid.NewGuid(),
-                        UserID = newUser.UserID,
-                        FullName = name,
-                        PhoneNumber = string.Empty,
-                        IdentityCard = string.Empty,
-                        Email = email,
-                    };
-
-                    await using var transaction = await _context.Database.BeginTransactionAsync();
-
-                    _context.Users.Add(newUser);
-                    _context.Passengers.Add(passenger);
-                    await _context.SaveChangesAsync();
-                    await transaction.CommitAsync();
-
-                    return StatusCode(
-                        StatusCodes.Status201Created,
-                        _jwtTokenService.CreateAuthResponse(newUser)
-                    );
-                }
-
-                if (!user.IsActive)
-                    return Unauthorized(new { message = "auth:msg.account_is_banned" });
-
-                return Ok(_jwtTokenService.CreateAuthResponse(user));
-            }
-            catch (InvalidJwtException)
-            {
-                return Unauthorized(new { message = "auth:msg.google_login_failed" });
-            }
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
         }
     }
 }

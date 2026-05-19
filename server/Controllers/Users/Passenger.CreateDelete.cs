@@ -13,47 +13,13 @@ namespace Pbl3.Controllers.Users
             [FromBody] CreateBusAdminUpgradeRequestDto dto
         )
         {
-            var userId = GetCurrentUserId();
+            var userId = _currentUserContext.GetRequiredUserId();
+            var result = await _passengerService.CreateBusAdminUpgradeRequestAsync(userId, dto);
 
-            var hasPendingRequest = await _context.BusAdminUpgradeRequests.AnyAsync(r =>
-                r.RequesterUserID == userId && r.Status == BusAdminUpgradeRequestStatus.Pending
-            );
+            if (result.StatusCode == 201)
+                return StatusCode(201, result.Data);
 
-            if (hasPendingRequest)
-            {
-                return Conflict(new { message = "Bạn đã có yêu cầu nâng cấp đang chờ duyệt." });
-            }
-
-            var request = new BusAdminUpgradeRequest
-            {
-                RequestID = Guid.NewGuid(),
-                RequesterUserID = userId,
-                CompanyName = dto.CompanyName.Trim(),
-                LicenseNumber = NormalizeOptional(dto.LicenseNumber),
-                Hotline = NormalizeOptional(dto.Hotline),
-                Reason = NormalizeOptional(dto.Reason),
-                Status = BusAdminUpgradeRequestStatus.Pending,
-                RequestedAt = DateTime.UtcNow,
-            };
-
-            _context.BusAdminUpgradeRequests.Add(request);
-            await _context.SaveChangesAsync();
-
-            return StatusCode(
-                StatusCodes.Status201Created,
-                new
-                {
-                    message = "Gửi yêu cầu nâng cấp thành công.",
-                    requestId = request.RequestID,
-                    request.Status,
-                    request.RequestedAt,
-                }
-            );
-        }
-
-        private static string? NormalizeOptional(string? value)
-        {
-            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
         }
     }
 }

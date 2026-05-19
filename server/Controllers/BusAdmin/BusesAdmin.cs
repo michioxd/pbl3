@@ -17,16 +17,22 @@ namespace Pbl3.Controllers.BusAdmin
         private readonly ApplicationDbContext _context;
         private readonly ICurrentUserContext _currentUserContext;
         private readonly IBusAdminOwnershipService _ownershipService;
+        private readonly IBusesAdminService _busesAdminService;
+        private readonly IBusesAdminCommandService _commandService;
 
         public BusesController(
             ApplicationDbContext context,
             ICurrentUserContext currentUserContext,
-            IBusAdminOwnershipService ownershipService
+            IBusAdminOwnershipService ownershipService,
+            IBusesAdminService busesAdminService,
+            IBusesAdminCommandService commandService
         )
         {
             _context = context;
             _currentUserContext = currentUserContext;
             _ownershipService = ownershipService;
+            _busesAdminService = busesAdminService;
+            _commandService = commandService;
         }
 
         private async Task<Guid?> GetCurrentCompanyIdAsync()
