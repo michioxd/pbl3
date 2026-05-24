@@ -198,7 +198,7 @@ export default function DialogProvider({ children }: { children: React.ReactNode
                                 variant={data.type === DialogType.Alert ? "soft" : "solid"}
                                 color={data.type === DialogType.Alert ? "gray" : undefined}
                             >
-                                {data.type === DialogType.Alert ? "OK" : t("common:confirm")}
+                                {data.type === DialogType.Alert ? t("common:ok") : t("common:confirm")}
                             </Button>
                         </Flex>
                     )}

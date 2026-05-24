@@ -117,7 +117,7 @@ export default function AddressSearch({
                         size={inputProps?.size ?? "3"}
                         className={["mx-auto", inputProps?.className].filter(Boolean).join(" ")}
                         value={text ?? txt}
-                        placeholder={inputProps?.placeholder ?? "Nhập địa điểm"}
+                        placeholder={inputProps?.placeholder ?? t("common:enter_location")}
                         onChange={(e) => {
                             (setText ?? setTxt)(e.target.value);
                         }}

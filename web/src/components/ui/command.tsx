@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Command as CommandPrimitive } from "cmdk";
+import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -20,8 +21,8 @@ function Command({ className, ...props }: React.ComponentProps<typeof CommandPri
 }
 
 function CommandDialog({
-    title = "Command Palette",
-    description = "Search for a command to run...",
+    title,
+    description,
     children,
     className,
     showCloseButton = false,
@@ -32,11 +33,15 @@ function CommandDialog({
     className?: string;
     showCloseButton?: boolean;
 }) {
+    const { t } = useTranslation("common");
+    const resolvedTitle = title ?? t("command_palette");
+    const resolvedDescription = description ?? t("command_search_placeholder");
+
     return (
         <Dialog {...props}>
             <DialogHeader className="sr-only">
-                <DialogTitle>{title}</DialogTitle>
-                <DialogDescription>{description}</DialogDescription>
+                <DialogTitle>{resolvedTitle}</DialogTitle>
+                <DialogDescription>{resolvedDescription}</DialogDescription>
             </DialogHeader>
             <DialogContent
                 className={cn("top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0", className)}

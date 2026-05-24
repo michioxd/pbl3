@@ -6,6 +6,8 @@ import common from "./common";
 import auth from "./auth";
 import search from "./search";
 import booking from "./booking";
+import orders from "./orders";
+import partnerRegistration from "./partner-registration";
 
 const Locale: LocaleResourcesType = {
     header,
@@ -15,6 +17,8 @@ const Locale: LocaleResourcesType = {
     auth,
     search,
     booking,
+    orders,
+    partnerRegistration,
 };
 
 export default Locale;

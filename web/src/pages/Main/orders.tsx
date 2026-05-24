@@ -21,6 +21,7 @@ import {
 import { Star } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useStore } from "@/stores";
 import LoginDialog from "@/dialogs/Login";
@@ -62,18 +63,18 @@ type PassengerTicket = {
     refundStatus?: unknown;
 };
 
-function getTicketStatusLabel(status: unknown) {
+function getTicketStatusLabel(status: unknown, t: (key: string, options?: Record<string, unknown>) => string) {
     switch (status) {
         case 0:
-            return "Chờ thanh toán";
+            return t("orders:status.pending_payment");
         case 1:
-            return "Đã xác nhận";
+            return t("orders:status.confirmed");
         case 2:
-            return "Đã sử dụng";
+            return t("orders:status.used");
         case 3:
-            return "Đã hủy";
+            return t("orders:status.cancelled");
         default:
-            return String(status ?? "N/A");
+            return String(status ?? t("common:not_available"));
     }
 }
 
@@ -90,21 +91,21 @@ function getTicketStatusColor(status: unknown): "gray" | "amber" | "green" | "re
     }
 }
 
-function getValue(value: unknown) {
-    if (value === null || value === undefined || value === "") return "N/A";
+function getValue(value: unknown, t: (key: string) => string) {
+    if (value === null || value === undefined || value === "") return t("common:not_available");
     return String(value);
 }
 
-function formatMoney(value: unknown) {
-    if (typeof value !== "number") return "N/A";
-    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value);
+function formatMoney(value: unknown, locale: string, t: (key: string) => string) {
+    if (typeof value !== "number") return t("common:not_available");
+    return new Intl.NumberFormat(locale, { style: "currency", currency: "VND" }).format(value);
 }
 
-function formatDateTime(value: unknown) {
-    if (!value) return "N/A";
+function formatDateTime(value: unknown, locale: string, t: (key: string) => string) {
+    if (!value) return t("common:not_available");
     const date = new Date(String(value));
     if (Number.isNaN(date.getTime())) return String(value);
-    return new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short" }).format(date);
+    return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
 function getTicketId(ticket: PassengerTicket) {
@@ -123,14 +124,14 @@ function isAlreadyReviewedMessage(message: string) {
     return message.toLowerCase().includes("already reviewed");
 }
 
-function DetailItem({ label, value }: { label: string; value: unknown }) {
+function DetailItem({ label, value }: { label: string; value: string }) {
     return (
         <Box>
             <Text as="div" size="1" color="gray" mb="1">
                 {label}
             </Text>
             <Text as="div" size="2" weight="medium">
-                {getValue(value)}
+                {value}
             </Text>
         </Box>
     );
@@ -138,6 +139,7 @@ function DetailItem({ label, value }: { label: string; value: unknown }) {
 
 const PageManageOrders = observer(() => {
     const store = useStore();
+    const { t, i18n } = useTranslation(["orders", "common"]);
     const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
     const [data, setData] = useState<PassengerTicket[]>([]);
@@ -155,6 +157,7 @@ const PageManageOrders = observer(() => {
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(false);
+    const locale = i18n.resolvedLanguage?.toLowerCase().startsWith("en") ? "en-US" : "vi-VN";
 
     const fetchTickets = async () => {
         const res = await getApiPassengerTickets();
@@ -203,12 +206,12 @@ const PageManageOrders = observer(() => {
         const amount = selectedTicket.price;
 
         if (!ticketId || !bookingId || typeof amount !== "number") {
-            setRefundError("Thiếu thông tin vé để tạo yêu cầu hoàn tiền.");
+            setRefundError(t("orders:refund.missing_ticket_info"));
             return;
         }
 
         if (!refundReason.trim()) {
-            setRefundError("Vui lòng nhập lý do hoàn tiền.");
+            setRefundError(t("orders:refund.reason_required"));
             return;
         }
 
@@ -227,15 +230,15 @@ const PageManageOrders = observer(() => {
             });
 
             if (response.error) {
-                throw new Error("Không thể gửi yêu cầu hoàn tiền.");
+                throw new Error(t("orders:refund.submit_failed"));
             }
 
             const refreshedTickets = await fetchTickets();
             setSelectedTicket(refreshedTickets.find((ticket) => getTicketId(ticket) === ticketId) || selectedTicket);
-            setRefundSuccess("Đã gửi yêu cầu hoàn tiền. Vui lòng chờ quản trị viên xử lý.");
+            setRefundSuccess(t("orders:refund.submit_success"));
             setRefundReason("");
         } catch (err) {
-            setRefundError(err instanceof Error ? err.message : "Không thể gửi yêu cầu hoàn tiền.");
+            setRefundError(err instanceof Error ? err.message : t("orders:refund.submit_failed"));
         } finally {
             setIsRefunding(false);
         }
@@ -248,12 +251,12 @@ const PageManageOrders = observer(() => {
         const tripId = getTripId(selectedTicket);
 
         if (!bookingId || !tripId) {
-            setReviewError("Thiếu thông tin chuyến đi để gửi đánh giá.");
+            setReviewError(t("orders:review.missing_trip_info"));
             return;
         }
 
         if (reviewRating < 1 || reviewRating > 5) {
-            setReviewError("Vui lòng chọn số sao đánh giá từ 1 đến 5.");
+            setReviewError(t("orders:review.rating_required"));
             return;
         }
 
@@ -275,8 +278,7 @@ const PageManageOrders = observer(() => {
                 throw response.error;
             }
 
-            const message =
-                response.data?.message || "Đã gửi đánh giá thành công. Đánh giá sẽ hiển thị sau khi được duyệt.";
+            const message = response.data?.message || t("orders:review.submit_success");
 
             setSubmittedReviewBookingIds((current) =>
                 current.includes(bookingId) ? current : [...current, bookingId],
@@ -285,14 +287,14 @@ const PageManageOrders = observer(() => {
             setReviewComment("");
             toast.success(message);
         } catch (err) {
-            const message = parseApiErrorMessage(err, "Không thể gửi đánh giá.");
+            const message = parseApiErrorMessage(err, t("orders:review.submit_failed"));
 
             if (isAlreadyReviewedMessage(message)) {
                 setDuplicateReviewBookingIds((current) =>
                     current.includes(bookingId) ? current : [...current, bookingId],
                 );
-                setReviewError("Bạn đã đánh giá chuyến đi này rồi.");
-                toast.error("Bạn đã đánh giá chuyến đi này rồi.");
+                setReviewError(t("orders:review.duplicate"));
+                toast.error(t("orders:review.duplicate"));
                 return;
             }
 
@@ -318,9 +320,9 @@ const PageManageOrders = observer(() => {
             <Container size="2" px="4" py="8">
                 <Card size="4">
                     <Flex direction="column" align="center" gap="4">
-                        <Heading size="6">Yêu cầu đăng nhập</Heading>
-                        <Text color="gray">Vui lòng đăng nhập để xem đơn hàng của bạn.</Text>
-                        <Button onClick={() => setAuthDialogOpen(true)}>Đăng nhập ngay</Button>
+                        <Heading size="6">{t("orders:login_required_title")}</Heading>
+                        <Text color="gray">{t("orders:login_required_desc")}</Text>
+                        <Button onClick={() => setAuthDialogOpen(true)}>{t("orders:login_required_cta")}</Button>
                     </Flex>
                 </Card>
                 <LoginDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
@@ -342,7 +344,7 @@ const PageManageOrders = observer(() => {
         return (
             <Container size="4" px="4" py="8">
                 <Card style={{ backgroundColor: "var(--red-3)", borderColor: "var(--red-6)" }}>
-                    <Text color="red">Đã xảy ra lỗi khi tải danh sách đơn hàng.</Text>
+                    <Text color="red">{t("orders:load_error")}</Text>
                 </Card>
             </Container>
         );
@@ -361,39 +363,39 @@ const PageManageOrders = observer(() => {
     return (
         <Container size="4" px="4" py="8">
             <Heading size="6" mb="5">
-                Quản lý đơn hàng
+                {t("orders:page_title")}
             </Heading>
             {tickets.length === 0 ? (
-                <Text color="gray">Bạn chưa có đơn hàng nào.</Text>
+                <Text color="gray">{t("orders:empty")}</Text>
             ) : (
                 <Table.Root variant="surface">
                     <Table.Header>
                         <Table.Row>
-                            <Table.ColumnHeaderCell>Mã vé</Table.ColumnHeaderCell>
-                            <Table.ColumnHeaderCell>Chuyến xe</Table.ColumnHeaderCell>
-                            <Table.ColumnHeaderCell>Vị trí ghế</Table.ColumnHeaderCell>
-                            <Table.ColumnHeaderCell>Giá vé</Table.ColumnHeaderCell>
-                            <Table.ColumnHeaderCell>Trạng thái</Table.ColumnHeaderCell>
-                            <Table.ColumnHeaderCell>Thao tác</Table.ColumnHeaderCell>
+                            <Table.ColumnHeaderCell>{t("orders:table.ticket_code")}</Table.ColumnHeaderCell>
+                            <Table.ColumnHeaderCell>{t("orders:table.trip")}</Table.ColumnHeaderCell>
+                            <Table.ColumnHeaderCell>{t("orders:table.seat_position")}</Table.ColumnHeaderCell>
+                            <Table.ColumnHeaderCell>{t("orders:table.price")}</Table.ColumnHeaderCell>
+                            <Table.ColumnHeaderCell>{t("orders:table.status")}</Table.ColumnHeaderCell>
+                            <Table.ColumnHeaderCell>{t("orders:table.actions")}</Table.ColumnHeaderCell>
                         </Table.Row>
                     </Table.Header>
                     <Table.Body>
                         {tickets.map((ticket, idx) => (
                             <Table.Row key={getTicketId(ticket) || ticket.ticketCode || idx}>
                                 <Table.RowHeaderCell>
-                                    {ticket.ticketCode || getTicketId(ticket) || "N/A"}
+                                    {ticket.ticketCode || getTicketId(ticket) || t("common:not_available")}
                                 </Table.RowHeaderCell>
-                                <Table.Cell>{ticket.routeName || "N/A"}</Table.Cell>
-                                <Table.Cell>{ticket.seatLabel || "N/A"}</Table.Cell>
-                                <Table.Cell>{formatMoney(ticket.price)}</Table.Cell>
+                                <Table.Cell>{ticket.routeName || t("common:not_available")}</Table.Cell>
+                                <Table.Cell>{ticket.seatLabel || t("common:not_available")}</Table.Cell>
+                                <Table.Cell>{formatMoney(ticket.price, locale, (key) => t(key))}</Table.Cell>
                                 <Table.Cell>
                                     <Badge color={getTicketStatusColor(ticket.status)}>
-                                        {getTicketStatusLabel(ticket.status)}
+                                        {getTicketStatusLabel(ticket.status, t)}
                                     </Badge>
                                 </Table.Cell>
                                 <Table.Cell>
                                     <Button size="1" variant="soft" onClick={() => handleOpenTicket(ticket)}>
-                                        Xem chi tiết
+                                        {t("orders:table.view_details")}
                                     </Button>
                                 </Table.Cell>
                             </Table.Row>
@@ -404,9 +406,9 @@ const PageManageOrders = observer(() => {
 
             <Dialog.Root open={!!selectedTicket} onOpenChange={(open) => !open && setSelectedTicket(null)}>
                 <Dialog.Content maxWidth="860px" style={{ maxHeight: "90vh", overflowY: "auto" }}>
-                    <Dialog.Title>Chi tiết vé</Dialog.Title>
+                    <Dialog.Title>{t("orders:dialog.title")}</Dialog.Title>
                     <Dialog.Description size="2" color="gray">
-                        Thông tin vé, chuyến đi, thanh toán và yêu cầu hoàn tiền.
+                        {t("orders:dialog.description")}
                     </Dialog.Description>
 
                     {selectedTicket && (
@@ -415,20 +417,22 @@ const PageManageOrders = observer(() => {
                                 <Flex justify="between" align="start" gap="4" wrap="wrap">
                                     <Box>
                                         <Text as="div" size="1" color="gray">
-                                            Mã vé
+                                            {t("orders:fields.ticket_code")}
                                         </Text>
                                         <Heading size="5">
-                                            {selectedTicket.ticketCode || selectedTicketId || "N/A"}
+                                            {selectedTicket.ticketCode || selectedTicketId || t("common:not_available")}
                                         </Heading>
                                     </Box>
                                     <Flex gap="2" align="center" wrap="wrap">
                                         <Badge color={getTicketStatusColor(selectedTicket.status)}>
-                                            {getTicketStatusLabel(selectedTicket.status)}
+                                            {getTicketStatusLabel(selectedTicket.status, t)}
                                         </Badge>
                                         {selectedTicket.refundStatus !== null &&
                                             selectedTicket.refundStatus !== undefined && (
                                                 <Badge color="amber">
-                                                    Hoàn tiền: {getValue(selectedTicket.refundStatus)}
+                                                    {t("orders:dialog.refund_badge", {
+                                                        value: getValue(selectedTicket.refundStatus, (key) => t(key)),
+                                                    })}
                                                 </Badge>
                                             )}
                                     </Flex>
@@ -437,17 +441,32 @@ const PageManageOrders = observer(() => {
 
                             <Box>
                                 <Heading size="3" mb="3">
-                                    Thông tin vé
+                                    {t("orders:sections.ticket_info")}
                                 </Heading>
                                 <Grid columns={{ initial: "1", sm: "2", md: "3" }} gap="3">
-                                    <DetailItem label="Ghế" value={selectedTicket.seatLabel} />
-                                    <DetailItem label="Tầng" value={selectedTicket.seatFloor} />
-                                    <DetailItem label="Loại ghế" value={selectedTicket.seatType} />
-                                    <DetailItem label="Giá vé" value={formatMoney(selectedTicket.price)} />
-                                    <DetailItem label="Mã booking" value={selectedBookingId} />
                                     <DetailItem
-                                        label="Ngày đặt"
-                                        value={formatDateTime(selectedTicket.bookingCreatedAt)}
+                                        label={t("orders:fields.seat")}
+                                        value={getValue(selectedTicket.seatLabel, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.floor")}
+                                        value={getValue(selectedTicket.seatFloor, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.seat_type")}
+                                        value={getValue(selectedTicket.seatType, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:table.price")}
+                                        value={formatMoney(selectedTicket.price, locale, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.booking_code")}
+                                        value={getValue(selectedBookingId, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.booking_date")}
+                                        value={formatDateTime(selectedTicket.bookingCreatedAt, locale, (key) => t(key))}
                                     />
                                 </Grid>
                             </Box>
@@ -456,32 +475,53 @@ const PageManageOrders = observer(() => {
 
                             <Box>
                                 <Heading size="3" mb="3">
-                                    Chuyến đi
+                                    {t("orders:sections.trip_info")}
                                 </Heading>
                                 <Grid columns={{ initial: "1", sm: "2", md: "3" }} gap="3">
-                                    <DetailItem label="Tuyến" value={selectedTicket.routeName} />
-                                    <DetailItem label="Nhà xe" value={selectedTicket.companyName} />
-                                    <DetailItem label="Ngày khởi hành" value={selectedTicket.departureDate} />
-                                    <DetailItem label="Giờ đi" value={selectedTicket.departureTime} />
-                                    <DetailItem label="Giờ đến" value={selectedTicket.arrivalTime} />
-                                    <DetailItem label="Trạng thái chuyến" value={selectedTicket.tripStatus} />
                                     <DetailItem
-                                        label="Khoảng cách"
+                                        label={t("orders:fields.route")}
+                                        value={getValue(selectedTicket.routeName, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.company")}
+                                        value={getValue(selectedTicket.companyName, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.departure_date")}
+                                        value={getValue(selectedTicket.departureDate, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.departure_time")}
+                                        value={getValue(selectedTicket.departureTime, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.arrival_time")}
+                                        value={getValue(selectedTicket.arrivalTime, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.trip_status")}
+                                        value={getValue(selectedTicket.tripStatus, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.distance")}
                                         value={
                                             selectedTicket.distanceEstimate
-                                                ? `${selectedTicket.distanceEstimate} km`
-                                                : "N/A"
+                                                ? t("orders:distance_value", { value: selectedTicket.distanceEstimate })
+                                                : t("common:not_available")
                                         }
                                     />
                                     <DetailItem
-                                        label="Thời lượng"
+                                        label={t("orders:fields.duration")}
                                         value={
                                             selectedTicket.durationEstimate
-                                                ? `${selectedTicket.durationEstimate} phút`
-                                                : "N/A"
+                                                ? t("orders:duration_value", { value: selectedTicket.durationEstimate })
+                                                : t("common:not_available")
                                         }
                                     />
-                                    <DetailItem label="Ghi chú" value={selectedTicket.tripNotes} />
+                                    <DetailItem
+                                        label={t("orders:fields.note")}
+                                        value={getValue(selectedTicket.tripNotes, (key) => t(key))}
+                                    />
                                 </Grid>
                             </Box>
 
@@ -489,15 +529,33 @@ const PageManageOrders = observer(() => {
 
                             <Box>
                                 <Heading size="3" mb="3">
-                                    Xe và liên hệ
+                                    {t("orders:sections.vehicle_contact")}
                                 </Heading>
                                 <Grid columns={{ initial: "1", sm: "2", md: "3" }} gap="3">
-                                    <DetailItem label="Biển số" value={selectedTicket.plateNumber} />
-                                    <DetailItem label="Loại xe" value={selectedTicket.busTypeName} />
-                                    <DetailItem label="Người liên hệ" value={selectedTicket.contactName} />
-                                    <DetailItem label="Số điện thoại" value={selectedTicket.contactPhone} />
-                                    <DetailItem label="Email" value={selectedTicket.contactEmail} />
-                                    <DetailItem label="Chính sách hủy" value={selectedTicket.cancellationPolicy} />
+                                    <DetailItem
+                                        label={t("orders:fields.plate_number")}
+                                        value={getValue(selectedTicket.plateNumber, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.bus_type")}
+                                        value={getValue(selectedTicket.busTypeName, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.contact_name")}
+                                        value={getValue(selectedTicket.contactName, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.phone_number")}
+                                        value={getValue(selectedTicket.contactPhone, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.email")}
+                                        value={getValue(selectedTicket.contactEmail, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.cancellation_policy")}
+                                        value={getValue(selectedTicket.cancellationPolicy, (key) => t(key))}
+                                    />
                                 </Grid>
                             </Box>
 
@@ -505,20 +563,34 @@ const PageManageOrders = observer(() => {
 
                             <Box>
                                 <Heading size="3" mb="3">
-                                    Thanh toán và hoàn tiền
+                                    {t("orders:sections.payment_refund")}
                                 </Heading>
                                 <Grid columns={{ initial: "1", sm: "2", md: "3" }} gap="3" mb="4">
-                                    <DetailItem label="Trạng thái booking" value={selectedTicket.bookingStatus} />
-                                    <DetailItem label="Trạng thái thanh toán" value={selectedTicket.paymentStatus} />
-                                    <DetailItem label="Cổng thanh toán" value={selectedTicket.paymentProvider} />
                                     <DetailItem
-                                        label="Đã thanh toán lúc"
-                                        value={formatDateTime(selectedTicket.paidAt)}
+                                        label={t("orders:fields.booking_status")}
+                                        value={getValue(selectedTicket.bookingStatus, (key) => t(key))}
                                     />
-                                    <DetailItem label="Trạng thái hoàn tiền" value={selectedTicket.refundStatus} />
                                     <DetailItem
-                                        label="Có thể hoàn tiền"
-                                        value={selectedTicket.canRefund ? "Có" : "Không"}
+                                        label={t("orders:fields.payment_status")}
+                                        value={getValue(selectedTicket.paymentStatus, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.payment_gateway")}
+                                        value={getValue(selectedTicket.paymentProvider, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.paid_at")}
+                                        value={formatDateTime(selectedTicket.paidAt, locale, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.refund_status")}
+                                        value={getValue(selectedTicket.refundStatus, (key) => t(key))}
+                                    />
+                                    <DetailItem
+                                        label={t("orders:fields.can_refund")}
+                                        value={
+                                            selectedTicket.canRefund ? t("orders:values.yes") : t("orders:values.no")
+                                        }
                                     />
                                 </Grid>
 
@@ -536,16 +608,18 @@ const PageManageOrders = observer(() => {
                                 {selectedTicket.canRefund ? (
                                     <Flex direction="column" gap="3">
                                         <TextArea
-                                            placeholder="Nhập lý do hoàn tiền..."
+                                            placeholder={t("orders:refund.reason_placeholder")}
                                             value={refundReason}
                                             onChange={(event) => setRefundReason(event.target.value)}
                                         />
                                         <Flex justify="end" gap="3">
                                             <Button variant="soft" color="gray" onClick={() => setSelectedTicket(null)}>
-                                                Đóng
+                                                {t("orders:refund.close")}
                                             </Button>
                                             <Button color="red" onClick={handleRefund} disabled={isRefunding}>
-                                                {isRefunding ? "Đang gửi..." : "Yêu cầu hoàn tiền"}
+                                                {isRefunding
+                                                    ? t("orders:refund.submitting")
+                                                    : t("orders:refund.submit_request")}
                                             </Button>
                                         </Flex>
                                     </Flex>
@@ -553,7 +627,7 @@ const PageManageOrders = observer(() => {
                                     <Flex justify="end">
                                         <Dialog.Close>
                                             <Button variant="soft" color="gray">
-                                                Đóng
+                                                {t("orders:refund.close")}
                                             </Button>
                                         </Dialog.Close>
                                     </Flex>
@@ -564,18 +638,18 @@ const PageManageOrders = observer(() => {
 
                             <Box>
                                 <Heading size="3" mb="3">
-                                    Đánh giá chuyến đi
+                                    {t("orders:sections.trip_review")}
                                 </Heading>
 
                                 {canReviewSelectedTicket && !hasDuplicateReviewSelectedTicket ? (
                                     <Flex direction="column" gap="3">
                                         <Text size="2" color="gray">
-                                            Hãy chia sẻ trải nghiệm của bạn sau chuyến đi này.
+                                            {t("orders:review.description")}
                                         </Text>
 
                                         <Flex direction="column" gap="2">
                                             <Text size="2" weight="medium">
-                                                Số sao
+                                                {t("orders:review.rating_label")}
                                             </Text>
                                             <Flex gap="2">
                                                 {Array.from({ length: 5 }, (_, index) => {
@@ -607,10 +681,10 @@ const PageManageOrders = observer(() => {
 
                                         <Flex direction="column" gap="2">
                                             <Text size="2" weight="medium">
-                                                Nhận xét
+                                                {t("orders:review.comment_label")}
                                             </Text>
                                             <TextArea
-                                                placeholder="Chia sẻ trải nghiệm chuyến đi của bạn..."
+                                                placeholder={t("orders:review.comment_placeholder")}
                                                 value={reviewComment}
                                                 disabled={hasSubmittedReviewSelectedTicket}
                                                 onChange={(event) => setReviewComment(event.target.value)}
@@ -629,9 +703,7 @@ const PageManageOrders = observer(() => {
                                             </Callout.Root>
                                         )}
 
-                                        <Blockquote color="gray">
-                                            Đánh giá của bạn sẽ được kiểm duyệt trước khi hiển thị công khai.
-                                        </Blockquote>
+                                        <Blockquote color="gray">{t("orders:review.moderation_note")}</Blockquote>
 
                                         <Flex justify="end">
                                             <Button
@@ -639,20 +711,20 @@ const PageManageOrders = observer(() => {
                                                 disabled={isSubmittingReview || hasSubmittedReviewSelectedTicket}
                                             >
                                                 {hasSubmittedReviewSelectedTicket
-                                                    ? "Đã gửi đánh giá"
+                                                    ? t("orders:review.submitted")
                                                     : isSubmittingReview
-                                                      ? "Đang gửi đánh giá..."
-                                                      : "Gửi đánh giá"}
+                                                      ? t("orders:review.submitting")
+                                                      : t("orders:review.submit")}
                                             </Button>
                                         </Flex>
                                     </Flex>
                                 ) : hasDuplicateReviewSelectedTicket ? (
                                     <Callout.Root color="amber">
-                                        <Callout.Text>Bạn đã đánh giá chuyến đi này rồi.</Callout.Text>
+                                        <Callout.Text>{t("orders:review.duplicate")}</Callout.Text>
                                     </Callout.Root>
                                 ) : (
                                     <Text size="2" color="gray">
-                                        Chỉ có thể đánh giá những vé đã sử dụng.
+                                        {t("orders:review.used_only")}
                                     </Text>
                                 )}
                             </Box>

@@ -1,38 +1,30 @@
 import * as React from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-} from "@/components/ui/command";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export function SearchableSelect({
     options,
     value,
     onChange,
-    placeholder = "Chọn...",
+    placeholder,
 }: {
     options: { id: string; label: string }[];
     value: string;
     onChange: (value: string) => void;
     placeholder?: string;
 }) {
+    const { t } = useTranslation("common");
     const [open, setOpen] = React.useState(false);
     const [searchValue, setSearchValue] = React.useState("");
 
     const selectedOption = options.find((opt) => opt.id === value);
     const displayValue = selectedOption ? selectedOption.label : value;
+    const resolvedPlaceholder = placeholder ?? t("select_placeholder");
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -43,22 +35,22 @@ export function SearchableSelect({
                     aria-expanded={open}
                     className="w-full justify-between font-normal"
                 >
-                    <span className="truncate">{displayValue || placeholder}</span>
+                    <span className="truncate">{displayValue || resolvedPlaceholder}</span>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                 <Command>
-                    <CommandInput 
-                        placeholder="Tìm kiếm hoặc nhập ID..." 
+                    <CommandInput
+                        placeholder={t("search_or_enter_id")}
                         value={searchValue}
                         onValueChange={setSearchValue}
                     />
                     <CommandList>
                         <CommandEmpty>
                             {searchValue ? (
-                                <Button 
-                                    variant="ghost" 
+                                <Button
+                                    variant="ghost"
                                     className="w-full justify-start text-sm font-normal"
                                     onClick={() => {
                                         onChange(searchValue);
@@ -66,10 +58,10 @@ export function SearchableSelect({
                                         setSearchValue("");
                                     }}
                                 >
-                                    Sử dụng ID: <span className="font-mono ml-1">{searchValue}</span>
+                                    {t("use_id", { value: searchValue })}
                                 </Button>
                             ) : (
-                                "Không tìm thấy kết quả."
+                                t("no_results_found")
                             )}
                         </CommandEmpty>
                         <CommandGroup>
@@ -86,7 +78,7 @@ export function SearchableSelect({
                                     <Check
                                         className={cn(
                                             "mr-2 h-4 w-4 shrink-0",
-                                            value === option.id ? "opacity-100" : "opacity-0"
+                                            value === option.id ? "opacity-100" : "opacity-0",
                                         )}
                                     />
                                     {option.label}

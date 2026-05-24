@@ -3,6 +3,7 @@
 import * as React from "react";
 import { CalendarIcon } from "lucide-react";
 import { IconButton, Popover, TextField } from "@radix-ui/themes";
+import { useTranslation } from "react-i18next";
 
 import { Calendar } from "@/components/ui/calendar";
 
@@ -48,6 +49,7 @@ function startOfDay(date: Date) {
 }
 
 export function DatePickerInput({ date, setDate, onDateChange, minDate, inputProps }: DatePickerInputProps) {
+    const { t } = useTranslation("common");
     const [open, setOpen] = React.useState(false);
     const [internalDate, setInternalDate] = React.useState<Date | undefined>(date ?? new Date());
     const currentDate = date ?? internalDate;
@@ -139,9 +141,9 @@ export function DatePickerInput({ date, setDate, onDateChange, minDate, inputPro
                         }}
                     >
                         <TextField.Slot side="right">
-                            <IconButton id="date-picker" variant="ghost" size="1" aria-label="Select date">
+                            <IconButton id="date-picker" variant="ghost" size="1" aria-label={t("select_date")}>
                                 <CalendarIcon size={16} />
-                                <span className="sr-only">Select date</span>
+                                <span className="sr-only">{t("select_date")}</span>
                             </IconButton>
                         </TextField.Slot>
                     </TextField.Root>
