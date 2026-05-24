@@ -13,6 +13,8 @@ namespace Pbl3.Controllers.Admin
             if (dto.CompanyIds.Count == 0)
                 return BadRequest(new { message = "Danh sách nhà xe trống." });
 
+            var reviewerId = GetCurrentUserId();
+
             var companies = await _context
                 .BusCompanies.Where(c => dto.CompanyIds.Contains(c.CompanyID))
                 .ToListAsync();
@@ -20,13 +22,37 @@ namespace Pbl3.Controllers.Admin
             if (companies.Count == 0)
                 return NotFound(new { message = "Không tìm thấy nhà xe nào." });
 
+            if (companies.Any(c => c.Status != CompanyStatus.Pending))
+            {
+                return BadRequest(new { message = "Chỉ có thể duyệt các nhà xe đang chờ duyệt." });
+            }
+
+            var companyIds = companies.Select(c => c.CompanyID).ToList();
+            var pendingRequests = await _context
+                .CompanyProfileUpdateRequests.Where(r =>
+                    companyIds.Contains(r.CompanyID)
+                    && r.Status == CompanyProfileUpdateRequestStatus.Pending
+                )
+                .ToListAsync();
+
+            var reviewedAt = DateTime.UtcNow;
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             foreach (var company in companies)
             {
                 company.Status = CompanyStatus.Approved;
                 company.IsApproved = true;
             }
 
+            foreach (var request in pendingRequests)
+            {
+                request.Status = CompanyProfileUpdateRequestStatus.Approved;
+                request.ReviewedByUserID = reviewerId;
+                request.ReviewedAt = reviewedAt;
+            }
+
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             return Ok(
                 new
