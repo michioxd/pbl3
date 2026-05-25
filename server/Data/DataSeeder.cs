@@ -37,6 +37,8 @@ namespace Pbl3.Data
             await SeedRolesAsync();
             await SeedUsersAsync();
             await SeedBusCompaniesAsync();
+            await SeedBusAdminUpgradeRequestsAsync();
+            await SeedCompanyProfileUpdateRequestsAsync();
             await SeedAmenitiesAsync();
             await SeedBusTypesAsync();
             await SeedBusTypeAmenitiesAsync();
@@ -263,7 +265,9 @@ namespace Pbl3.Data
                     Name = "Phương Trang (FUTA Bus Lines)",
                     LicenseNumber = "VN-PT-001",
                     Hotline = "19006067",
+                    AllowPayOnBoard = true,
                     IsApproved = true,
+                    Status = CompanyStatus.Approved,
                 },
                 new BusCompany
                 {
@@ -271,7 +275,9 @@ namespace Pbl3.Data
                     Name = "Mai Linh Express",
                     LicenseNumber = "VN-ML-002",
                     Hotline = "19006292",
+                    AllowPayOnBoard = true,
                     IsApproved = true,
+                    Status = CompanyStatus.Approved,
                 },
                 new BusCompany
                 {
@@ -279,7 +285,9 @@ namespace Pbl3.Data
                     Name = "Thiện Thành",
                     LicenseNumber = "VN-TT-003",
                     Hotline = "02513828282",
+                    AllowPayOnBoard = true,
                     IsApproved = true,
+                    Status = CompanyStatus.Approved,
                 },
             };
 
@@ -306,13 +314,94 @@ namespace Pbl3.Data
                 {
                     UserID = busAdmin2.UserID,
                     CompanyID = maiLinh.CompanyID,
-                    Roles = "TB",
+                    Roles = "A",
                 },
             };
 
             _context.BusCompanyAdmins.AddRange(admins);
             await _context.SaveChangesAsync();
             _logger.LogInformation("Seeded {Count} bus companies", companies.Count);
+        }
+
+        private async Task SeedBusAdminUpgradeRequestsAsync()
+        {
+            var sysAdmin = await _context.Users.FirstAsync(u => u.Email == "admin@example.com");
+            var passenger1 = await _context.Users.FirstAsync(u =>
+                u.Email == "nguyenvana@gmail.com"
+            );
+            var passenger2 = await _context.Users.FirstAsync(u => u.Email == "tranthib@gmail.com");
+            var thienThanh = await _context.BusCompanies.FirstAsync(c =>
+                c.LicenseNumber == "VN-TT-003"
+            );
+
+            var requests = new List<BusAdminUpgradeRequest>
+            {
+                new BusAdminUpgradeRequest
+                {
+                    RequestID = Guid.NewGuid(),
+                    RequesterUserID = passenger1.UserID,
+                    ReviewedByUserID = sysAdmin.UserID,
+                    CompanyID = thienThanh.CompanyID,
+                    CompanyName = thienThanh.Name,
+                    LicenseNumber = thienThanh.LicenseNumber,
+                    Hotline = thienThanh.Hotline,
+                    Reason = "Muốn quản lý thêm lịch trình và vận hành cho nhà xe.",
+                    Status = BusAdminUpgradeRequestStatus.Approved,
+                    RequestedAt = DateTime.UtcNow.AddDays(-6),
+                    ReviewedAt = DateTime.UtcNow.AddDays(-5),
+                    ReviewNote = "Đã xác minh thông tin doanh nghiệp.",
+                },
+                new BusAdminUpgradeRequest
+                {
+                    RequestID = Guid.NewGuid(),
+                    RequesterUserID = passenger2.UserID,
+                    CompanyName = "Hải Vân Limousine",
+                    LicenseNumber = "VN-HV-004",
+                    Hotline = "19006763",
+                    Reason = "Muốn đăng ký hợp tác để mở bán tuyến mới.",
+                    Status = BusAdminUpgradeRequestStatus.Pending,
+                    RequestedAt = DateTime.UtcNow.AddDays(-1),
+                },
+            };
+
+            _context.BusAdminUpgradeRequests.AddRange(requests);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded {Count} bus admin upgrade requests", requests.Count);
+        }
+
+        private async Task SeedCompanyProfileUpdateRequestsAsync()
+        {
+            var sysAdmin = await _context.Users.FirstAsync(u => u.Email == "admin@example.com");
+            var busAdmin = await _context.Users.FirstAsync(u => u.Email == "admin@maitanh.com");
+            var maiLinh = await _context.BusCompanies.FirstAsync(c =>
+                c.LicenseNumber == "VN-ML-002"
+            );
+
+            var requests = new List<CompanyProfileUpdateRequest>
+            {
+                new CompanyProfileUpdateRequest
+                {
+                    RequestID = Guid.NewGuid(),
+                    CompanyID = maiLinh.CompanyID,
+                    RequesterUserID = busAdmin.UserID,
+                    ReviewedByUserID = sysAdmin.UserID,
+                    Name = "Mai Linh Express Premium",
+                    LicenseNumber = maiLinh.LicenseNumber,
+                    Hotline = "19006293",
+                    AllowPayOnBoard = false,
+                    Status = CompanyProfileUpdateRequestStatus.Approved,
+                    RequestedAt = DateTime.UtcNow.AddDays(-3),
+                    ReviewedAt = DateTime.UtcNow.AddDays(-2),
+                    ReviewNote = "Cập nhật hồ sơ doanh nghiệp đã được duyệt.",
+                },
+            };
+
+            _context.CompanyProfileUpdateRequests.AddRange(requests);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation(
+                "Seeded {Count} company profile update requests",
+                requests.Count
+            );
         }
 
         private async Task SeedAmenitiesAsync()
@@ -1406,6 +1495,7 @@ namespace Pbl3.Data
                     Currency = "VND",
                     Status = PaymentIntentStatus.Succeeded,
                     CreatedAt = DateTime.UtcNow.AddDays(-2),
+                    PaidAt = DateTime.UtcNow.AddDays(-2).AddMinutes(15),
                 },
                 new PaymentIntent
                 {
@@ -1429,6 +1519,7 @@ namespace Pbl3.Data
             var succeededIntent = await _context.PaymentIntents.FirstAsync(pi =>
                 pi.Status == PaymentIntentStatus.Succeeded
             );
+            var sysAdmin = await _context.Users.FirstAsync(u => u.Email == "admin@example.com");
 
             var paidBooking = await _context.Bookings.FirstAsync(b =>
                 b.ContactEmail == "nguyenvana@gmail.com" && b.Status == BookingStatus.Paid
@@ -1452,11 +1543,14 @@ namespace Pbl3.Data
                 RefundRequestID = Guid.NewGuid(),
                 BookingID = paidBooking.BookingID,
                 PaymentIntentID = succeededIntent.IntentID,
+                UserID = paidBooking.UserID,
                 RequestedAmount = 50000,
                 Reason = "Hoàn phí khuyến mại do đổi lịch",
                 Status = RefundStatus.Approved,
                 RequestedAt = DateTime.UtcNow.AddDays(-4),
                 ProcessedAt = DateTime.UtcNow.AddDays(-3),
+                ProcessedByUserID = sysAdmin.UserID,
+                AdminNotes = "Yêu cầu hợp lệ, đã chuyển hoàn tiền.",
                 RefundID = completedRefund.RefundID,
             };
             _context.RefundRequests.Add(approvedRequest);
@@ -1483,6 +1577,7 @@ namespace Pbl3.Data
                     RefundRequestID = Guid.NewGuid(),
                     BookingID = paidBooking.BookingID,
                     PaymentIntentID = succeededIntent.IntentID,
+                    UserID = paidBooking.UserID,
                     RequestedAmount = 50000,
                     Reason = "Hủy vé do thay đổi lịch trình cá nhân",
                     Status = RefundStatus.Pending,
@@ -1497,6 +1592,7 @@ namespace Pbl3.Data
 
         private async Task SeedReviewsAsync()
         {
+            var sysAdmin = await _context.Users.FirstAsync(u => u.Email == "admin@example.com");
             var paidBooking = await _context.Bookings.FirstAsync(b =>
                 b.ContactEmail == "nguyenvana@gmail.com" && b.Status == BookingStatus.Paid
             );
@@ -1515,6 +1611,9 @@ namespace Pbl3.Data
                     Comment = "Xe sạch sẽ, tài xế chạy đúng giờ và nhân viên hỗ trợ tốt.",
                     UserID = paidBooking.UserID,
                     Status = ReviewStatus.Approved,
+                    CreatedAt = DateTime.UtcNow.AddDays(-2),
+                    ModeratedAt = DateTime.UtcNow.AddDays(-1),
+                    ModeratedByUserID = sysAdmin.UserID,
                 },
             };
 
@@ -1532,6 +1631,10 @@ namespace Pbl3.Data
             );
             var pendingBooking = await _context.Bookings.FirstAsync(b =>
                 b.ContactEmail == "tranthib@gmail.com" && b.Status == BookingStatus.Pending
+            );
+            var pendingUpgradeRequest = await _context.BusAdminUpgradeRequests.FirstAsync(r =>
+                r.RequesterUserID == user2.UserID
+                && r.Status == BusAdminUpgradeRequestStatus.Pending
             );
 
             var notifications = new List<Notification>
@@ -1553,6 +1656,16 @@ namespace Pbl3.Data
                     Type = NotificationType.SMS,
                     Content =
                         "Đơn đặt vé TP.HCM - Vũng Tàu đang chờ thanh toán trước khi giữ ghế hết hạn.",
+                    Status = NotificationStatus.Sent,
+                },
+                new Notification
+                {
+                    NotifID = Guid.NewGuid(),
+                    UserID = user2.UserID,
+                    RequestID = pendingUpgradeRequest.RequestID,
+                    Type = NotificationType.Push,
+                    Content =
+                        "Yêu cầu đăng ký đối tác của bạn đã được ghi nhận và đang chờ xét duyệt.",
                     Status = NotificationStatus.Sent,
                 },
             };
