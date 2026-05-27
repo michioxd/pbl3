@@ -1,9 +1,9 @@
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Mvc;
-using Pbl3.Data;
+using Pbl3.Services.Users;
 
 namespace Pbl3.Controllers.Users
 {
@@ -13,11 +13,11 @@ namespace Pbl3.Controllers.Users
     [Tags("Passenger")]
     public partial class PassengersController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IPassengersService _passengersService;
 
-        public PassengersController(ApplicationDbContext context)
+        public PassengersController(IPassengersService passengersService)
         {
-            _context = context;
+            _passengersService = passengersService;
         }
 
         private Guid GetCurrentUserId()

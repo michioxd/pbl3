@@ -14,6 +14,9 @@ using Pbl3.Enums;
 using Pbl3.Extensions;
 using Pbl3.Models;
 using Pbl3.Services;
+using Pbl3.Services.Admin;
+using Pbl3.Services.BusAdmin;
+using Pbl3.Services.Users;
 
 namespace Pbl3
 {
@@ -26,13 +29,31 @@ namespace Pbl3
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddControllers();
+            builder.Services.AddControllers(options =>
+            {
+                options.Filters.Add<GlobalExceptionFilter>();
+            });
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<ITripSearchService, TripSearchService>();
             builder.Services.AddScoped<ICurrentUserContext, CurrentUserContext>();
             builder.Services.AddScoped<IBusAdminOwnershipService, BusAdminOwnershipService>();
             builder.Services.AddScoped<IBookingService, BookingService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
+            builder.Services.AddScoped<ILocationSearchService, LocationSearchService>();
+            builder.Services.AddScoped<ITripDetailService, TripDetailService>();
+            builder.Services.AddScoped<IRefundManagementService, RefundManagementService>();
+            builder.Services.AddScoped<IBusAdminUpgradeResponseService, BusAdminUpgradeResponseService>();
+            builder.Services.AddScoped<ICompanyProfileUpdateRequestService, CompanyProfileUpdateRequestService>();
+            builder.Services.AddScoped<IRevenueAnalyticsService, RevenueAnalyticsService>();
+            builder.Services.AddScoped<IReviewManagementService, ReviewManagementService>();
+            builder.Services.AddScoped<ISystemAdminManagementService, SystemAdminManagementService>();
+            builder.Services.AddScoped<ITransactionManagementService, TransactionManagementService>();
+            builder.Services.AddScoped<ITripMonitoringService, TripMonitoringService>();
+            builder.Services.AddScoped<IBusCompanyRegistrationService, BusCompanyRegistrationService>();
+            builder.Services.AddScoped<IBusAdminProfileService, BusAdminProfileService>();
+            builder.Services.AddScoped<IBusAdminBusesService, BusAdminBusesService>();
+            builder.Services.AddScoped<IUserMeService, UserMeService>();
+            builder.Services.AddScoped<IPassengersService, PassengersService>();
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy(

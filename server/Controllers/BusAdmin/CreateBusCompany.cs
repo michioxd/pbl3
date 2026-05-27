@@ -1,12 +1,12 @@
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Pbl3.Data;
 using Pbl3.Dtos;
-using Pbl3.Enums;
-using Pbl3.Models;
+using Pbl3.Services.BusAdmin;
 
 namespace Pbl3.Controllers.BusAdmin
 {
@@ -16,11 +16,11 @@ namespace Pbl3.Controllers.BusAdmin
     [Tags("BusAdmin")]
     public partial class CreateBusAdmin : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IBusCompanyRegistrationService _registrationService;
 
-        public CreateBusAdmin(ApplicationDbContext context)
+        public CreateBusAdmin(IBusCompanyRegistrationService registrationService)
         {
-            _context = context;
+            _registrationService = registrationService;
         }
 
         private Guid GetCurrentUserId()
@@ -41,82 +41,8 @@ namespace Pbl3.Controllers.BusAdmin
         public async Task<IActionResult> AddBusCompany([FromBody] Infor_BusCompany company)
         {
             var userId = GetCurrentUserId();
-
-            var alreadyCompanyAdmin = await _context.BusCompanyAdmins.AnyAsync(x =>
-                x.UserID == userId
-            );
-            if (alreadyCompanyAdmin)
-            {
-                return Conflict(new { message = "Tài khoản đã thuộc một nhà xe." });
-            }
-
-            var normalizedLicense = string.IsNullOrWhiteSpace(company.LicenseNumber)
-                ? null
-                : company.LicenseNumber.Trim();
-
-            if (normalizedLicense != null)
-            {
-                var duplicatedLicense = await _context.BusCompanies.AnyAsync(c =>
-                    c.LicenseNumber != null
-                    && c.LicenseNumber.ToLower() == normalizedLicense.ToLower()
-                );
-
-                if (duplicatedLicense)
-                {
-                    return Conflict(new { message = "LicenseNumber đã tồn tại." });
-                }
-            }
-
-            var busCompany = new BusCompany
-            {
-                CompanyID = Guid.NewGuid(),
-                Name = company.Name.Trim(),
-                LicenseNumber = normalizedLicense,
-                Hotline = string.IsNullOrWhiteSpace(company.Hotline)
-                    ? null
-                    : company.Hotline.Trim(),
-                IsApproved = false,
-            };
-
-            var busCompanyAdmin = new BusCompanyAdmin
-            {
-                UserID = userId,
-                CompanyID = busCompany.CompanyID,
-                Roles = "O",
-            };
-
-            var updateRequest = new CompanyProfileUpdateRequest
-            {
-                RequestID = Guid.NewGuid(),
-                CompanyID = busCompany.CompanyID,
-                RequesterUserID = userId,
-                Name = busCompany.Name,
-                LicenseNumber = busCompany.LicenseNumber,
-                Hotline = busCompany.Hotline,
-                Status = CompanyProfileUpdateRequestStatus.Pending,
-                RequestedAt = DateTime.UtcNow,
-            };
-
-            await using var transaction = await _context.Database.BeginTransactionAsync();
-
-            _context.BusCompanies.Add(busCompany);
-            _context.BusCompanyAdmins.Add(busCompanyAdmin);
-            _context.CompanyProfileUpdateRequests.Add(updateRequest);
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
-
-            return StatusCode(
-                StatusCodes.Status201Created,
-                new
-                {
-                    message = "Đăng ký nhà xe thành công.",
-                    busCompany.CompanyID,
-                    busCompany.Name,
-                    busCompany.LicenseNumber,
-                    busCompany.Hotline,
-                    busCompany.IsApproved,
-                }
-            );
+            var result = await _registrationService.AddBusCompanyAsync(company, userId);
+            return StatusCode(StatusCodes.Status201Created, result);
         }
     }
 }

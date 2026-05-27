@@ -1,12 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.Metadata;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Pbl3.Data;
-using Pbl3.Models;
+using Pbl3.Services.Admin;
 
 namespace Pbl3.Controllers.Admin
 {
@@ -16,16 +12,11 @@ namespace Pbl3.Controllers.Admin
     [Tags("SystemAdmin")]
     public partial class SystemAdminManagementController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        private readonly IPasswordHasher<User> _passwordHasher;
+        private readonly ISystemAdminManagementService _service;
 
-        public SystemAdminManagementController(
-            ApplicationDbContext context,
-            IPasswordHasher<User> passwordHasher
-        )
+        public SystemAdminManagementController(ISystemAdminManagementService service)
         {
-            _context = context;
-            _passwordHasher = passwordHasher;
+            _service = service;
         }
 
         private Guid GetCurrentUserId()
@@ -40,23 +31,6 @@ namespace Pbl3.Controllers.Admin
             }
 
             throw new UnauthorizedAccessException("Không tìm thấy UserID trong token.");
-        }
-
-        private Task<bool> IsRouteOwnedByCompanyAsync(Guid companyId, Guid routeId)
-        {
-            return _context.BusRoutes.AnyAsync(r =>
-                r.RouteID == routeId && r.CompanyID == companyId
-            );
-        }
-
-        private Task<bool> IsBusOwnedByCompanyAsync(Guid companyId, Guid busId)
-        {
-            return _context.Buses.AnyAsync(b => b.BusID == busId && b.CompanyID == companyId);
-        }
-
-        private Task<bool> IsBusTypeExistsAsync(Guid busTypeId)
-        {
-            return _context.BusTypes.AnyAsync(bt => bt.BusTypeID == busTypeId);
         }
     }
 }

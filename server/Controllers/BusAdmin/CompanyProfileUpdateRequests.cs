@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Pbl3.Data;
 using Pbl3.Dtos;
-using Pbl3.Enums;
 using Pbl3.Services;
+using Pbl3.Services.BusAdmin;
+using System;
+using System.Threading.Tasks;
 
 namespace Pbl3.Controllers.BusAdmin
 {
@@ -14,17 +15,17 @@ namespace Pbl3.Controllers.BusAdmin
     [Tags("BusAdmin")]
     public class CompanyProfileUpdateRequestsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IBusAdminProfileService _profileService;
         private readonly ICurrentUserContext _currentUserContext;
         private readonly IBusAdminOwnershipService _ownershipService;
 
         public CompanyProfileUpdateRequestsController(
-            ApplicationDbContext context,
+            IBusAdminProfileService profileService,
             ICurrentUserContext currentUserContext,
             IBusAdminOwnershipService ownershipService
         )
         {
-            _context = context;
+            _profileService = profileService;
             _currentUserContext = currentUserContext;
             _ownershipService = ownershipService;
         }
@@ -37,30 +38,7 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
-            var request = await _context
-                .CompanyProfileUpdateRequests.AsNoTracking()
-                .Where(r => r.CompanyID == companyId.Value)
-                .OrderByDescending(r => r.RequestedAt)
-                .Select(r => new CompanyProfileUpdateRequestDto
-                {
-                    RequestID = r.RequestID,
-                    CompanyID = r.CompanyID,
-                    Status = r.Status,
-                    Name = r.Name,
-                    LicenseNumber = r.LicenseNumber,
-                    Hotline = r.Hotline,
-                    AllowPayOnBoard = r.AllowPayOnBoard,
-                    RequestedAt = r.RequestedAt,
-                    ReviewedAt = r.ReviewedAt,
-                    ReviewNote = r.ReviewNote,
-                })
-                .FirstOrDefaultAsync();
-
-            if (request == null)
-            {
-                return NotFound(new { message = "Chưa có yêu cầu cập nhật hồ sơ." });
-            }
-
+            var request = await _profileService.GetCurrentRequestAsync(companyId.Value);
             return Ok(request);
         }
 
@@ -74,44 +52,8 @@ namespace Pbl3.Controllers.BusAdmin
             if (companyId == null)
                 return Forbid();
 
-            var hasPendingRequest = await _context.CompanyProfileUpdateRequests.AnyAsync(r =>
-                r.CompanyID == companyId.Value
-                && r.Status == CompanyProfileUpdateRequestStatus.Pending
-            );
-
-            if (hasPendingRequest)
-            {
-                return Conflict(new { message = "Bạn đã có yêu cầu cập nhật đang chờ duyệt." });
-            }
-
-            var request = new Models.CompanyProfileUpdateRequest
-            {
-                RequestID = Guid.NewGuid(),
-                CompanyID = companyId.Value,
-                RequesterUserID = userId,
-                Name = dto.Name.Trim(),
-                LicenseNumber = string.IsNullOrWhiteSpace(dto.LicenseNumber)
-                    ? null
-                    : dto.LicenseNumber.Trim(),
-                Hotline = string.IsNullOrWhiteSpace(dto.Hotline) ? null : dto.Hotline.Trim(),
-                AllowPayOnBoard = dto.AllowPayOnBoard,
-                Status = CompanyProfileUpdateRequestStatus.Pending,
-                RequestedAt = DateTime.UtcNow,
-            };
-
-            _context.CompanyProfileUpdateRequests.Add(request);
-            await _context.SaveChangesAsync();
-
-            return StatusCode(
-                StatusCodes.Status201Created,
-                new
-                {
-                    message = "Đã gửi yêu cầu cập nhật hồ sơ nhà xe.",
-                    requestId = request.RequestID,
-                    request.Status,
-                    request.RequestedAt,
-                }
-            );
+            var result = await _profileService.CreateRequestAsync(dto, companyId.Value, userId);
+            return StatusCode(StatusCodes.Status201Created, result);
         }
     }
 }

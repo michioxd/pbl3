@@ -1,15 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Pbl3.Services.Users;
 using System;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.Metadata;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Pbl3.Data;
-using Pbl3.Dtos;
-using Pbl3.Enums;
 
 namespace Pbl3.Controllers.Users
 {
@@ -19,11 +14,11 @@ namespace Pbl3.Controllers.Users
     [Tags("User")]
     public class UserMyOrdersController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IUserMeService _userMeService;
 
-        public UserMyOrdersController(ApplicationDbContext context)
+        public UserMyOrdersController(IUserMeService userMeService)
         {
-            _context = context;
+            _userMeService = userMeService;
         }
 
         private Guid GetCurrentUserId()
@@ -44,59 +39,8 @@ namespace Pbl3.Controllers.Users
         public async Task<IActionResult> GetMyOrders()
         {
             var userId = GetCurrentUserId();
-
-            var passengerId = await _context
-                .Passengers.AsNoTracking()
-                .Where(p => p.UserID == userId)
-                .Select(p => p.PassengerID)
-                .FirstOrDefaultAsync();
-
-            if (passengerId == Guid.Empty)
-            {
-                return NotFound(new { message = "common:internal_server_error" });
-            }
-
-            var now = DateTime.UtcNow;
-
-            var tickets = await _context
-                .Tickets.AsNoTracking()
-                .Where(t => t.PassengerID == passengerId)
-                .Select(t => new OrderTicketDto
-                {
-                    TicketID = t.TicketID,
-                    TicketCode = t.TicketCode,
-                    Status = t.Status.ToString(),
-                    FinalPrice = t.FinalPrice,
-                    SeatLabel = t.SeatLayout != null ? t.SeatLayout.SeatLabel : null,
-                    RouteName =
-                        t.Trip != null && t.Trip.Route != null ? t.Trip.Route.RouteName : null,
-                    DepartureTime = t.Trip != null ? t.Trip.DepartureTime : default,
-                })
-                .ToListAsync();
-
-            var response = new MyOrdersResponseDto
-            {
-                Booked = tickets
-                    .Where(t =>
-                        t.Status == nameof(TicketStatus.PendingPayment)
-                        || t.Status == nameof(TicketStatus.Issued)
-                    )
-                    .OrderByDescending(t => t.DepartureTime)
-                    .ToList(),
-                Completed = tickets
-                    .Where(t =>
-                        t.Status == nameof(TicketStatus.CheckedIn)
-                        || (t.Status == nameof(TicketStatus.Issued) && t.DepartureTime <= now)
-                    )
-                    .OrderByDescending(t => t.DepartureTime)
-                    .ToList(),
-                Cancelled = tickets
-                    .Where(t => t.Status == nameof(TicketStatus.Cancelled))
-                    .OrderByDescending(t => t.DepartureTime)
-                    .ToList(),
-            };
-
-            return Ok(response);
+            var result = await _userMeService.GetMyOrdersAsync(userId);
+            return Ok(result);
         }
     }
 }
