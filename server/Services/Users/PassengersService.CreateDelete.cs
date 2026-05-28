@@ -9,7 +9,7 @@ namespace Pbl3.Services.Users
 {
     public partial class PassengersService
     {
-        public async Task<object> CreateBusAdminUpgradeRequestAsync(CreateBusAdminUpgradeRequestDto dto, Guid userId)
+        public async Task<BusAdminUpgradeRequestResponseDto> CreateBusAdminUpgradeRequestAsync(CreateBusAdminUpgradeRequestDto dto, Guid userId)
         {
             var hasPendingRequest = await _context.BusAdminUpgradeRequests.AnyAsync(r =>
                 r.RequesterUserID == userId && r.Status == BusAdminUpgradeRequestStatus.Pending
@@ -35,12 +35,12 @@ namespace Pbl3.Services.Users
             _context.BusAdminUpgradeRequests.Add(request);
             await _context.SaveChangesAsync();
 
-            return new
+            return new BusAdminUpgradeRequestResponseDto
             {
-                message = "Gửi yêu cầu nâng cấp thành công.",
-                requestId = request.RequestID,
-                request.Status,
-                request.RequestedAt,
+                Message = "Gửi yêu cầu nâng cấp thành công.",
+                RequestId = request.RequestID,
+                Status = request.Status,
+                RequestedAt = request.RequestedAt,
             };
         }
 

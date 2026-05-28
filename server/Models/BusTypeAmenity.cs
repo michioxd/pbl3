@@ -2,10 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Pbl3.Models
 {
-    /// <summary>
-    /// Junction table for many-to-many relationship between BusType and Amenity.
-    /// Represents which amenities are available on a specific bus type.
-    /// </summary>
     public class BusTypeAmenity
     {
         [Key]

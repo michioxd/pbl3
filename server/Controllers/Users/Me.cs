@@ -16,10 +16,12 @@ namespace Pbl3.Controllers.Users
     public class UserMeController : ControllerBase
     {
         private readonly IUserMeService _userMeService;
+        private readonly IPassengersService _passengersService;
 
-        public UserMeController(IUserMeService userMeService)
+        public UserMeController(IUserMeService userMeService, IPassengersService passengersService)
         {
             _userMeService = userMeService;
+            _passengersService = passengersService;
         }
 
         private Guid GetCurrentUserId()
@@ -47,7 +49,7 @@ namespace Pbl3.Controllers.Users
         public async Task<IActionResult> GetMyTickets()
         {
             var userId = GetCurrentUserId();
-            var result = await _userMeService.GetMyTicketsAsync(userId);
+            var result = await _passengersService.GetMyTicketsAsync(userId);
             return Ok(result);
         }
     }

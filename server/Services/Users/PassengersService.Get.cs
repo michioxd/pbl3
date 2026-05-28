@@ -11,18 +11,18 @@ namespace Pbl3.Services.Users
 {
     public partial class PassengersService
     {
-        public async Task<object> GetProfileAsync(Guid userId)
+        public async Task<PassengerProfileDto> GetProfileAsync(Guid userId)
         {
             var passenger = await _context
                 .Passengers.Include(p => p.User)
                 .Where(p => p.UserID == userId)
-                .Select(p => new
+                .Select(p => new PassengerProfileDto
                 {
-                    p.PassengerID,
-                    p.FullName,
-                    p.Email,
-                    p.PhoneNumber,
-                    p.IdentityCard,
+                    PassengerID = p.PassengerID,
+                    FullName = p.FullName,
+                    Email = p.Email,
+                    PhoneNumber = p.PhoneNumber,
+                    IdentityCard = p.IdentityCard,
                 })
                 .FirstOrDefaultAsync();
 
@@ -34,96 +34,57 @@ namespace Pbl3.Services.Users
             return passenger;
         }
 
-        public async Task<object> GetMyTicketsAsync(Guid userId)
+        public async Task<List<PassengerTicketDetailDto>> GetMyTicketsAsync(Guid userId)
         {
-            var passenger = await _context.Passengers.FirstOrDefaultAsync(p => p.UserID == userId);
-            if (passenger == null)
+            var passengerExists = await _context.Passengers.AnyAsync(p => p.UserID == userId);
+            if (!passengerExists)
             {
                 throw new KeyNotFoundException("Hành khách không tồn tại.");
             }
 
             var tickets = await _context
-                .Tickets.Include(t => t.Trip)
-                    .ThenInclude(tr => tr!.Route)
-                        .ThenInclude(r => r!.BusCompany)
-                .Include(t => t.Trip)
-                    .ThenInclude(tr => tr!.Bus)
-                        .ThenInclude(b => b!.BusType)
-                .Include(t => t.Trip)
-                    .ThenInclude(tr => tr!.BusType)
-                .Include(t => t.Booking)
-                    .ThenInclude(b => b!.PaymentIntents)
-                .Include(t => t.Booking)
-                    .ThenInclude(b => b!.RefundRequests)
-                .Include(t => t.SeatLayout)
-                .Where(t => t.PassengerID == passenger.PassengerID)
-                .Select(t => new
+                .Tickets
+                .Where(t => t.Passenger != null && t.Passenger.UserID == userId)
+                .Select(t => new PassengerTicketDetailDto
                 {
-                    t.TicketID,
-                    t.BookingID,
+                    TicketID = t.TicketID,
+                    BookingID = t.BookingID,
                     TripID = t.TripID,
-                    t.TicketCode,
+                    TicketCode = t.TicketCode,
                     SeatLabel = t.SeatLayout != null ? t.SeatLayout.SeatLabel : null,
-                    SeatFloor = t.SeatLayout != null ? t.SeatLayout.Floor : (int?)null,
+                    SeatFloor = t.SeatLayout != null ? (int?)t.SeatLayout.Floor : null,
                     SeatType = t.SeatLayout != null ? t.SeatLayout.SeatType.ToString() : null,
                     Price = t.FinalPrice,
-                    t.Status,
-                    RouteName = t.Trip != null && t.Trip.Route != null
-                        ? t.Trip.Route.RouteName
-                        : null,
-                    CompanyName = t.Trip != null
-                    && t.Trip.Route != null
-                    && t.Trip.Route.BusCompany != null
-                        ? t.Trip.Route.BusCompany.Name
-                        : null,
-                    DistanceEstimate = t.Trip != null && t.Trip.Route != null
-                        ? t.Trip.Route.DistanceEstimate
-                        : (decimal?)null,
-                    DurationEstimate = t.Trip != null && t.Trip.Route != null
-                        ? t.Trip.Route.DurationEstimate
-                        : (decimal?)null,
+                    Status = t.Status,
+                    RouteName = t.Trip != null && t.Trip.Route != null ? t.Trip.Route.RouteName : null,
+                    CompanyName = t.Trip != null && t.Trip.Route != null && t.Trip.Route.BusCompany != null ? t.Trip.Route.BusCompany.Name : null,
+                    DistanceEstimate = t.Trip != null && t.Trip.Route != null ? (decimal?)t.Trip.Route.DistanceEstimate : null,
+                    DurationEstimate = t.Trip != null && t.Trip.Route != null ? (decimal?)t.Trip.Route.DurationEstimate : null,
                     DepartureDate = t.Trip != null ? t.Trip.DepartureDate : default,
                     DepartureTime = t.Trip != null ? t.Trip.DepartureTime : default,
                     ArrivalTime = t.Trip != null ? t.Trip.ArrivalTime : default,
                     TripStatus = t.Trip != null ? t.Trip.Status.ToString() : null,
                     CancellationPolicy = t.Trip != null ? t.Trip.CancellationPolicy : null,
                     TripNotes = t.Trip != null ? t.Trip.Notes : null,
-                    PlateNumber = t.Trip != null && t.Trip.Bus != null
-                        ? t.Trip.Bus.PlateNumber
-                        : null,
-                    BusTypeName = t.Trip != null && t.Trip.Bus != null && t.Trip.Bus.BusType != null
-                        ? t.Trip.Bus.BusType.Name
-                    : t.Trip != null && t.Trip.BusType != null ? t.Trip.BusType.Name
-                    : null,
+                    PlateNumber = t.Trip != null && t.Trip.Bus != null ? t.Trip.Bus.PlateNumber : null,
+                    BusTypeName = t.Trip != null && t.Trip.Bus != null && t.Trip.Bus.BusType != null ? t.Trip.Bus.BusType.Name : (t.Trip != null && t.Trip.BusType != null ? t.Trip.BusType.Name : null),
                     ContactName = t.Booking != null ? t.Booking.ContactName : null,
                     ContactPhone = t.Booking != null ? t.Booking.ContactPhone : null,
                     ContactEmail = t.Booking != null ? t.Booking.ContactEmail : null,
                     BookingStatus = t.Booking != null ? t.Booking.Status.ToString() : null,
                     BookingCreatedAt = t.Booking != null ? t.Booking.CreatedAt : default,
-                    PaymentStatus = t.Booking != null
-                        ? t
-                            .Booking.PaymentIntents.Where(pi =>
-                                pi.Status == PaymentIntentStatus.Succeeded
-                            )
-                            .Select(pi => pi.Status.ToString())
-                            .FirstOrDefault()
-                        : null,
-                    PaymentProvider = t.Booking != null
-                        ? t
-                            .Booking.PaymentIntents.Where(pi =>
-                                pi.Status == PaymentIntentStatus.Succeeded
-                            )
-                            .Select(pi => pi.Provider.ToString())
-                            .FirstOrDefault()
-                        : null,
-                    PaidAt = t.Booking != null
-                        ? t
-                            .Booking.PaymentIntents.Where(pi =>
-                                pi.Status == PaymentIntentStatus.Succeeded
-                            )
-                            .Select(pi => pi.PaidAt)
-                            .FirstOrDefault()
-                        : null,
+                    PaymentStatus = t.Booking != null ? t.Booking.PaymentIntents
+                        .Where(pi => pi.Status == PaymentIntentStatus.Succeeded)
+                        .Select(pi => pi.Status.ToString())
+                        .FirstOrDefault() : null,
+                    PaymentProvider = t.Booking != null ? t.Booking.PaymentIntents
+                        .Where(pi => pi.Status == PaymentIntentStatus.Succeeded)
+                        .Select(pi => pi.Provider.ToString())
+                        .FirstOrDefault() : null,
+                    PaidAt = t.Booking != null ? t.Booking.PaymentIntents
+                        .Where(pi => pi.Status == PaymentIntentStatus.Succeeded)
+                        .Select(pi => pi.PaidAt)
+                        .FirstOrDefault() : null,
                     CanRefund = t.Status == TicketStatus.Issued
                         && t.Booking != null
                         && t.Booking.Status == BookingStatus.Paid
@@ -135,12 +96,10 @@ namespace Pbl3.Services.Users
                             || rr.Status == RefundStatus.Processing
                             || rr.Status == RefundStatus.Completed
                         ),
-                    RefundStatus = t.Booking != null
-                        ? t
-                            .Booking.RefundRequests.OrderByDescending(rr => rr.RequestedAt)
-                            .Select(rr => rr.Status.ToString())
-                            .FirstOrDefault()
-                        : null,
+                    RefundStatus = t.Booking != null ? t.Booking.RefundRequests
+                        .OrderByDescending(rr => rr.RequestedAt)
+                        .Select(rr => rr.Status.ToString())
+                        .FirstOrDefault() : null,
                 })
                 .OrderByDescending(t => t.DepartureTime)
                 .ToListAsync();
@@ -150,8 +109,8 @@ namespace Pbl3.Services.Users
 
         public async Task<Guid> CreateTicketRefundRequestAsync(Guid ticketId, CreateRefundRequestDto dto, Guid userId)
         {
-            var passenger = await _context.Passengers.FirstOrDefaultAsync(p => p.UserID == userId);
-            if (passenger == null)
+            var passengerExists = await _context.Passengers.AnyAsync(p => p.UserID == userId);
+            if (!passengerExists)
             {
                 throw new KeyNotFoundException("Hành khách không tồn tại.");
             }
@@ -163,7 +122,7 @@ namespace Pbl3.Services.Users
                 .Include(t => t.Booking)
                     .ThenInclude(b => b!.RefundRequests)
                 .FirstOrDefaultAsync(t =>
-                    t.TicketID == ticketId && t.PassengerID == passenger.PassengerID
+                    t.TicketID == ticketId && t.Passenger != null && t.Passenger.UserID == userId
                 );
 
             if (ticket == null)
