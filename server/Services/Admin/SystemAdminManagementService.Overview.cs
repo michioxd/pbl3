@@ -217,6 +217,7 @@ namespace Pbl3.Services.Admin
 
             var recentBookings = await _context
                 .Bookings.AsNoTracking()
+                .Where(b => b.Status == BookingStatus.Paid)
                 .Include(b => b.Tickets)
                     .ThenInclude(t => t.Trip)
                         .ThenInclude(tr => tr!.Route)
