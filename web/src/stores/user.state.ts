@@ -61,9 +61,11 @@ export class UserStore {
 
             if (!f.data?.user) {
                 console.error("[user.checkAuth] check failed: No user data", f.data);
-                this.user = null;
-                this.error = "common:unauthorized";
-                runInAction(() => this.logout());
+                runInAction(() => {
+                    this.user = null;
+                    this.error = "common:unauthorized";
+                });
+                await this.logout();
                 return false;
             }
 

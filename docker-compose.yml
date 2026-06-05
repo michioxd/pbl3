@@ -1,0 +1,62 @@
+# create .env file with the following content before running `docker-compose up`:
+# POSTGRES_PASSWORD=db_pass
+# DATABASE_URL=Host=postgres;Database=pbl3;Username=pbl3;Password=db_pass;Port=5432
+# JWT_KEY=jwt-key
+# JWT_ISSUER=jwt-issuer
+# JWT_AUDIENCE=jwt-audience
+# GOOGLE_CLIENT_ID=12345-abcd.apps.googleusercontent.com
+# ASPNETCORE_URLS=http://+:8080
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: postgres
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_DB: root
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d root"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+
+  server:
+    image: ghcr.io/michioxd/pbl3-server:latest
+    restart: unless-stopped
+    ports:
+      - "60010:8080"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+  
+  migrate:
+    image: ghcr.io/michioxd/pbl3-server:latest
+    profiles: [ "tools" ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    command: [ "--migrate" ]
+
+  seed:
+    image: ghcr.io/michioxd/pbl3-server:latest
+    profiles: [ "tools" ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    command: [ "--seed" ]
+
+volumes:
+  pgdata:

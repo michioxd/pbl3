@@ -333,12 +333,12 @@ export default function PageBusAdminIndex() {
                     {
                         title: "Vé đã hủy",
                         value: numberFormatter.format(stats?.cancelledTickets ?? 0),
-                        helper: `Tỷ lệ ${stats?.cancellationRatePercent ?? 0}%`,
+                        helper: `Tỷ lệ ${(stats?.cancellationRatePercent ?? 0).toFixed(1)}%`,
                     },
                     {
                         title: "Chuyến xe",
                         value: numberFormatter.format(stats?.totalTrips ?? 0),
-                        helper: `TB ${stats?.averageSoldTicketsPerTrip ?? 0} vé/chuyến`,
+                        helper: `TB ${(stats?.averageSoldTicketsPerTrip ?? 0).toFixed(1)} vé/chuyến`,
                     },
                 ].map((item) => (
                     <Card key={item.title}>

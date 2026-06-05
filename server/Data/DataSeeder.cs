@@ -26,6 +26,9 @@ namespace Pbl3.Data
         {
             await ImportAdministrativeLocationDataAsync();
 
+            // Đảm bảo roles luôn tồn tại, ngay cả khi DB bị reset một phần
+            await EnsureRolesExistAsync();
+
             if (await _context.Users.AnyAsync())
             {
                 _logger.LogInformation("Database already has data. Skipping seed.");
@@ -34,7 +37,6 @@ namespace Pbl3.Data
 
             _logger.LogInformation("Starting to seed data...");
 
-            await SeedRolesAsync();
             await SeedUsersAsync();
             await SeedBusCompaniesAsync();
             await SeedBusAdminUpgradeRequestsAsync();
@@ -150,6 +152,36 @@ namespace Pbl3.Data
             finally
             {
                 _context.Database.SetCommandTimeout(previousCommandTimeout);
+            }
+        }
+
+        /// <summary>
+        /// Đảm bảo 3 roles cơ bản luôn tồn tại trong DB.
+        /// Chỉ tạo role nếu chưa có — an toàn để gọi nhiều lần.
+        /// </summary>
+        private async Task EnsureRolesExistAsync()
+        {
+            var requiredRoles = new[]
+            {
+                UserRole.SysAdmin.ToString(),
+                UserRole.BusAdmin.ToString(),
+                UserRole.Passenger.ToString(),
+            };
+
+            var added = 0;
+            foreach (var roleName in requiredRoles)
+            {
+                if (!await _context.Roles.AnyAsync(r => r.RoleName == roleName))
+                {
+                    _context.Roles.Add(new Role { RoleID = Guid.NewGuid(), RoleName = roleName });
+                    added++;
+                }
+            }
+
+            if (added > 0)
+            {
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Created {Count} missing role(s).", added);
             }
         }
 

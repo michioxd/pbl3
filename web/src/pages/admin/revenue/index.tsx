@@ -196,7 +196,7 @@ export function PageAdminRevenue() {
                 <SummaryCard
                     title="Hoàn tiền"
                     value={formatCurrency(summary.totalRefunded)}
-                    subtitle={`${((summary.totalRefunded / summary.totalRevenue) * 100).toFixed(1)}% tổng doanh thu`}
+                    subtitle={`${(summary.totalRevenue === 0 ? 0 : (summary.totalRefunded / summary.totalRevenue) * 100).toFixed(1)}% tổng doanh thu`}
                     icon={<TrendingDown className="h-4 w-4" />}
                     variant="destructive"
                 />
