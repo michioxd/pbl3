@@ -478,6 +478,14 @@ namespace Pbl3.Services
 
         private void ValidateMomoOptions()
         {
+            System.Diagnostics.Debug.WriteLine($"[MoMo Config] PartnerCode: {_momoOptions.PartnerCode}");
+            System.Diagnostics.Debug.WriteLine($"[MoMo Config] AccessKey: {_momoOptions.AccessKey}");
+            System.Diagnostics.Debug.WriteLine($"[MoMo Config] SecretKey: {_momoOptions.SecretKey}");
+            System.Diagnostics.Debug.WriteLine($"[MoMo Config] Endpoint: {_momoOptions.Endpoint}");
+            System.Diagnostics.Debug.WriteLine($"[MoMo Config] RedirectUrl: {_momoOptions.RedirectUrl}");
+            System.Diagnostics.Debug.WriteLine($"[MoMo Config] FrontendRedirectUrl: {_momoOptions.FrontendRedirectUrl}");
+            System.Diagnostics.Debug.WriteLine($"[MoMo Config] IpnUrl: {_momoOptions.IpnUrl}");
+
             if (
                 string.IsNullOrWhiteSpace(_momoOptions.PartnerCode)
                 || string.IsNullOrWhiteSpace(_momoOptions.AccessKey)
