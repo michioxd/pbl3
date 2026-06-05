@@ -66,8 +66,10 @@ namespace Pbl3.Controllers.Payments
                 await _paymentService.HandleMomoIpnAsync(dto);
                 return NoContent();
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"MoMo IPN Error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack: {ex.StackTrace}");
                 return NoContent();
             }
         }
