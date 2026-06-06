@@ -35,7 +35,8 @@ namespace Pbl3.Controllers.Admin
             [FromBody] UpdateCompanyStatusDto dto
         )
         {
-            await _service.UpdateCompanyStatusAsync(companyId, dto.Status);
+            var reviewerId = GetCurrentUserId();
+            await _service.UpdateCompanyStatusAsync(companyId, dto.Status, reviewerId);
             return Ok(new { message = "Cập nhật trạng thái thành công.", status = dto.Status });
         }
     }

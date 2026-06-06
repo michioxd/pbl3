@@ -17,8 +17,8 @@ namespace Pbl3.Dtos
         public Guid BusTypeID { get; set; }
         public DateOnly DepartureDate { get; set; }
         public List<DateOnly>? DepartureDates { get; set; }
-        public DateTime DepartureTime { get; set; }
-        public DateTime ArrivalTime { get; set; }
+        public required string DepartureTime { get; set; }
+        public required string ArrivalTime { get; set; }
         public TripStatus Status { get; set; } = TripStatus.Scheduled;
     }
 
@@ -28,8 +28,8 @@ namespace Pbl3.Dtos
         public Guid? BusID { get; set; }
         public Guid BusTypeID { get; set; }
         public DateOnly DepartureDate { get; set; }
-        public DateTime DepartureTime { get; set; }
-        public DateTime ArrivalTime { get; set; }
+        public required string DepartureTime { get; set; }
+        public required string ArrivalTime { get; set; }
         public TripStatus Status { get; set; }
     }
 

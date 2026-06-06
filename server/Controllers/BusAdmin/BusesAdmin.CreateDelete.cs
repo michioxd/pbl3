@@ -34,12 +34,31 @@ namespace Pbl3.Controllers.BusAdmin
         [HttpPost("trips")]
         public async Task<IActionResult> CreateTrip([FromBody] CreateTripDto dto)
         {
-            var companyId = await GetCurrentCompanyIdAsync();
-            if (companyId == null)
-                return Forbid();
+            try
+            {
+                var companyId = await GetCurrentCompanyIdAsync();
+                if (companyId == null)
+                    return Forbid();
 
-            var tripIds = await _busesService.CreateTripAsync(companyId.Value, dto);
-            return Ok(new { message = "Tạo chuyến xe thành công.", tripIds });
+                var tripIds = await _busesService.CreateTripAsync(companyId.Value, dto);
+                return Ok(new { message = "Tạo chuyến xe thành công.", tripIds });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi hệ thống.", detail = ex.Message, stackTrace = ex.StackTrace });
+            }
         }
 
         [HttpDelete("trips/{tripId:guid}")]

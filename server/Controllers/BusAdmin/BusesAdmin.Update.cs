@@ -38,12 +38,31 @@ namespace Pbl3.Controllers.BusAdmin
         [HttpPut("trips/{tripId:guid}")]
         public async Task<IActionResult> UpdateTrip(Guid tripId, [FromBody] UpdateTripDto dto)
         {
-            var companyId = await GetCurrentCompanyIdAsync();
-            if (companyId == null)
-                return Forbid();
+            try
+            {
+                var companyId = await GetCurrentCompanyIdAsync();
+                if (companyId == null)
+                    return Forbid();
 
-            await _busesService.UpdateTripAsync(tripId, dto, companyId.Value);
-            return Ok(new { message = "Cập nhật chuyến xe thành công." });
+                await _busesService.UpdateTripAsync(tripId, dto, companyId.Value);
+                return Ok(new { message = "Cập nhật chuyến xe thành công." });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi hệ thống.", detail = ex.Message, stackTrace = ex.StackTrace });
+            }
         }
 
         [HttpPatch("bus-types/{busTypeId:guid}/amenities")]

@@ -67,12 +67,21 @@ namespace Pbl3.Services.Admin
             if (!busTypeExists)
                 throw new ArgumentException("Loại xe không tồn tại.");
 
+            var parsedDepTime = TimeOnly.Parse(dto.DepartureTime);
+            var parsedArrTime = TimeOnly.Parse(dto.ArrivalTime);
+            var departureDateTime = dto.DepartureDate.ToDateTime(parsedDepTime);
+            var arrivalDateTime = dto.DepartureDate.ToDateTime(parsedArrTime);
+            if (arrivalDateTime < departureDateTime)
+            {
+                arrivalDateTime = arrivalDateTime.AddDays(1);
+            }
+
             trip.RouteID = dto.RouteID;
             trip.BusID = dto.BusID;
             trip.BusTypeID = dto.BusTypeID;
             trip.DepartureDate = dto.DepartureDate;
-            trip.DepartureTime = dto.DepartureTime;
-            trip.ArrivalTime = dto.ArrivalTime;
+            trip.DepartureTime = departureDateTime;
+            trip.ArrivalTime = arrivalDateTime;
             trip.Status = dto.Status;
 
             await _context.SaveChangesAsync();

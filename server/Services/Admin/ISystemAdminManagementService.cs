@@ -12,7 +12,7 @@ namespace Pbl3.Services.Admin
         Task<object> BulkApproveCompaniesAsync(List<Guid> companyIds, Guid reviewerId);
         Task<object> BulkSuspendCompaniesAsync(List<Guid> companyIds);
         Task<object> BulkDeleteCompaniesAsync(List<Guid> companyIds);
-        Task UpdateCompanyStatusAsync(Guid companyId, int status);
+        Task UpdateCompanyStatusAsync(Guid companyId, int status, Guid reviewerId);
 
         // Companies & Stats (Get partial)
         Task<AdminCompaniesListResponseDto> GetCompaniesAsync(

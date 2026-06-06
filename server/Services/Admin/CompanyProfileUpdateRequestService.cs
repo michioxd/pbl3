@@ -103,6 +103,7 @@ namespace Pbl3.Services.Admin
                 company.Hotline = request.Hotline;
                 company.AllowPayOnBoard = request.AllowPayOnBoard;
                 company.IsApproved = true;
+                company.Status = CompanyStatus.Approved;
             }
 
             request.Status = dto.Status;

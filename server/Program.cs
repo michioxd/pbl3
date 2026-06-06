@@ -24,7 +24,7 @@ namespace Pbl3
     {
         public static async Task Main(string[] args)
         {
-            Env.Load();
+            Env.TraversePath().Load();
 
             var builder = WebApplication.CreateBuilder(args);
 

@@ -86,16 +86,27 @@ namespace Pbl3.Services.BusAdmin
                 throw new ArgumentException("Ngày khởi hành phải từ hôm nay trở đi.");
 
             var trips = departureDates
-                .Select(departureDate => new Trip
-                {
-                    TripID = Guid.NewGuid(),
-                    RouteID = dto.RouteID,
-                    BusID = dto.BusID,
-                    BusTypeID = dto.BusTypeID,
-                    DepartureDate = departureDate,
-                    DepartureTime = dto.DepartureTime,
-                    ArrivalTime = dto.ArrivalTime,
-                    Status = dto.Status,
+                .Select(departureDate => {
+                    var parsedDepTime = TimeOnly.Parse(dto.DepartureTime);
+                    var parsedArrTime = TimeOnly.Parse(dto.ArrivalTime);
+                    var departureDateTime = departureDate.ToDateTime(parsedDepTime);
+                    var arrivalDateTime = departureDate.ToDateTime(parsedArrTime);
+                    if (arrivalDateTime < departureDateTime)
+                    {
+                        arrivalDateTime = arrivalDateTime.AddDays(1);
+                    }
+
+                    return new Trip
+                    {
+                        TripID = Guid.NewGuid(),
+                        RouteID = dto.RouteID,
+                        BusID = dto.BusID,
+                        BusTypeID = dto.BusTypeID,
+                        DepartureDate = departureDate,
+                        DepartureTime = departureDateTime,
+                        ArrivalTime = arrivalDateTime,
+                        Status = dto.Status,
+                    };
                 })
                 .ToList();
 

@@ -157,6 +157,7 @@ namespace Pbl3.Services.Admin
                             ? null
                             : request.Hotline.Trim(),
                         IsApproved = true,
+                        Status = CompanyStatus.Approved,
                     };
 
                     _context.BusCompanies.Add(existingCompany);
@@ -172,6 +173,7 @@ namespace Pbl3.Services.Admin
                         ? null
                         : request.Hotline.Trim();
                     existingCompany.IsApproved = true;
+                    existingCompany.Status = CompanyStatus.Approved;
                 }
 
                 request.CompanyID = existingCompany.CompanyID;

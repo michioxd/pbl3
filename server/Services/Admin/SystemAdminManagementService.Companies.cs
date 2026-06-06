@@ -124,7 +124,7 @@ namespace Pbl3.Services.Admin
             };
         }
 
-        public async Task UpdateCompanyStatusAsync(Guid companyId, int status)
+        public async Task UpdateCompanyStatusAsync(Guid companyId, int status, Guid reviewerId)
         {
             if (!Enum.IsDefined(typeof(CompanyStatus), status))
                 throw new ArgumentException("Trạng thái không hợp lệ.");
@@ -135,10 +135,44 @@ namespace Pbl3.Services.Admin
             if (company == null)
                 throw new KeyNotFoundException("Không tìm thấy nhà xe.");
 
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             company.Status = (CompanyStatus)status;
             company.IsApproved = status == (int)CompanyStatus.Approved;
 
+            // Đồng bộ trạng thái của các yêu cầu cập nhật hồ sơ đang chờ duyệt của nhà xe này
+            var pendingRequests = await _context
+                .CompanyProfileUpdateRequests.Where(r =>
+                    r.CompanyID == companyId
+                    && r.Status == CompanyProfileUpdateRequestStatus.Pending
+                )
+                .ToListAsync();
+
+            var reviewedAt = DateTime.UtcNow;
+            if (status == (int)CompanyStatus.Approved)
+            {
+                foreach (var request in pendingRequests)
+                {
+                    request.Status = CompanyProfileUpdateRequestStatus.Approved;
+                    request.ReviewedByUserID = reviewerId;
+                    request.ReviewedAt = reviewedAt;
+                }
+            }
+            else if (status == (int)CompanyStatus.Suspended || status == (int)CompanyStatus.Rejected)
+            {
+                foreach (var request in pendingRequests)
+                {
+                    request.Status = CompanyProfileUpdateRequestStatus.Rejected;
+                    request.ReviewedByUserID = reviewerId;
+                    request.ReviewedAt = reviewedAt;
+                    request.ReviewNote = status == (int)CompanyStatus.Suspended
+                        ? "Nhà xe bị tạm ngưng."
+                        : "Yêu cầu đăng ký nhà xe bị từ chối.";
+                }
+            }
+
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
         }
     }
 }
